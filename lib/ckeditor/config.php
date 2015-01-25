@@ -1,0 +1,24 @@
+<?php
+$jsTheme="moono";
+$arrJS=array
+(
+    array("source"=>"ckeditor.js","destination"=>"ckeditor.js")
+);
+$arrCSS=array
+(
+    array("source"=>"themes/{$jsTheme}/editor.css","destination"=>"editor.css"),
+    array("source"=>"themes/{$jsTheme}/editor_ie.css","destination"=>"editor_ie.css"),
+    array("source"=>"themes/{$jsTheme}/editor_ie7.css","destination"=>"editor_ie7.css"),
+    array("source"=>"themes/{$jsTheme}/editor_ie8.css","destination"=>"editor_ie8.css"),
+);
+$arrImage=array
+(
+    array("source"=>"themes/{$jsTheme}/icon.png","destination"=>"images/icon.png"),
+    array("source"=>"themes/{$jsTheme}/images/arrow.png","destination"=>"images/arrow.png"),
+    array("source"=>"themes/{$jsTheme}/images/close.png","destination"=>"images/close.png"),
+    array("source"=>"themes/{$jsTheme}/images/lock-open.png","destination"=>"images/lock-open.png"),
+    array("source"=>"themes/{$jsTheme}/images/lock.png","destination"=>"images/lock.png"),
+    array("source"=>"themes/{$jsTheme}/images/refresh.png","destination"=>"images/refresh.png")
+);
+$priority=9;
+?>

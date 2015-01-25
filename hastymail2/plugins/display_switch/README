@@ -1,0 +1,12 @@
+The display_switch plugin adds a display mode toggle to the main menu allowing
+users to switch between normal and simple display modes. Add the following to
+your hastymail2.conf file enable the plugin:
+
+plugin = display_switch
+
+Don't forget to rebuild the hastymail2.rc file after editing the hastymail2.conf.
+Plugin configs are cached when you login so be sure to logout and back in to
+enable the plugin.
+
+Jason Munro
+jason@hastymail.org

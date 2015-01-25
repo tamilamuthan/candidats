@@ -1,0 +1,22 @@
+This is the hm_utils module, an experimental PHP5 module written in C++
+that offloads some of the more computationally intense work from the
+Hastymail2 PHP code. Preliminary benchmarks of the functions converted
+to this module indicates that they execute 2 to 3 times faster than
+the PHP versions of the functions.
+
+Currently the following functions are provided by the hm_utils extension:
+
+    hm_html_strlen:     determine length of a string with html entities only counting as a single char
+    hm_html_trim:       slice a string with entities without breaking any
+    hm_html_entities:   convert some chars into corresponding entities
+    hm_crypt:           encrypt a string to encrypted text using RC4 and and a substitution cipher
+    hm_decrypt:         un-encrypt a string that was crypted with hm_crypt
+    hm_utf8_to_html:    convert raw utf characters to HTML entities if they are > ASCII 127
+    hm_parse_imap_line: parse a line of an IMAP server command response
+
+use at your own risk! bugs in this extension will likely cause apache to segfault.
+
+Questions or comments can be sent to:
+
+Jason Munro
+jason@hastymail.org

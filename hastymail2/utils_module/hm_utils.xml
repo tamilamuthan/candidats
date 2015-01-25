@@ -1,0 +1,39 @@
+<?xml version="1.0" ?>
+<!DOCTYPE extension SYSTEM "../extension.dtd"> 
+<extension name="hm_utils" version="0.0.1">
+ <summary>Hastymail utilities extension</summary>
+ <description>Hastymail utilities extension</description>
+ <license>LGPL</license>
+ <deps language="cpp" platform="unix">
+ </deps>
+ <function role="public" name="hm_html_strlen">
+    <proto>
+        int hm_html_strlen(string str);
+    </proto>
+ </function>
+ <function role="public" name="hm_html_trim">
+    <proto>
+        string hm_html_trim(string str, int len);
+    </proto>
+ </function>
+ <function role="public" name="hm_html_entities">
+    <proto>
+        string hm_html_entities(string str);
+    </proto>
+ </function>
+ <function role="public" name="hm_crypt">
+    <proto>
+        string hm_crypt(string str, string key);
+    </proto>
+ </function>
+ <function role="public" name="hm_decrypt">
+    <proto>
+        string hm_decrypt(string str, string key);
+    </proto>
+ </function>
+ <function role="public" name="hm_utf8_to_html">
+    <proto>
+        string hm_utf8_to_html(string str);
+    </proto>
+ </function>
+</extension>

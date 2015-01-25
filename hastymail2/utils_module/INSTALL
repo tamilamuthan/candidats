@@ -1,0 +1,42 @@
+This module is EXPERIMENTAL. Use at your own risk!!
+
+Build instructions:
+------------------
+
+1. Unpack the util module tarball or zip file which should
+   then be found in the hastymail2_utils_module_1_1 directory
+
+3. Enter the newly created direcotry
+
+    cd ~/hastymail2_utils_module_1_1
+
+4. Run the phpize command to create the build files
+
+    phpize
+
+5. Configure the module (no args needed unless PHP is in a non-standard
+   location, in which case use the --with-php-config to point to your
+   php-config executable
+
+    ./configure
+
+6. Build the module
+
+    make
+
+7. Copy the compiled module somewhere
+
+    cp modules/hm_utils.so /<path to module>/
+
+8. Add the module to your php.ini
+
+    php.ini:
+        extension=/<path to module>/hm_utils.so
+
+9. Enable the module in hastymail by editing the index.php file:
+
+   line 567: $hm_utils_mod = true; 
+
+10. Restart apache
+
+    /etc/init.d/apache2 restart
