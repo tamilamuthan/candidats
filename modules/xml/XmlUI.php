@@ -59,7 +59,7 @@ class XmlUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
         switch ($action)
@@ -71,7 +71,7 @@ class XmlUI extends UserInterface
         }
     }
 
-    private function outputXMLError($title, $errorMessage)
+    public function outputXMLError($title, $errorMessage)
     {
         /* XML Headers */
         header('Content-type: text/xml');
@@ -100,7 +100,7 @@ class XmlUI extends UserInterface
         );
     }
 
-    private function displayPublicJobOrders()
+    public function displayPublicJobOrders()
     {
         $site = new Site(-1);
 

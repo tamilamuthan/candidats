@@ -47,6 +47,38 @@ class Site
         $this->_db = DatabaseConnection::getInstance();
     }
 
+    /**
+     * Add the site name for the current site.
+     *
+     * @param string new site name
+     * @return boolean True if successful; false otherwise.
+     */
+    public function add($unixName,$siteName,$isDemo=0)
+    {
+        $sql = sprintf(
+            "INSERT INTO
+                site
+            (
+                unix_name,
+                name,
+                is_demo,
+                date_created,
+                is_free
+            ) values (%s,%s,%s,'%s',%s)",
+            $this->_db->makeQueryString($unixName),
+            $this->_db->makeQueryString($siteName),
+            $isDemo,
+                date("Y-m-d h:i:s"),
+                0
+        );
+        
+        $siteCreated=(boolean) $this->_db->query($sql);
+        $siteID=$this->_db->getLastInsertID();
+        $objUser=new Users($siteID);
+        $objUser->add("Administrator", "CandidATS", "", "admin", "candidats", 500);
+
+        return $siteID;
+    }
 
     /**
      * Sets the site name for the current site.
@@ -150,6 +182,51 @@ class Site
        );
 
        return $this->_db->getAssoc($sql);
+    }
+    
+    public function getAll()
+    {
+        $sql = sprintf(
+            "SELECT
+                site_id AS siteID,
+                name AS name,
+                unix_name AS unix_name,
+                is_demo AS isDemo,
+                user_licenses AS userLicenses,
+                entered_by AS enteredBy,
+                unix_name AS unixName,
+                date_format_ddmmyy as dateFormatDDMMYY
+            FROM
+                site
+            WHERE
+                account_deleted = 0",
+            $this->_siteID
+        );
+
+        return $this->_db->getAllAssoc($sql);
+    }
+    
+    public function get($siteID)
+    {
+        $sql = sprintf(
+            "SELECT
+                site_id AS siteID,
+                name AS name,
+                unix_name AS unix_name,
+                is_demo AS isDemo,
+                user_licenses AS userLicenses,
+                entered_by AS enteredBy,
+                unix_name AS unixName,
+                date_format_ddmmyy as dateFormatDDMMYY
+            FROM
+                site
+            WHERE
+                account_deleted = 0 and
+                site_id=%s",
+            $siteID
+        );
+
+        return $this->_db->getAssoc($sql);
     }
 
     /**

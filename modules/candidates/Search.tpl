@@ -143,6 +143,7 @@ echo($this->exportForm['header']);
                                         foreach($_GET as $k=>$v)
                                         {
                                             if($k=="attachmentID") continue;
+                                            if($k=="getback") continue;
                                             if($k=="m")
                                             {
                                                 $k="return_m";
@@ -153,7 +154,7 @@ echo($this->exportForm['header']);
                                             }
                                             $arrUrl[]="{$k}={$v}";
                                         }
-                                        $url=implode("&amp;",$arrUrl);
+                                        $url=implode("&",$arrUrl);
                                         ?>
                                         <a href='<?php echo(CATSUtility::getIndexName()); ?>?m=candidates&amp;a=delete&amp;<?php echo $url; ?>&amp;attachmentID=<?php $this->_($data['attachmentID']); ?>'>Delete</a>
                                     </td>
@@ -227,7 +228,7 @@ echo ClsCandidateFilter::getInstance()->getFilter();
                         <?php foreach ($this->rs as $rowNumber => $data): ?>
                             <tr class="<?php TemplateUtility::printAlternatingRowClass($rowNumber); ?>">
                                 <td nowrap>
-                                    <input type="checkbox" id="checked_<?php echo($data['candidateID']); ?>" name="checked_<?php echo($data['candidateID']); ?>" />
+                                    <input class="record_checkbox" type="checkbox" id="checked_<?php echo($data['candidateID']); ?>" name="checked_<?php echo($data['candidateID']); ?>" />
                                     <a href="javascript:void(0);" onClick="window.open('<?php echo(CATSUtility::getIndexName()); ?>?m=candidates&amp;a=show&amp;candidateID=<?php $this->_($data['candidateID']); ?>')" title="View in New Window">
                                         <img src="images/new_window.gif" class="abstop" alt="(Preview)" border="0" width="15" height="15" />
                                     </a>&nbsp;

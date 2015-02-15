@@ -48,7 +48,7 @@ class AttachmentsUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
 
@@ -66,7 +66,7 @@ class AttachmentsUI extends UserInterface
     }
 
 
-    private function getAttachment()
+    public function getAttachment()
     {
         // FIXME: Do we really need to mess with memory limits here? We're only reading ~80KB at a time...
         @ini_set('memory_limit', '128M'); 

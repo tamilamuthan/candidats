@@ -45,7 +45,7 @@ class LoginUI extends UserInterface
         $this->_moduleDirectory = 'login';
     }
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
         switch ($action)
@@ -78,9 +78,9 @@ class LoginUI extends UserInterface
 
 
     /*
-     * Called by handleRequest() to handle displaying the initial login form.
+     * Called by render() to handle displaying the initial login form.
      */
-    private function showLoginForm()
+    public function showLoginForm()
     {
         /* The username can be pre-filled in the input box by specifing
          * "&loginusername=Username" in the URL.
@@ -173,7 +173,7 @@ class LoginUI extends UserInterface
                 $this->_template->display('./modules/login/Login.tpl');
     }
 
-    private function noCookiesModal()
+    public function noCookiesModal()
     {
         if (!eval(Hooks::get('NO_COOKIES_MODAL'))) return;
 
@@ -181,9 +181,9 @@ class LoginUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to handle attempting to log in a user.
+     * Called by render() to handle attempting to log in a user.
      */
-    private function attemptLogin()
+    public function attemptLogin()
     {
         //FIXME: getTrimmedInput()!
         if (isset($_POST['siteName']))
@@ -219,8 +219,6 @@ class LoginUI extends UserInterface
                 $siteNameFull = $siteName;
             }
 
-            $this->_template->assign('aspMode', false);
-
             if (!eval(Hooks::get('LOGIN_NO_CREDENTIALS'))) return;
 
             $this->_template->assign('message', $message);
@@ -240,9 +238,10 @@ class LoginUI extends UserInterface
         $username = $this->getTrimmedInput('username', $_POST);
         $password = $this->getTrimmedInput('password', $_POST);
 
-        if (strpos($username, '@') !== false)
+        if (($pos=strpos($username, '@')) !== false)
         {
-            $siteName = '';
+            $siteName = substr($username, $pos+1);
+            $username = substr($username, 0, $pos);
         }
 
         if ($siteName != '')
@@ -448,10 +447,10 @@ class LoginUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to handle displaying the form for retrieving
+     * Called by render() to handle displaying the form for retrieving
      * forgotten passwords.
      */
-    private function forgotPassword()
+    public function forgotPassword()
     {
         if (!eval(Hooks::get('FORGOT_PASSWORD'))) return;
 
@@ -459,10 +458,10 @@ class LoginUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to handle processing the form for retrieving
+     * Called by render() to handle processing the form for retrieving
      * forgotten passwords.
      */
-    private function onForgotPassword()
+    public function onForgotPassword()
     {
         $username = $this->getTrimmedInput('username', $_POST);
 

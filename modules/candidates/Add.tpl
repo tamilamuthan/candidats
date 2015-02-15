@@ -167,12 +167,7 @@ echo "var url='{$url}';";
                                     </tr>
                                 </table>
                             <?php else: ?>
-                                <?php if (PARSING_ENABLED &&
-                                    count($this->parsingStatus) &&
-                                    $this->parsingStatus['parseUsed'] >= $this->parsingStatus['parseLimit'] &&
-                                    $this->parsingStatus['parseLimit'] >= 0): ?>
-                                <a href="http://www.catsone.com/professional" target="_blank">All daily resume imports used. For more, upgrade to CATS professional</a>.
-                                <?php endif; ?>
+                                
                                 <?php $freeformTop = '<p class="freeformtop">Cut and paste freeform address here.</p>'; ?>
                                 <?php eval(Hooks::get('CANDIDATE_TEMPLATE_ABOVE_FREEFORM')); ?>
                                 <?php echo($freeformTop); ?>
@@ -182,6 +177,7 @@ echo "var url='{$url}';";
                                 <?php $freeformBottom = '<p class="freeformbottom">Cut and paste freeform address here.</p>'; ?>
                                 <?php eval(Hooks::get('CANDIDATE_TEMPLATE_BELOW_FREEFORM')); ?>
                                 <?php echo($freeformBottom); ?>
+                                Need to upload multiple resumes? <a href="<?php echo CATSUtility::getIndexName(); ?>?m=import&a=massImport">Click here!</a>
                             <?php endif; ?>
                         </td>
                     </tr>

@@ -23,7 +23,7 @@
                                         <?php $this->pager->printNavigation('lastName', false); ?>
                                     </td>
                                     <td>
-                                        <select name="view" id="hotListSelect" onChange="if (this.value != 'edit' &amp;&amp; this.value != 'nullline') { document.candidatesViewSelectorForm.submit(); } else { if (this.value == 'edit') { listEditor('Hot Lists', 'hotListSelect', 'hotListCSV', false, 'candidatesViewSelectorForm', 0); } if (this.value == 'nullline') { this.value = '(none)'; } }" >
+                                        <select name="view" id="hotListSelect" onChange="if (this.value != 'edit' && this.value != 'nullline') { document.candidatesViewSelectorForm.submit(); } else { if (this.value == 'edit') { listEditor('Hot Lists', 'hotListSelect', 'hotListCSV', false, 'candidatesViewSelectorForm', 0); } if (this.value == 'nullline') { this.value = '(none)'; } }" >
                                             <?php if ($this->accessLevel >= ACCESS_LEVEL_DELETE): ?>
                                                 <option value="edit">(Manage Hot Lists)</option>
                                             <?php else: ?>

@@ -1906,7 +1906,7 @@ class DataGrid
         echo ('</table>' . "\n");
 
         /* If the table is smaller than the maximum width, JS will extend out the last cell so the table takes up all of its allocated space. */$arrTmp=array_keys($this->_currentColumns);
-        echo ('<script type="text/javascript">setTableWidth("table'.$md5InstanceName.'", '.$this->_totalColumnWidths.', document.getElementById(\'cell'.$md5InstanceName.end($arrTmp).'\'), document.getElementById(\'cell'.$md5InstanceName.end($arrTmp).'div\'), ' . ($this->_tableWidth) . ');</script>' . "\n");
+        echo ('<script type="text/javascript">setTableWidth("table'.$md5InstanceName.'", '.$this->_totalColumnWidths.', document.getElementById(\'cell'.$md5InstanceName.end($arrTmp).'\'), document.getElementById(\'cell'.$md5InstanceName.end($arrTmp).'div\'), "' . ($this->_tableWidth) . '");</script>' . "\n");
 
         /* Close overflowdiv */
         if (!$noOverflow)

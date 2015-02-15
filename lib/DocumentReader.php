@@ -1,9 +1,14 @@
 <?php
-/* This Source Code Form is subject to the terms of the Mozilla Public
+/* 
+ * CandidATS
+ * Document to Text Conversion Library
+ *
+ * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+ * 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-//include_once('./lib/tcpdf/tcpdf.php');
-//include_once('./lib/tcpdf/tcpdf_parser.php');
+
 include_once('./lib/MSWordReader.php');
 class DocumentReader
 {
@@ -30,6 +35,14 @@ class DocumentReader
                 return $this->read_doc();
         } else if($this->documentType==DOCUMENT_TYPE_DOCX) {
                 return $this->read_docx();
+        }
+        else if($this->documentType==DOCUMENT_TYPE_HTML)
+        {
+            return $this->read_html();
+        }
+        else if($this->documentType==DOCUMENT_TYPE_PDF)
+        {
+            return $this->read_pdf();
         }
         else 
         {
@@ -74,7 +87,27 @@ class DocumentReader
         $outtext = preg_replace("/[^a-zA-Z0-9\s\,\.\-\n\r\t@\/\_\(\)]/","",$outtext);
         return $outtext;
     }
+    
+    private function read_html()
+    {
+        $content=file_get_contents($this->filename);
+        $obj=new DOMDocument();
+        //$obj->formatOutput=true;
+        $obj->preserveWhiteSpace=true;
+        $obj->loadHTML($content);
+        return $obj->textContent;
+    }
 
+    private function &read_pdf()
+    {
+        include 'lib/vendor/autoload.php';
+        $parser = new \Smalot\PdfParser\Parser();
+        $pdf    = $parser->parseFile($this->filename);
+
+        $text = $pdf->getText();
+        return $text;
+    }
+    
     private function read_docx(){
 
             $striped_content = '';

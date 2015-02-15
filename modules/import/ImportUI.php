@@ -57,7 +57,7 @@ class ImportUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
         switch ($action)
@@ -125,9 +125,9 @@ class ImportUI extends UserInterface
     }
 
    /*
-    * Called by handleRequest() to revert an import.
+    * Called by render() to revert an import.
     */
-    private function revert()
+    public function revert()
     {
         if (!$this->isRequiredIDValid('importID', $_GET))
         {
@@ -161,9 +161,9 @@ class ImportUI extends UserInterface
 
 
    /*
-    * Called by handleRequest() to view the errors of a pervious import.
+    * Called by render() to view the errors of a pervious import.
     */
-    private function viewErrors()
+    public function viewErrors()
     {
         $importID = $_GET['importID'];
 
@@ -193,9 +193,9 @@ class ImportUI extends UserInterface
     }
 
    /*
-    * Called by handleRequest() and viewErrors() to view pending imports and to display relavent information.
+    * Called by render() and viewErrors() to view pending imports and to display relavent information.
     */
-    private function viewPending()
+    public function viewPending()
     {
         $import = new Import($this->_siteID);
         $data = $import->getAll();
@@ -219,7 +219,7 @@ class ImportUI extends UserInterface
    /*
     * Sets a variety of constants in the instantiated object.
     */
-    private function setImportTypes()
+    public function setImportTypes()
     {
         $this->candidatesTypes = array(
             'Full Name',        'name',
@@ -302,7 +302,7 @@ class ImportUI extends UserInterface
    /*
     * First page (also used to display errors.)
     */
-    private function import()
+    public function import()
     {
         $import = new Import($this->_siteID);
         $data = $import->getAll();
@@ -325,7 +325,7 @@ class ImportUI extends UserInterface
    /*
     * Second page (upload a file, select file format).
     */
-   private function importSelectType()
+   public function importSelectType()
    {
        $typeOfImport = $this->getTrimmedInput('typeOfImport', $_REQUEST);
 
@@ -371,7 +371,7 @@ class ImportUI extends UserInterface
    /*
     * 3rd page for CSV data (After uploading a file).  Sets environment to behave like old style import.
     */
-   private function importUploadFile()
+   public function importUploadFile()
    {
        /* Change passed in settings to settings the old importer knows how to handle. */
        $_POST['dataType'] = 'Text File';
@@ -384,7 +384,7 @@ class ImportUI extends UserInterface
    /*
     * 3rd page for resume data. (After uploading a file).  Sets environment to behave like old style import.
     */
-   private function importUploadResume()
+   public function importUploadResume()
    {
        $_POST['dataType'] = 'Resume';
 
@@ -392,10 +392,10 @@ class ImportUI extends UserInterface
    }
 
    /*
-    * Called by handleRequest() to process an import both on step #2 (choose
+    * Called by render() to process an import both on step #2 (choose
     * fields) and step #3 (process import).
     */
-    private function onImport()
+    public function onImport()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -566,7 +566,7 @@ class ImportUI extends UserInterface
      * Called by onImport() to process an import for Step 2 (decide what
      * fields go where).
      */
-    private function onImportDelimited($fileID)
+    public function onImportDelimited($fileID)
     {
         $filePath = CATS_TEMP_DIR . '/'. $fileID;
 
@@ -986,7 +986,7 @@ class ImportUI extends UserInterface
    /*
     * Generic function to add a extra field to any foreign table.
     */
-    private function addForeign($dataTable, $data, $assocID, $importID)
+    public function addForeign($dataTable, $data, $assocID, $importID)
     {
         if (!eval(Hooks::get('IMPORT_ADD_FOREIGN'))) return;
 
@@ -997,7 +997,7 @@ class ImportUI extends UserInterface
    /*
     * Inserts a record into candidates.
     */
-    private function addToCandidates($dataFields, $dataNamed, $dataForeign, $importID)
+    public function addToCandidates($dataFields, $dataNamed, $dataForeign, $importID)
     {
         $dateAvailable = '01/01/0001';
 
@@ -1038,7 +1038,7 @@ class ImportUI extends UserInterface
    /*
     * Inserts a record into Companies.
     */
-    private function addToCompanies($dataFields, $dataNamed, $dataForeign, $importID)
+    public function addToCompanies($dataFields, $dataNamed, $dataForeign, $importID)
     {
         $companiesImport = new CompaniesImport($this->_siteID);
 
@@ -1076,7 +1076,7 @@ class ImportUI extends UserInterface
    /*
     * Inserts a record into Contacts.
     */
-    private function addToContacts($dataFields, $dataNamed, $dataForeign, $importID)
+    public function addToContacts($dataFields, $dataNamed, $dataForeign, $importID)
     {
         $contactImport = new ContactImport($this->_siteID);
 
@@ -1458,9 +1458,18 @@ class ImportUI extends UserInterface
             {
                 $uploadPath = false;
             }
-
-            $this->_template->assign('flashUploaderEnabled', file_exists('modules/asp') ? true : false);
-            $this->_template->assign('multipleFilesEnabled', true);
+            $importStart=isset($_GET["typeOfImport"])?true:false;
+            if($importStart)
+            {
+                $this->_template->assign('flashUploaderEnabled', true);
+                $this->_template->assign('multipleFilesEnabled', false);
+            }
+            else
+            {
+                $this->_template->assign('flashUploaderEnabled', false);
+                $this->_template->assign('multipleFilesEnabled', true);
+            }
+            
             $this->_template->assign('uploadPath', $uploadPath);
         }
         else if ($step == 2)
@@ -1475,7 +1484,7 @@ class ImportUI extends UserInterface
             {
                 $this->_template->assign('errorMessage', 'You didn\'t upload any files or there was a '
                     . 'problem working with any files you uploaded. Please use the '
-                    . '<a href="javascript:back()"><b>Back</b></a> button on your web browser '
+                    . '<a href="index.php?m=import&a=massImport"><b>Back</b></a> button on your web browser '
                     . 'and select one or more files to import.'
                 );
 
@@ -1572,7 +1581,7 @@ class ImportUI extends UserInterface
         $this->_template->display('./modules/import/MassImport.tpl');
     }
 
-    private function getMassImportCandidates()
+    public function getMassImportCandidates()
     {
         $db = DatabaseConnection::getInstance();
 
@@ -1875,7 +1884,7 @@ class ImportUI extends UserInterface
         return array($importedCandidates, $importedDocuments, $importedFailed, $importedDuplicates);
     }
 
-    private function getMassImportDocuments()
+    public function getMassImportDocuments()
     {
         if (!isset($_SESSION['CATS_PARSE_TEMP']) || empty($_SESSION['CATS_PARSE_TEMP']) ||
             !is_array($_SESSION['CATS_PARSE_TEMP']))
@@ -1937,7 +1946,7 @@ class ImportUI extends UserInterface
         return array($documents, $success, $failed);
     }
 
-    private function deleteBulkResumes()
+    public function deleteBulkResumes()
     {
         if (!isset($_SESSION['CATS']) || empty($_SESSION['CATS']))
         {
@@ -1970,7 +1979,7 @@ class ImportUI extends UserInterface
         $this->import();
     }
 
-    private function importBulkResumes()
+    public function importBulkResumes()
     {
         if (!isset($_SESSION['CATS']) || empty($_SESSION['CATS']))
         {

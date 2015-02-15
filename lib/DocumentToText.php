@@ -30,6 +30,16 @@
  * @version    $Id: DocumentToText.php 3587 2007-11-13 03:55:57Z will $
  */
 
+/* 
+ * CandidATS
+ * Document to Text Conversion Library
+ *
+ * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+ * 
+ * This Modified Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 include_once('./lib/SystemUtility.php');
 include_once('./lib/FileUtility.php');
 include_once('./lib/DocumentReader.php');
@@ -116,37 +126,30 @@ class DocumentToText
             case DOCUMENT_TYPE_DOCX:
                 break;
             case DOCUMENT_TYPE_PDF:
-                if (PDFTOTEXT_PATH == '')
+                if (PDFTOTEXT_PATH != '')
                 {
-                    $this->_setError('The PDF format has not been configured.');
-                    return false;
+                    $nativeEncoding = 'ISO-8859-1';
+                    $convertEncoding = false;
+                    $command = '"'. PDFTOTEXT_PATH . '" -layout ' . $escapedFilename . ' -';
                 }
-
-                $nativeEncoding = 'ISO-8859-1';
-                $convertEncoding = false;
-                $command = '"'. PDFTOTEXT_PATH . '" -layout ' . $escapedFilename . ' -';
                 break;
 
             case DOCUMENT_TYPE_HTML:
-                if (HTML2TEXT_PATH == '')
+                if (HTML2TEXT_PATH != '')
                 {
-                    $this->_setError('The HTML format has not been configured.');
-                    return false;
-                }
+                    $nativeEncoding = 'ISO-8859-1';
+                    $convertEncoding = false;
 
-                $nativeEncoding = 'ISO-8859-1';
-                $convertEncoding = false;
-                
-                if (SystemUtility::isWindows())
-                {
-                    $command = 'TYPE ' . $escapedFilename . ' | "'. HTML2TEXT_PATH . '" -nobs ';
+                    if (SystemUtility::isWindows())
+                    {
+                        $command = 'TYPE ' . $escapedFilename . ' | "'. HTML2TEXT_PATH . '" -nobs ';
+                    }
+                    else
+                    {
+                        $command = '"'. HTML2TEXT_PATH . '" -nobs ' . $escapedFilename;
+                    }                
                 }
-                else
-                {
-                    $command = '"'. HTML2TEXT_PATH . '" -nobs ' . $escapedFilename;
-                }                
                 break;
-
             case DOCUMENT_TYPE_TEXT:
                 return $this->_readTextFile($fileName);
                 break;

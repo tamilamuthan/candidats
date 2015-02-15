@@ -30,6 +30,16 @@
  * @version    $Id: Candidates.php 3813 2007-12-05 23:16:22Z brian $
  */
 
+/* 
+ * CandidATS
+ * Document to Text Conversion Library
+ *
+ * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+ * 
+ * This Modified Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 include_once('./lib/Attachments.php');
 include_once('./lib/Pipelines.php');
 include_once('./lib/History.php');
@@ -43,16 +53,18 @@ include_once('lib/DataGrid.php');
  *  @package    CATS
  *  @subpackage Library
  */
-class Candidates
+class Candidates extends Modules
 {
-    private $_db;
-    private $_siteID;
 
     public $extraFields;
-
+    protected $module="candidates";
+    protected $module_table="candidate";
+    protected $module_id="candidate_id";
+    protected $data_item_type=0;
 
     public function __construct($siteID)
     {
+        $this->data_item_type=DATA_ITEM_CANDIDATE;
         $this->_siteID = $siteID;
         $this->_db = DatabaseConnection::getInstance();
         $this->extraFields = new ExtraFields($siteID, DATA_ITEM_CANDIDATE);
@@ -836,7 +848,74 @@ class Candidates
 
         return $this->_db->getAllAssoc($sql);
     }
+    
+    /**
+     * Transfer resume to another site.
+     *
+     * @param integer Candidate ID.
+     * @param integer Site ID.
+     * @return true/false.
+     */
+    public function transferResume($candidateID, $siteID)
+    {
+        $sql = sprintf(
+            "UPDATE 
+                attachment
+            SET
+                site_id=%s
+            WHERE
+                resume = 1
+            AND
+                attachment.data_item_type = %s
+            AND
+                attachment.data_item_id = %s
+            AND
+                attachment.site_id = %s",
+            $siteID,
+            DATA_ITEM_CANDIDATE,
+            $this->_db->makeQueryInteger($candidateID),
+            $this->_siteID
+        );
 
+        return $this->_db->query($sql);
+    }
+
+    /**
+     * Copy resume to same site or another site.
+     *
+     * @param integer Candidate ID.
+     * @param integer Site ID.
+     * @return true/false.
+     */
+    public function copyResume($candidateID, $toCandidateID, $siteID)
+    {
+        $arrResume=$this->getAllResumesFields($candidateID);
+        foreach($arrResume as $resume)
+        {
+            unset($resume["attachment_id"]);
+            $resume["site_id"]=$siteID;
+            $file=$resume["directory_name"].$resume["stored_filename"];
+            $arrPatIhnfo=pathinfo($file);
+            $resume["original_filename"]=$arrPatIhnfo["filename"]."_copy.{$arrPatIhnfo["extension"]}";
+            $resume["stored_filename"]=$arrPatIhnfo["filename"]."_copy.{$arrPatIhnfo["extension"]}";
+            if(file_exists("{$resume["directory_name"]}{$arrPatIhnfo["filename"]}.{$arrPatIhnfo["extension"]}"))
+            {
+                copy("{$resume["directory_name"]}{$arrPatIhnfo["filename"]}.{$arrPatIhnfo["extension"]}","{$arrPatIhnfo["directory_name"]}{$arrPatIhnfo["filename"]}_copy.{$arrPatIhnfo["extension"]}");
+            }
+            $resume["text"]=  addslashes($resume["text"]);
+            $resume["data_item_id"]=$toCandidateID;
+            $objSQL=new ClsNaanalSQL("INSERT");
+            $objSQL->addTable("attachment");
+            foreach($resume as $field=>$data)
+            {
+                $objSQL->addValue($field, $data);
+            }
+            $sql=$objSQL->render();
+            $this->_db->query($sql);
+        }
+        return true;
+    }
+    
     /**
      * Returns all resumes for a candidate.
      *
@@ -853,6 +932,37 @@ class Candidates
                 attachment.data_item_id AS candidateID,
                 attachment.title AS title,
                 attachment.text AS text
+            FROM
+                attachment
+            WHERE
+                resume = 1
+            AND
+                attachment.data_item_type = %s
+            AND
+                attachment.data_item_id = %s
+            AND
+                attachment.site_id = %s",
+            DATA_ITEM_CANDIDATE,
+            $this->_db->makeQueryInteger($candidateID),
+            $this->_siteID
+        );
+
+        return $this->_db->getAllAssoc($sql);
+    }
+    
+    /**
+     * Returns all resumes for a candidate.
+     *
+     * @param integer Candidate ID.
+     * @return array Multi-dimensional associative result set array of
+     *               candidate attachments data, or array() if no records were
+     *               returned.
+     */
+    public function getAllResumesFields($candidateID)
+    {
+        $sql = sprintf(
+            "SELECT
+                *
             FROM
                 attachment
             WHERE

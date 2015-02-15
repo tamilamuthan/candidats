@@ -78,12 +78,11 @@ function dumpDB($db, $file, $useStatus = false, $splitFiles = true, $siteID = -1
     $connection = $db->getConnection();
 
     $text = '';
-
-    $result = mysql_query(
-        sprintf("SHOW TABLES FROM %s", DATABASE_NAME),
-        $connection
+    $objDB=DatabaseConnection::getInstance();
+    $arrRow = $objDB->getAllRow(
+        sprintf("SHOW TABLES FROM %s", DATABASE_NAME)
     );
-    while ($row = mysql_fetch_array($result, MYSQL_NUM))
+    foreach ($arrRow as $row)
     {
         $tables[] = $row[0];
     }
@@ -108,13 +107,11 @@ function dumpDB($db, $file, $useStatus = false, $splitFiles = true, $siteID = -1
 
         $text .= 'DROP TABLE IF EXISTS `' . $table . '`((ENDOFQUERY))'."\n";
         $sql = 'SHOW CREATE TABLE ' . $table;
-        $rs = mysql_query($sql, $connection);
-        if ($rs)
+        $row = $objDB->getAssoc($sql);
+        if ($row)
         {
-            if ($row = mysql_fetch_assoc($rs))
-            {
-                $text .= $row['Create Table'] . "((ENDOFQUERY))\n\n";
-            }
+
+            $text .= $row['Create Table'] . "((ENDOFQUERY))\n\n";
         }
 
         if ($table == 'word_verification') continue;
@@ -132,8 +129,8 @@ function dumpDB($db, $file, $useStatus = false, $splitFiles = true, $siteID = -1
 
         $isSiteIdColumn = false;
         $sql = sprintf("SHOW COLUMNS FROM %s", $table);
-        $rs = mysql_query($sql, $connection);
-        while ($recordSet = mysql_fetch_assoc($rs))    
+        $arrRecordSet = $objDB->getAssoc($sql);
+        foreach ($arrRecordSet as $recordSet)    
         {
             if ($recordSet['Field'] == 'site_id')
             {
@@ -150,9 +147,9 @@ function dumpDB($db, $file, $useStatus = false, $splitFiles = true, $siteID = -1
             $sql = 'SELECT * FROM ' . $table . '';
         }
 
-        $rs = mysql_query($sql, $connection);
+        $arrRecordSet = $objDB->getAssoc($sql);
         $index = 0;
-        while ($recordSet = mysql_fetch_assoc($rs))
+        foreach ($arrRecordSet as $recordSet)
         {
             $continue = true;
 
@@ -228,7 +225,7 @@ function dumpDB($db, $file, $useStatus = false, $splitFiles = true, $siteID = -1
                 $i = 0;
                 foreach ($recordSet as $field)
                 {
-                    $text .= "'".mysql_real_escape_string($field)."'";
+                    $text .= "'".$field."'";
                     $i++;
                     if ($i != count($recordSet))
                     {

@@ -3,25 +3,26 @@
  * CATS
  * Module Utility Library
  *
- * Copyright (C) 2005 - 2007 Cognizo Technologies, Inc.
+ * Copyright (C) 2005 - 2007 Cognizo Technologies, Inc and partly by Unicomtech. Tamil Amuthan - info@unicomtech.
  *
  *
  * The contents of this file are subject to the CATS Public License
  * Version 1.1a (the "License"); you may not use this file except in
  * compliance with the License. You may obtain a copy of the License at
- * http://www.catsone.com/.
+ * http://www.catsone.com/ and Mozilla Public License Version 1.2.
  *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
  * License for the specific language governing rights and limitations
  * under the License.
  *
- * The Original Code is "CATS Standard Edition".
+ * The Original Code is "CATS Standard Edition" and "CandidATS".
  *
  * The Initial Developer of the Original Code is Cognizo Technologies, Inc.
  * Portions created by the Initial Developer are Copyright (C) 2005 - 2007
  * (or from the year in which this file was created to the year 2007) by
  * Cognizo Technologies, Inc. All Rights Reserved.
+ * Portions created by Tamil Amuthan is Copyright to Unicomtech
  *
  *
  * @package    CATS
@@ -76,7 +77,27 @@ class ModuleUtility
         if (!eval(Hooks::get('LOAD_MODULE'))) return;
 
         $module = new $moduleClass();
-        $module->handleRequest();
+        $actionExist=false;
+        if (isset($_GET['a']) && !empty($_GET['a']))
+        {
+            $action=$_GET['a'];
+            if (isset($_POST['postback']) || isset($_GET['getback']))
+            {
+                $action = "on" . ucfirst($action);
+            }
+            if(method_exists($module, $action))
+            {
+                $actionExist=true;
+                $module->$action();
+            }
+        }
+        if($actionExist===false)
+        {
+            if(method_exists($module, "render"))
+                $module->render();
+            else
+                $module->handleRequest();
+        }
     }
 
     /**

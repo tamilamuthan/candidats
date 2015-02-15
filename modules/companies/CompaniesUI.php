@@ -27,6 +27,16 @@
  * $Id: CompaniesUI.php 3460 2007-11-07 03:50:34Z brian $
  */
 
+/* 
+ * CandidATS
+ * Document to Text Conversion Library
+ *
+ * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+ * 
+ * This Modified Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 include_once('./lib/StringUtility.php');
 include_once('./lib/DateUtility.php'); /* Depends on StringUtility. */
 include_once('./lib/ResultSetUtility.php');
@@ -39,6 +49,8 @@ include_once('./lib/ListEditor.php');
 include_once('./lib/FileUtility.php');
 include_once('./lib/ExtraFields.php');
 include_once('./lib/CommonErrors.php');
+include_once('./lib/Search.php');
+include_once('./lib/DocumentToText.php');
 
 class CompaniesUI extends UserInterface
 {
@@ -64,7 +76,7 @@ class CompaniesUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
 
@@ -113,7 +125,7 @@ class CompaniesUI extends UserInterface
                 break;
                 
             case 'search':
-                include_once('./lib/Search.php');
+                
 
                 if ($this->isGetBack())
                 {
@@ -128,7 +140,7 @@ class CompaniesUI extends UserInterface
 
             /* Add an attachment */
             case 'createAttachment':
-                include_once('./lib/DocumentToText.php');
+                
 
                 if ($this->isPostBack())
                 {
@@ -156,9 +168,9 @@ class CompaniesUI extends UserInterface
 
 
     /*
-     * Called by handleRequest() to process loading the list / main page.
+     * Called by render() to process loading the list / main page.
      */
-    private function listByView($errMessage = '')
+    public function listByView($errMessage = '')
     {
         /* First, if we are operating in HR mode we will never see the
            companies pager.  Immediantly forward to My Company. */
@@ -193,9 +205,9 @@ class CompaniesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the details page.
+     * Called by render() to process loading the details page.
      */
-    private function show()
+    public function show()
     {
         /* Bail out if we don't have a valid company ID. */
         if (!$this->isRequiredIDValid('companyID', $_GET))
@@ -417,13 +429,13 @@ class CompaniesUI extends UserInterface
 
         if (!eval(Hooks::get('CLIENTS_SHOW'))) return;
 
-        $this->_template->display('./modules/companies/Show.tpl');
+        $this->_template->display('./modules/companies/Show.php');
     }
 
     /*
-     * Called by handleRequest() to process loading the internal postings company.
+     * Called by render() to process loading the internal postings company.
      */
-    private function internalPostings()
+    public function internalPostings()
     {
         $companies = new Companies($this->_siteID);
         $companyID = $companies->getDefaultCompany();
@@ -434,9 +446,9 @@ class CompaniesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the add page.
+     * Called by render() to process loading the add page.
      */
-    private function add()
+    public function add()
     {
         $companies = new Companies($this->_siteID);
 
@@ -452,9 +464,9 @@ class CompaniesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process saving / submitting the add page.
+     * Called by render() to process saving / submitting the add page.
      */
-    private function onAdd()
+    public function onAdd()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -563,9 +575,9 @@ class CompaniesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the edit page.
+     * Called by render() to process loading the edit page.
      */
-    private function edit()
+    public function edit()
     {
         /* Bail out if we don't have a valid company ID. */
         if (!$this->isRequiredIDValid('companyID', $_GET))
@@ -643,9 +655,9 @@ class CompaniesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process saving / submitting the edit page.
+     * Called by render() to process saving / submitting the edit page.
      */
-    private function onEdit()
+    public function onEdit()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -843,7 +855,7 @@ class CompaniesUI extends UserInterface
         );
     }
     
-    private function deleteSelected()
+    public function deleteSelected()
     {
         foreach($_REQUEST as $k=>$v)
         {
@@ -859,9 +871,9 @@ class CompaniesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process deleting a company.
+     * Called by render() to process deleting a company.
      */
-    private function onDelete()
+    public function onDelete()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_DELETE)
         {
@@ -908,9 +920,9 @@ class CompaniesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the search page.
+     * Called by render() to process loading the search page.
      */
-    private function search()
+    public function search()
     {
         $savedSearches = new SavedSearches($this->_siteID);
         $savedSearchRS = $savedSearches->get(DATA_ITEM_COMPANY);
@@ -929,9 +941,9 @@ class CompaniesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process displaying the search results.
+     * Called by render() to process displaying the search results.
      */
-    private function onSearch()
+    public function onSearch()
     {
         $wildCardCompanyName = '';
         $wildCardKeyTechnologies = '';
@@ -980,7 +992,7 @@ class CompaniesUI extends UserInterface
         }
 
         $baseURL = CATSUtility::getFilteredGET(
-            array('sortBy', 'sortDirection', 'page'), '&amp;'
+            array('sortBy', 'sortDirection', 'page'), '&'
         );
         $searchPager->setSortByParameters($baseURL, $sortBy, $sortDirection);
 
@@ -1069,10 +1081,10 @@ class CompaniesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the create attachment
+     * Called by render() to process loading the create attachment
      * modal dialog.
      */
-    private function createAttachment()
+    public function createAttachment()
     {
         /* Bail out if we don't have a valid joborder ID. */
         if (!$this->isRequiredIDValid('companyID', $_GET))
@@ -1092,9 +1104,9 @@ class CompaniesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process creating an attachment.
+     * Called by render() to process creating an attachment.
      */
-    private function onCreateAttachment()
+    public function onCreateAttachment()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -1132,9 +1144,9 @@ class CompaniesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process deleting an attachment.
+     * Called by render() to process deleting an attachment.
      */
-    private function onDeleteAttachment()
+    public function onDeleteAttachment()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_DELETE)
         {

@@ -39,7 +39,7 @@ class CATSUI extends UserInterface
         $this->_schema = CATSSchema::get();
     }
 
-    public function handleRequest()
+    public function render()
     {
     }
 }

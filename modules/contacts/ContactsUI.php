@@ -38,7 +38,8 @@ include_once('./lib/Export.php');
 include_once('./lib/ExtraFields.php');
 include_once('./lib/Calendar.php');
 include_once('./lib/CommonErrors.php');
-
+include_once('./lib/Search.php');
+include_once('./lib/VCard.php');
 
 class ContactsUI extends UserInterface
 {
@@ -74,7 +75,7 @@ class ContactsUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
 
@@ -119,7 +120,6 @@ class ContactsUI extends UserInterface
                 break;
 
             case 'search':
-                include_once('./lib/Search.php');
 
                 if ($this->isGetBack())
                 {
@@ -149,7 +149,6 @@ class ContactsUI extends UserInterface
                 break;
 
             case 'downloadVCard':
-                include_once('./lib/VCard.php');
 
                 $this->downloadVCard();
                 break;
@@ -163,9 +162,9 @@ class ContactsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the list / main page.
+     * Called by render() to process loading the list / main page.
      */
-    private function listByView($errMessage = '')
+    public function listByView($errMessage = '')
     {
         if (!eval(Hooks::get('CONTACTS_LIST_BY_VIEW_TOP'))) return;
 
@@ -196,9 +195,9 @@ class ContactsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the details page.
+     * Called by render() to process loading the details page.
      */
-    private function show()
+    public function show()
     {
         /* Bail out if we don't have a valid contact ID. */
         if (!$this->isRequiredIDValid('contactID', $_GET))
@@ -383,9 +382,9 @@ class ContactsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the add page.
+     * Called by render() to process loading the add page.
      */
-    private function add()
+    public function add()
     {
         $companies = new Companies($this->_siteID);
         $contacts = new Contacts($this->_siteID);
@@ -438,9 +437,9 @@ class ContactsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process saving / submitting the add page.
+     * Called by render() to process saving / submitting the add page.
      */
-    private function onAdd()
+    public function onAdd()
     {
         /* Bail if we don't have add permision. */
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
@@ -559,9 +558,9 @@ class ContactsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the edit page.
+     * Called by render() to process loading the edit page.
      */
-    private function edit()
+    public function edit()
     {
         /* Bail out if we don't have a valid contact ID. */
         if (!$this->isRequiredIDValid('contactID', $_GET))
@@ -654,9 +653,9 @@ class ContactsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process saving / submitting the edit page.
+     * Called by render() to process saving / submitting the edit page.
      */
-    private function onEdit()
+    public function onEdit()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -838,7 +837,7 @@ class ContactsUI extends UserInterface
         );
     }
     
-    private function deleteSelected()
+    public function deleteSelected()
     {
         foreach($_REQUEST as $k=>$v)
         {
@@ -854,9 +853,9 @@ class ContactsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process deleting a contact.
+     * Called by render() to process deleting a contact.
      */
-    private function onDelete()
+    public function onDelete()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_DELETE)
         {
@@ -887,9 +886,9 @@ class ContactsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the search page.
+     * Called by render() to process loading the search page.
      */
-    private function search()
+    public function search()
     {
         $savedSearches = new SavedSearches($this->_siteID);
         $savedSearchRS = $savedSearches->get(DATA_ITEM_CONTACT);
@@ -909,9 +908,9 @@ class ContactsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process displaying the search results.
+     * Called by render() to process displaying the search results.
      */
-    private function onSearch()
+    public function onSearch()
     {
         $wildCardContactName = '';
         $wildCardCompanyName = '';
@@ -960,7 +959,7 @@ class ContactsUI extends UserInterface
         }
 
         $baseURL = CATSUtility::getFilteredGET(
-            array('sortBy', 'sortDirection', 'page'), '&amp;'
+            array('sortBy', 'sortDirection', 'page'), '&'
         );
         $searchPager->setSortByParameters($baseURL, $sortBy, $sortDirection);
 
@@ -1066,9 +1065,9 @@ class ContactsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the cold call list.
+     * Called by render() to process loading the cold call list.
      */
-    private function showColdCallList()
+    public function showColdCallList()
     {
         $contacts = new Contacts($this->_siteID);
 
@@ -1081,7 +1080,7 @@ class ContactsUI extends UserInterface
     }
 
     //TODO: Document me.
-    private function addActivityScheduleEvent()
+    public function addActivityScheduleEvent()
     {
         /* Bail out if we don't have a valid candidate ID. */
         if (!$this->isRequiredIDValid('contactID', $_GET))
@@ -1126,7 +1125,7 @@ class ContactsUI extends UserInterface
     }
 
     //TODO: Document me.
-    private function onAddActivityScheduleEvent()
+    public function onAddActivityScheduleEvent()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -1145,11 +1144,11 @@ class ContactsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process downloading of a contact's vCard.
+     * Called by render() to process downloading of a contact's vCard.
      *
      * Example vCard output in doc/NOTES.
      */
-    private function downloadVCard()
+    public function downloadVCard()
     {
         /* Bail out if we don't have a valid contact ID. */
         if (!$this->isRequiredIDValid('contactID', $_GET))

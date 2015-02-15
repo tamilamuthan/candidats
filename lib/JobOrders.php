@@ -30,6 +30,16 @@
  * @version    $Id: JobOrders.php 3829 2007-12-11 21:17:46Z brian $
  */
 
+/* 
+ * CandidATS
+ * Document to Text Conversion Library
+ *
+ * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+ * 
+ * This Modified Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 define('JOBORDERS_STATUS_ACTIVE',        100);
 define('JOBORDERS_STATUS_ONHOLD',        200);
 define('JOBORDERS_STATUS_FULL',          300);
@@ -54,13 +64,12 @@ include_once('./lib/DataGrid.php');
  *	@package    CATS
  *	@subpackage Library
  */
-class JobOrders
+class JobOrders extends Modules
 {
-    public $_db;
-    public $_siteID;
-
     public $extraFields;
-
+    protected $module="joborders";
+    protected $module_table="joborder";
+    protected $module_id="joborder_id";
 
     public function __construct($siteID)
     {

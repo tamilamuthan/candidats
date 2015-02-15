@@ -33,12 +33,12 @@
                     <?php foreach ($this->rs as $rowNumber => $data): ?>
                         <tr class="<?php TemplateUtility::printAlternatingRowClass($rowNumber); ?>">
                             <td valign="top" align="left">
-                                <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=showUser&amp;userID=<?php $this->_($data['userID']); ?>">
+                                <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&a=showUser&userID=<?php $this->_($data['userID']); ?>">
                                     <?php $this->_($data['firstName']); ?>
                                 </a>
                             </td>
                             <td valign="top" align="left">
-                                <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=showUser&amp;userID=<?php $this->_($data['userID']); ?>">
+                                <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&a=showUser&userID=<?php $this->_($data['userID']); ?>">
                                     <?php $this->_($data['lastName']); ?>
                                 </a>
                             </td>
@@ -50,7 +50,7 @@
                     <?php endforeach; ?>
                 <?php endif; ?>
             </table>
-            <a id="add_link" href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=addUser" title="You have <?php $this->_($this->license['diff']); ?> user accounts remaining.">
+            <a id="add_link" href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&a=addUser" title="You have <?php $this->_($this->license['diff']); ?> user accounts remaining.">
                 <img src="images/candidate_inline.gif" width="16" height="16" class="absmiddle" alt="add" style="border: none;" />&nbsp;Add User
             </a>
         </div>

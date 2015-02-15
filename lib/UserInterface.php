@@ -30,6 +30,16 @@
  * @version    $Id: UserInterface.php 3593 2007-11-13 17:36:57Z andrew $
  */
 
+/* 
+ * CandidATS
+ * Base class for controller
+ *
+ * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+ * 
+ * This Modified Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /**
  *	User Interface Library
  *	@package    CATS
@@ -414,6 +424,96 @@ class UserInterface
         }
 
         return $ret;
+    }
+    
+    public function transferto()
+    {
+        if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this);
+            return;
+            //$this->fatal(ERROR_NO_PERMISSION);
+        }
+        if($this->_moduleName=="candidates")
+        {
+            $module = new Candidates($this->_siteID);
+        }
+        else if($this->_moduleName=="companies")
+        {
+            $module = new Companies($this->_siteID);
+        }
+        else if($this->_moduleName=="joborders")
+        {
+            $module = new JobOrders($this->_siteID);
+        }
+        /* Bail out if we don't have a valid candidate ID. */
+        if (!isset($module))
+        {
+            CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this, "Invalid Module: {$this->_moduleName}.");
+            return;
+        }
+        /* Bail out if we don't have a valid candidate ID. */
+        if (!$this->isRequiredIDValid('dataItemID', $_GET))
+        {
+            CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this, "Invalid {$this->_moduleName} ID.");
+            return;
+        }
+        /* Update the module record. */
+        $updateSuccess = $module->updateSite(
+            $_GET['dataItemID'],
+            $_GET["siteID"]
+        );
+        if (!$updateSuccess)
+        {
+            CommonErrors::fatal(COMMONERROR_RECORDERROR, $this, "Failed to update {$this->_moduleName}.");
+        }
+        $this->_template->assign('active', $this);
+        $this->_template->display('./modules/Settings/transferstatus.php');
+    }
+    
+    public function copyto()
+    {
+        if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this);
+            return;
+            //$this->fatal(ERROR_NO_PERMISSION);
+        }
+        if($this->_moduleName=="candidates")
+        {
+            $module = new Candidates($this->_siteID);
+        }
+        else if($this->_moduleName=="companies")
+        {
+            $module = new Companies($this->_siteID);
+        }
+        else if($this->_moduleName=="joborders")
+        {
+            $module = new JobOrders($this->_siteID);
+        }
+        /* Bail out if we don't have a valid candidate ID. */
+        if (!isset($module))
+        {
+            CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this, "Invalid Module: {$this->_moduleName}.");
+            return;
+        }
+        /* Bail out if we don't have a valid candidate ID. */
+        if (!$this->isRequiredIDValid('dataItemID', $_GET))
+        {
+            CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this, "Invalid {$this->_moduleName} ID.");
+            return;
+        }
+        /* Update the candidate record. */
+        $updateSuccess = $module->copyRecord(
+            $_GET['dataItemID'],
+            $_GET["siteID"]
+        );
+        if (!$updateSuccess)
+        {
+            CommonErrors::fatal(COMMONERROR_RECORDERROR, $this, "Failed to update {$this->_moduleName}.");
+        }
+        $this->_template->assign('active', $this);
+        $this->_template->display('./modules/Settings/copystatus.php');
     }
 }
 

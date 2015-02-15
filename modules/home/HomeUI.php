@@ -30,6 +30,9 @@
 include_once('./lib/NewVersionCheck.php');
 include_once('./lib/CommonErrors.php');
 include_once('./lib/Dashboard.php');
+include_once('./lib/Search.php');
+include_once('./lib/StringUtility.php');
+include_once('./lib/Attachments.php');
 
 class HomeUI extends UserInterface
 {
@@ -45,7 +48,7 @@ class HomeUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
 
@@ -54,26 +57,22 @@ class HomeUI extends UserInterface
         switch ($action)
         {
             case 'quickSearch':
-                include_once('./lib/Search.php');
-                include_once('./lib/StringUtility.php');
+                
 
                 $this->quickSearch();
                 break;
 
             case 'deleteSavedSearch':
-                include_once('./lib/Search.php');
 
                 $this->deleteSavedSearch();
                 break;
 
             case 'addSavedSearch':
-                include_once('./lib/Search.php');
 
                 $this->addSavedSearch();
                 break;
 
             case 'getAttachment':
-                include_once('./lib/Attachments.php');
 
                 $this->getAttachment();
                 break;
@@ -86,7 +85,7 @@ class HomeUI extends UserInterface
     }
 
 
-    private function home()
+    public function home()
     {        
          if (!eval(Hooks::get('HOME'))) return;
         
@@ -136,7 +135,7 @@ class HomeUI extends UserInterface
         $this->_template->display('./modules/home/Home.tpl');
     }
 
-    private function deleteSavedSearch()
+    public function deleteSavedSearch()
     {
         if (!isset($_GET['searchID']))
         {
@@ -161,7 +160,7 @@ class HomeUI extends UserInterface
         CATSUtility::transferRelativeURI($currentURL);
     }
 
-    private function addSavedSearch()
+    public function addSavedSearch()
     {
         if (!isset($_GET['searchID']))
         {
@@ -186,7 +185,7 @@ class HomeUI extends UserInterface
         CATSUtility::transferRelativeURI($currentURL);
     }
 
-    private function quickSearch()
+    public function quickSearch()
     {
         /* Bail out to prevent an error if the GET string doesn't even contain
          * a field named 'quickSearchFor' at all.

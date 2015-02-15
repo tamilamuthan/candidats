@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package version="2.0" xmlns="http://pear.php.net/dtd/package-2.0"
+    xmlns:tasks="http://pear.php.net/dtd/tasks-1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
+        http://pear.php.net/dtd/tasks-1.0.xsd
+        http://pear.php.net/dtd/package-2.0
+        http://pear.php.net/dtd/package-2.0.xsd">
+
+    <name>File_PDFreader</name>
+    <channel>pear.php.net</channel>
+
+    <summary>PDF Reader extracts text from PDF Files</summary>
+    <description>PDF Reader supports PDF versions up to 1.7, including AcroForms 
+    (aka FDF), and is written as a PHP 5 class tree. It returns raw text as an array 
+    of strings or form fields as an associative array of key/value pairs. PDF Reader
+    does not support signed or encrypted PDFs.</description>
+
+    <lead>
+        <name>John M. Stokes</name>
+        <user>jmstokes</user>
+        <email>jstokes@heartofthefyre.us</email>
+        <active>yes</active>
+    </lead>
+    <date>2010-08-27</date>
+
+    <version>
+        <release>0.1.7</release>
+        <api>0.1.7</api>
+    </version>
+
+    <stability>
+        <release>alpha</release>
+        <api>beta</api>
+    </stability>
+
+    <license filesource="doc/LICENSE.txt">BSD License</license>
+    <notes>Changes in this version:
+        - Fixed bug in which Marked Content operators would sometimes appear in form fields
+        - Removed "exit" and "die" statements for PEAR compliance
+        - Added error trap for absence of `gzip`
+        - Implemented package-specific Exceptions
+        - Name changed to File_PDFreader for PEAR compliance
+    </notes>
+
+    <contents>
+        <dir name="/">
+            <dir name="doc">
+                <file name="ChangeLog.txt" role="doc" />
+                <file name="LICENSE.txt" role="doc" />
+                <file name="README.txt" role="doc" />
+            </dir> <!-- Close /doc -->
+            <dir name="examples">
+                <file name="PDFFormExample.php" role="php" />
+                <file name="PDFFormExample.php" role="php" />
+            </dir> <!-- Close /examples -->
+            <dir name="File">
+                <dir name="PDFreader">
+                    <file name="PDFbase.class.php" role="php" />
+                    <file name="PDFdecoder.class.php" role="php" />
+                    <file name="PDFexception.class.php" role="php" />
+                    <file name="PDFform.class.php" role="php" />
+                    <file name="PDFformfield.class.php" role="php" />
+                    <file name="PDFobject.class.php" role="php" />
+                    <file name="PDFpage.class.php" role="php" />
+               </dir> <!-- Close /File/PDFreader -->
+               <file name="PDFreader.class.php" role="php" />
+           </dir> <!-- Close /File -->
+       </dir> <!-- Close / -->
+    </contents>
+
+    <dependencies>
+        <required>
+            <php>
+                <min>5.1</min>
+            </php>
+            <pearinstaller>
+                <min>1.4.0</min>
+            </pearinstaller>
+
+            <package>
+                 <name>Archive_Tar</name>
+                 <channel>pear.php.net</channel>
+                 <min>1.1</min>
+                 <recommended>1.2</recommended>
+            </package>
+
+            <os>
+                <name>unix</name>
+            </os>
+            <os>
+                <name>windows</name>
+            </os>
+        </required>
+
+        <optional>
+            <package>
+                <name>GZIP</name>
+				<channel>NA</channel>
+            </package>
+        </optional> 
+    </dependencies>
+
+
+    <changelog>
+    	<release>
+            <version>
+                <release>0.1.7</release>
+                <api>0.1.7</api>
+            </version>
+            <stability>
+                 <release>alpha</release>
+                 <api>beta</api>
+            </stability>
+            <date>2011-02-02</date>
+            <license filesource="doc/LICENSE.txt">BSD License</license>
+            <notes>
+- Removed some unneeded str_replace() and pass-by-reference code
+            </notes>
+        </release>
+        <release>
+            <version>
+                <release>0.1.6</release>
+                <api>0.1.6</api>
+            </version>
+            <stability>
+                 <release>alpha</release>
+                 <api>beta</api>
+            </stability>
+            <date>2011-02-02</date>
+            <license filesource="doc/LICENSE.txt">BSD License</license>
+            <notes>
+- Fixed a bug in which parent fields without field types throws an exception
+- Fixed a bug in which PDF arrays in form labels were not parsed correctly
+- Fixed a bug in parsing binary Field Flags
+- Brought into E_STRICT compliance
+- All output is now UTF-8 encoded (Thanks to Christoph Runkel for this tip)
+            </notes>
+        </release>
+        <release>
+            <version>
+                <release>0.1.5</release>
+                <api>0.1.5</api>
+            </version>
+            <stability>
+                 <release>alpha</release>
+                 <api>beta</api>
+            </stability>
+            <date>2011-01-05</date>
+            <license filesource="doc/LICENSE.txt">BSD License</license>
+            <notes>
+- Added support for StandardEncoding
+- Added support for PDFDocEncoding
+- Added support for MacExpertEncoding
+- Added support for ASCIIHexDecoded filter
+- Added support for ASCII85Decoded filter
+            </notes>
+        </release>
+        <release>
+            <version>
+                <release>0.1.4</release>
+                <api>0.1.4</api>
+            </version>
+            <stability>
+                 <release>alpha</release>
+                 <api>beta</api>
+            </stability>
+            <date>2010-12-29</date>
+            <license filesource="doc/LICENSE.txt">BSD License</license>
+            <notes>
+- Added support for cascaded filters
+- Fixed a bug in which stream object dictionaries may be parsed incorrectly
+- Restructured directories for PEAR compliance
+- Added package.xml for PEAR installer
+            </notes>
+        </release>
+        <release>
+            <version>
+                <release>0.1.3</release>
+                <api>0.1.3</api>
+            </version>
+            <stability>
+                 <release>alpha</release>
+                 <api>beta</api>
+            </stability>
+            <date>2010-08-27</date>
+            <license filesource="doc/LICENSE.txt">BSD License</license>
+            <notes>
+- Fixed bug in which Marked Content operators would sometimes appear in form fields
+- Removed "exit" and "die" statements for PEAR compliance
+- Added error trap for absence of `gzip`
+- Implemented package-specific Exceptions
+- Name changed to File_PDFreader for PEAR compliance
+            </notes>
+        </release>
+        <release>
+            <version>
+                <release>0.1.2</release>
+                <api>0.1.2</api>
+            </version>
+            <stability>
+                 <release>alpha</release>
+                 <api>beta</api>
+            </stability>
+            <date>2010-08-05</date>
+            <license filesource="doc/LICENSE.txt">BSD License</license>
+            <notes>
+- Fixed known bug with character mapping non-standard fonts
+- Added limited support for text matrices
+            </notes>
+        </release>
+        <release>
+            <version>
+                <release>0.1.1</release>
+                <api>0.1.1</api>
+            </version>
+            <stability>
+                 <release>devel</release>
+                 <api>beta</api>
+            </stability>
+            <date>2010-08-03</date>
+            <license filesource="doc/LICENSE.txt">BSD License</license>
+            <notes>
+- Fixed a bug in which a string without ET operator would have zero length
+- Added support for hexadecimal strings embedded in normal strings
+- Fixed a bug in which some line breaks are ignored
+- Standardized regular expressions for primitive data types as constants
+- Shortened lines and adjusted switch/case indents for PEAR compliance
+- Moved extractText routines from PDFobject class to PDFpage class in order
+to assemble multiple content streams
+- Refactored to use a single PDFdecoder instance
+            </notes>
+        </release>
+        <release>
+            <version>
+                <release>0.1.0</release>
+                <api>0.1.0</api>
+            </version>
+            <stability>
+                 <release>devel</release>
+                 <api>alpha</api>
+            </stability>
+            <date>2010-07-22</date>
+            <license filesource="doc/LICENSE.txt">BSD License</license>
+            <notes>
+- Initial proposal
+- Included basic support for text and form field extraction
+- Some known bugs with character mapping non-standard fonts
+            </notes>
+        </release>
+    </changelog>
+</package>

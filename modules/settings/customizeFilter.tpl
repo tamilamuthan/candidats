@@ -1,7 +1,12 @@
 <?php /* $Id: ChangePassword.tpl 1927 2007-02-22 06:03:24Z will $ */ ?>
 <?php TemplateUtility::printHeader('Settings', array('modules/settings/validator.js', 'js/sorttable.js')); ?>
 <?php TemplateUtility::printHeaderBlock(); ?>
-<?php TemplateUtility::printTabs($this->active, $this->subActive); ?>
+<?php 
+if(isset($this->active))
+{
+    TemplateUtility::printTabs($this->active, $this->subActive); 
+}
+?>
     <div id="main">
         <?php TemplateUtility::printQuickSearch(); ?>
 
@@ -20,7 +25,7 @@
             <form name="showgrouping" id="showgrouping" action="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=filtergrouping" method="post">
                 <input type="hidden" name="postback" id="postback" value="postback" />
 
-                <?php if ($this->isDemoUser): ?>
+                <?php if (isset($this->isDemoUser) && $this->isDemoUser): ?>
                     Note that as a demo user, you do not have privileges to modify any settings.
                     <br /><br />
                 <?php endif; ?>

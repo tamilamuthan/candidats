@@ -49,7 +49,7 @@ class ToolbarUI extends UserInterface
         $this->_moduleDirectory = 'toolbar';
     }
 
-    public function handleRequest()
+    public function render()
     {
         //$this->authenticate();
 
@@ -126,7 +126,7 @@ class ToolbarUI extends UserInterface
         return true;
     }
 
-    private function authenticate()
+    public function authenticate()
     {
         if (!$this->_authenticate())
         {
@@ -141,7 +141,7 @@ class ToolbarUI extends UserInterface
         }
     }
 
-    private function getRemoteVersion()
+    public function getRemoteVersion()
     {
         // Obsolete function used to notify old toolbars that they are no longer supported.
         // FIXME:  Remove me after toolbar migration is finished.
@@ -149,7 +149,7 @@ class ToolbarUI extends UserInterface
     }
 
 
-    private function getJavaScriptLibLegacy()
+    public function getJavaScriptLibLegacy()
     {
         // FIXME: Send a JS library that just makes a button indicating that their version
         // is out of date.
@@ -159,7 +159,7 @@ class ToolbarUI extends UserInterface
         return;
     }
 
-    private function checkEmailIsInSystem()
+    public function checkEmailIsInSystem()
     {
         if (!eval(Hooks::get('TOOLBAR_CHECK_EMAIL'))) return;
 
@@ -187,7 +187,7 @@ class ToolbarUI extends UserInterface
         flush();
     }
 
-    private function storeMonsterResumeText()
+    public function storeMonsterResumeText()
     {
         $this->_authenticate();
 

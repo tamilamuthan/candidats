@@ -3,7 +3,7 @@
 <?php include_once('config.php'); ?>
 <html>
     <head>
-        <title>CATS - Installation Wizard Script</title>
+        <title>CandidATS - Installation Wizard Script</title>
         <script type="text/javascript" src="js/lib.js"></script>
         <script type="text/javascript" src="js/install.js"></script>
         <style type="text/css" media="all">@import "modules/install/install.css";</style>
@@ -11,7 +11,7 @@
 
     <body>
         <div id="headerBlock">
-            <span id="mainLogo">C&nbsp;A&nbsp;T&nbsp;S</span><br />
+            <span id="mainLogo">CandidATS</span><br />
             <span id="subMainLogo">Applicant Tracking System</span>
         </div>
 

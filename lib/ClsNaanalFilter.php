@@ -31,7 +31,23 @@ class ClsNaanalFilter
             if(!isset($arr[$table])) continue;
             if(!in_array($row["COLUMN_NAME"],$arr[$table]["main"])) continue;
             $sql="select distinct `{$row["COLUMN_NAME"]}` from {$table}";
-            $result=mysql_query($sql);
+            $arrRecord=$objDatabase->getAllRow($sql);
+            $arrData=array();
+            if($arrRecord)
+            foreach($arrRecord as $r)
+            {
+                if(method_exists($this, "on_unique_data_display"))
+                {
+                    $uniqueDataDisplay=$this->on_unique_data_display($row["COLUMN_NAME"],$r[0]);
+                    if(is_null($uniqueDataDisplay)) $arrData[$r[0]]=$r[0];
+                    else $arrData[$r[0]]=$uniqueDataDisplay;
+                }
+                else
+                {
+                    $arrData[$r[0]]=$r[0];
+                }
+            }
+            /*$result=mysql_query($sql);
             $arrData=array();
             while($r=  mysql_fetch_row($result))
             {
@@ -45,7 +61,7 @@ class ClsNaanalFilter
                 {
                     $arrData[$r[0]]=$r[0];
                 }
-            }
+            }*/
             asort($arrData);
             $arrUniqueData[$row["COLUMN_NAME"]]=$arrData;
         }
@@ -53,6 +69,26 @@ class ClsNaanalFilter
         foreach($arr[$table]["extra"] as $extField)
         {
             $sql="select extra_field_settings_id from extra_field_settings where field_name='{$extField}'";
+            $records=$objDatabase->getAllRow($sql);
+            $rEField=$records[0];
+            $sql="select distinct `value` from extra_field where field_name='{$extField}'";
+            $records=$objDatabase->getAllRow($sql);
+            $arrData=array();
+            if($records)
+            foreach($records as $r)
+            {
+                if(method_exists($this, "on_unique_data_display"))
+                {
+                    $uniqueDataDisplay=$this->on_unique_data_display($extField,$r[0]);
+                    if(is_null($uniqueDataDisplay)) $arrData[$r[0]]=$r[0];
+                    else $arrData[$r[0]]=$uniqueDataDisplay;
+                }
+                else
+                {
+                    $arrData[$r[0]]=$r[0];
+                }
+            }
+            /*
             $result=mysql_query($sql);
             $rEField=mysql_fetch_row($result);
             $sql="select distinct `value` from extra_field where field_name='{$extField}'";
@@ -70,7 +106,7 @@ class ClsNaanalFilter
                 {
                     $arrData[$r[0]]=$r[0];
                 }
-            }
+            }*/
             asort($arrData);
             $arrUniqueData[$rEField[0]]=$arrData;
         }

@@ -29,6 +29,16 @@
  * @version    $Id: Contacts.php 3690 2007-11-26 18:07:17Z brian $
  */
 
+/* 
+ * CandidATS
+ * Document to Text Conversion Library
+ *
+ * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+ * 
+ * This Modified Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 include_once('./lib/Pager.php');
 include_once('./lib/EmailTemplates.php');
 include_once('./lib/ExtraFields.php');
@@ -39,13 +49,12 @@ include_once('./lib/Calendar.php');
  *	@package    CATS
  *	@subpackage Library
  */
-class Contacts
+class Contacts extends Modules
 {
-    private $_db;
-    private $_siteID;
-
     public $extraFields;
-
+    protected $module="contacts";
+    protected $module_table="contact";
+    protected $module_id="contact_id";
 
     public function __construct($siteID)
     {

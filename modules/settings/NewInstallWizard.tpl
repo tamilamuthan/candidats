@@ -13,7 +13,7 @@
     <body>
 
     <div id="headerBlock">
-        <span id="mainLogo">C&nbsp;A&nbsp;T&nbsp;S</span><br />
+        <span id="mainLogo">CandidATS</span><br />
         <span id="subMainLogo">Applicant Tracking System</span>
     </div>
 

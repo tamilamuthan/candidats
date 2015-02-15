@@ -14,7 +14,7 @@
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
  * License for the specific language governing rights and limitations
- * under the License.
+ * under the License.                                 
  *
  * The Original Code is "CATS Standard Edition".
  *
@@ -192,7 +192,11 @@ class Mailer
         $logMessage = true, $replyTo = array(), $wrapLinesAt = 78,
         $signature = true)
     {
-
+        if(MAIL_MAILER===0) 
+        {
+            $this->_errorMessage ="Sending Email Disabled";                print_r($this->_errorMessage);exit;
+            return false;
+        }
         $this->_mailer->From     = $from[0];
         $this->_mailer->FromName = $from[1];
 

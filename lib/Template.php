@@ -30,6 +30,16 @@
  * @version    $Id: Template.php 3587 2007-11-13 03:55:57Z will $
  */
 
+/* 
+ * CandidATS
+ * Document to Text Conversion Library
+ *
+ * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+ * 
+ * This Modified Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /**
  *	Template Library
  *	@package    CATS
@@ -86,6 +96,29 @@ class Template
     {
         $this->_filters[] = $code;
     }
+    /**
+     * return only capital letter variables with AUIEO keyword
+     * @param type $__AUIEO__TEMPLATE__FILE
+     * @return type
+     */
+    private function &loadTemplateVars($__AUIEO__TEMPLATE__FILE)
+    {
+        if(!file_exists($__AUIEO__TEMPLATE__FILE)) return array();
+        include $__AUIEO__TEMPLATE__FILE;
+        $arrVar=get_defined_vars();
+        unset($arrVar[$__AUIEO__TEMPLATE__FILE]);
+        $arrVarNew=array();
+        foreach($arrVar as $var=>$data)
+        {
+            $tmpVar = strtoupper($var);
+            if(strpos($tmpVar, "AUIEO")===false) continue;
+            if(isset($$tmpVar))
+            {
+                $arrVarNew[$tmpVar]=$data;
+            }
+        }
+        return $arrVarNew;
+    }
 
     /**
      * Evaluates a template file. All assignments (see the Template::assign()
@@ -109,12 +142,80 @@ class Template
 
         /* We don't want any variable name conflicts here. */
         unset($file, $template);
+        
+        /**
+        * for handing comment in html template. usage is {$_("This is comment")}
+        */
+       $_=function($comment)
+       {
+           return "";
+       };
+        
+       /**
+        * generate master html template from auieo.php and auieo.html
+        */
+        try
+        {
+            ///for late rendering from module template - replace the same variable
+            $AUIEO_MODULE_CONTENT='{$AUIEO_MODULE_CONTENT}';
+            ///for late rendering from module template - replace the same variable
+            $AUIEO_HEADER='{$AUIEO_HEADER}';
+            $arrTplVar=$this->loadTemplateVars("auieo/auieo.php");
+            extract($arrTplVar);
+            $_AUIEO_TEMPLATE_MASTER=file_get_contents("auieo/auieo.html");
+            ob_start();
+            $html="";
+            eval('echo <<< EOT
+    '.$_AUIEO_TEMPLATE_MASTER.'
+EOT;
+');
+            $_AUIEO_TEMPLATE_MASTER = ob_get_clean();
+        }
+        catch(Exception $e)
+        {
+            trace($e);
+        }
+        
 
         /* Include the template, with output buffering on, and echo it. */
-        ob_start();
-        include($this->_templateFile);
-        $html = ob_get_clean();
-
+        $arrPathInfo=pathinfo($this->_templateFile);
+        if($arrPathInfo["extension"]=="php" && (file_exists("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.html") || file_exists("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.htm")))
+        {
+           $arrTplVar=$this->loadTemplateVars($this->_templateFile);
+           extract($arrTplVar);
+            if(file_exists("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.html"))
+                $_AUIEO_TEMPLATE_CONTENT=file_get_contents("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.html");
+            else
+                $_AUIEO_TEMPLATE_CONTENT=file_get_contents("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.htm");
+            try
+            {
+                ob_start();
+                $AUIEO_MODULE_CONTENT="";
+                eval('echo <<< EOT
+        '.$_AUIEO_TEMPLATE_CONTENT.'
+EOT;
+');
+                $AUIEO_MODULE_CONTENT = ob_get_clean();
+                
+                ob_start();
+                $html="";
+                eval('echo <<< EOT
+        '.$_AUIEO_TEMPLATE_MASTER.'
+EOT;
+');
+                $html = ob_get_clean();
+            }
+            catch(Exception $e)
+            {
+                trace($e);
+            }
+        }
+        else
+        {
+            ob_start();
+            include($this->_templateFile);
+            $html = ob_get_clean();
+        }
         if (strpos($html, '<!-- NOSPACEFILTER -->') === false && strpos($html, 'textarea') === false)
         {
             $html = preg_replace('/^\s+/m', '', $html);

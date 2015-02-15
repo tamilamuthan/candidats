@@ -198,7 +198,7 @@
                                             </td>
                                             <td valign="top">
                                                 <?php foreach ($this->careerPortalTemplateNames as $name => $data): ?>
-                                                    <a href="javascript:void(0);" onclick="setModifyingJobDefault('<?php echo($data['careerPortalName']); ?>','<?php echo(CATSUtility::getIndexName()); ?>?m=careers&amp;templateName=<?php echo(urlencode($data['careerPortalName'])); ?>');" >
+                                                    <a href="javascript:void(0);" onclick="setModifyingJobDefault('<?php echo($data['careerPortalName']); ?>','<?php echo(CATSUtility::getIndexName()); ?>?m=careers&templateName=<?php echo(urlencode($data['careerPortalName'])); ?>');" >
                                                         <?php $this->_($data['careerPortalName']); ?>
                                                         <?php if($data['careerPortalName'] == $this->careerPortalSettingsRS['activeBoard']): ?>&nbsp;(Active)<?php endif; ?>
                                                         <br />
@@ -223,7 +223,7 @@
                                                     </form>
                                                 </div>
                                                 <?php foreach ($this->careerPortalTemplateCustomNames as $name => $data): ?>
-                                                    <a href="javascript:void(0);" onclick="setModifyingJobCustom('<?php echo($data['careerPortalName']); ?>','<?php echo(CATSUtility::getIndexName()); ?>?m=careers&amp;templateName=<?php echo(urlencode($data['careerPortalName'])); ?>');">
+                                                    <a href="javascript:void(0);" onclick="setModifyingJobCustom('<?php echo($data['careerPortalName']); ?>','<?php echo(CATSUtility::getIndexName()); ?>?m=careers&templateName=<?php echo(urlencode($data['careerPortalName'])); ?>');">
                                                         <?php $this->_($data['careerPortalName']); ?>
                                                         <?php if($data['careerPortalName'] == $this->careerPortalSettingsRS['activeBoard']): ?>&nbsp;(Active)<?php endif; ?>
                                                         <br />
@@ -244,7 +244,7 @@
                                     <span id="textTemplateName" style="font-weight: bold; font-size: 18px;"></span>
                                     <br />
                                     <input type="button" class="button" value="Full Screen Preview" onclick="fullScreenPreview();" />
-                                    <input type="button" class="button" value="Edit" id="buttonEdit" onclick="window.location.href='<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=careerPortalTemplateEdit&amp;templateName='+escape(usingID);" />
+                                    <input type="button" class="button" value="Edit" id="buttonEdit" onclick="window.location.href='<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=careerPortalTemplateEdit&templateName='+escape(usingID);" />
                                     <input type="button" class="button" value="Edit" id="buttonEditDefault" onclick="showEditDefaultInput();" style="display: none;" />
                                     <input type="button" class="button" value="Delete" id="buttonDelete" onclick="showDeleteInput();" />
                                     <input type="button" class="button" value="Duplicate" onclick="showDuplicateInput();" />
@@ -297,12 +297,12 @@
         <?php if(isset($_GET['templateName'])) $this->careerPortalSettingsRS['activeBoard'] = $_GET['templateName']; ?>
         <?php foreach ($this->careerPortalTemplateCustomNames as $name => $data): ?>
             <?php if($data['careerPortalName'] == $this->careerPortalSettingsRS['activeBoard']): ?>
-                setModifyingJobCustom('<?php echo($data['careerPortalName']); ?>','<?php echo(CATSUtility::getIndexName()); ?>?m=careers&amp;templateName=<?php echo(urlencode($data['careerPortalName'])); ?>');
+                setModifyingJobCustom('<?php echo($data['careerPortalName']); ?>','<?php echo(CATSUtility::getIndexName()); ?>?m=careers&templateName=<?php echo(urlencode($data['careerPortalName'])); ?>');
             <?php endif; ?>
         <?php endforeach; ?>
         <?php foreach ($this->careerPortalTemplateNames as $name => $data): ?>
             <?php if($data['careerPortalName'] == $this->careerPortalSettingsRS['activeBoard']): ?>
-                setModifyingJobDefault('<?php echo($data['careerPortalName']); ?>','<?php echo(CATSUtility::getIndexName()); ?>?m=careers&amp;templateName=<?php echo(urlencode($data['careerPortalName'])); ?>');
+                setModifyingJobDefault('<?php echo($data['careerPortalName']); ?>','<?php echo(CATSUtility::getIndexName()); ?>?m=careers&templateName=<?php echo(urlencode($data['careerPortalName'])); ?>');
             <?php endif; ?>
         <?php endforeach; ?>
     </script>

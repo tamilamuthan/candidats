@@ -30,6 +30,16 @@
  * @version    $Id: Companies.php 3690 2007-11-26 18:07:17Z brian $
  */
 
+/* 
+ * CandidATS
+ * Document to Text Conversion Library
+ *
+ * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+ * 
+ * This Modified Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 include_once('./lib/Pager.php');
 include_once('./lib/ListEditor.php');
 include_once('./lib/EmailTemplates.php');
@@ -43,16 +53,17 @@ include_once('./lib/Contacts.php');
  *  @package    CATS
  *  @subpackage Library
  */
-class Companies
+class Companies extends Modules
 {
-    private $_db;
-    private $_siteID;
-
     public $extraFields;
-
-
+    protected $module="companies";
+    protected $module_table="company";
+    protected $module_id="company_id";
+    protected $data_item_type=0;
+    
     public function __construct($siteID)
     {
+        $this->data_item_type=DATA_ITEM_COMPANY;
         $this->_siteID = $siteID;
         $this->_db = DatabaseConnection::getInstance();
         $this->extraFields = new ExtraFields($siteID, DATA_ITEM_COMPANY);

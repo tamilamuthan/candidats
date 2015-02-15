@@ -54,7 +54,7 @@ class ActivityUI extends UserInterface
         $this->_moduleTabText = 'Activities';
     }
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
 
@@ -82,9 +82,9 @@ class ActivityUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the list / main page.
+     * Called by render() to process loading the list / main page.
      */
-    private function listByViewDataGrid()
+    public function listByViewDataGrid()
     {
         $dataGridProperties = DataGrid::getRecentParamaters("activity:ActivityDataGrid");
 
@@ -122,9 +122,9 @@ class ActivityUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to handle displaying the search page.
+     * Called by render() to handle displaying the search page.
      */
-    private function search()
+    public function search()
     {
         if (!eval(Hooks::get('ACTIVITY_SEARCH'))) return;
 
@@ -135,9 +135,9 @@ class ActivityUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process displaying the search results.
+     * Called by render() to process displaying the search results.
      */
-    private function onSearch()
+    public function onSearch()
     {
         $periodString = $this->getTrimmedInput('period', $_GET);
         if (!empty($periodString) &&
@@ -272,7 +272,7 @@ class ActivityUI extends UserInterface
      *
      * @return string "Quick Links" HTML
      */
-    private function getQuickLinks()
+    public function getQuickLinks()
     {
         $today = array(
             'month' => date('n'),

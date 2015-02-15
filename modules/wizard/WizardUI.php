@@ -74,7 +74,7 @@ class WizardUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
         switch ($action)

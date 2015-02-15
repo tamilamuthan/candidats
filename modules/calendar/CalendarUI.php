@@ -50,7 +50,7 @@ class CalendarUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
 
@@ -88,9 +88,9 @@ class CalendarUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to handle displaying the calendar.
+     * Called by render() to handle displaying the calendar.
      */
-    private function showCalendar()
+    public function showCalendar()
     {
         $currentHour     = DateUtility::getAdjustedDate('H');
         $currentDay      = DateUtility::getAdjustedDate('j');
@@ -300,9 +300,9 @@ class CalendarUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to handle generating a string of data for the calendar.
+     * Called by render() to handle generating a string of data for the calendar.
      */
-    private function dynamicData()
+    public function dynamicData()
     {
         /* Do we have a valid date argument? If a month was specified and
          * isn't valid, fatal() out. If none was specified, use the current
@@ -338,9 +338,9 @@ class CalendarUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process adding an event.
+     * Called by render() to process adding an event.
      */
-    private function onAddEvent()
+    public function onAddEvent()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -498,9 +498,9 @@ class CalendarUI extends UserInterface
 
 
     /*
-     * Called by handleRequest() to process editing an event.
+     * Called by render() to process editing an event.
      */
-    private function onEditEvent()
+    public function onEditEvent()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -683,9 +683,9 @@ class CalendarUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process deleting an event.
+     * Called by render() to process deleting an event.
      */
-    private function onDeleteEvent()
+    public function onDeleteEvent()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_DELETE)
         {

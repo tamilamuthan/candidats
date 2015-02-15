@@ -51,7 +51,7 @@ class ExportUI extends UserInterface
         $this->_subTabs = array();
     }
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
 

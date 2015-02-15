@@ -49,7 +49,7 @@ class EmailTemplates
         $this->_siteID = $siteID;
         $this->_db = DatabaseConnection::getInstance();
     }
-    
+
     public function insert($title,$text, $disabled)
     {
         $sql = sprintf(
@@ -78,6 +78,7 @@ class EmailTemplates
         $this->_db->query($sql);
         return true;
     }
+    
     /**
      * Updates an e-mail template.
      *
@@ -176,10 +177,10 @@ class EmailTemplates
             $mailerSettings = new MailerSettings($this->_siteID);
             $mailerSettingsRS = $mailerSettings->getAll();
 
-            if ($mailerSettingsRS['configured'] == '0' || $mailerSettingsRS['mode'] == 0)
+            /*if ($mailerSettingsRS['configured'] == '0' || $mailerSettingsRS['mode'] == 0)
             {
                 $rs['disabled'] = '1';
-            }
+            }*/
 
             $rs['textReplaced'] = $this->replaceVariables($rs['text']);
         }

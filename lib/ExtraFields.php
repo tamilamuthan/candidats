@@ -26,6 +26,16 @@
  *
  * $Id: ExtraFields.php 3767 2007-11-29 16:49:10Z brian $
  */
+
+/* 
+ * CandidATS
+ * Extra Fileld Handler
+ *
+ * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+ * 
+ * This Modified Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
  
 include_once('lib/Site.php');
  
@@ -412,7 +422,7 @@ class ExtraFields
      * @param integer candidate ID
      * @return array extra fields data
      */
-    public function getValues($candidateID)
+    public function getValues($record_id)
     {
         $sql = sprintf(
             "SELECT
@@ -428,7 +438,7 @@ class ExtraFields
                 extra_field.data_item_type = %s
             AND
                 extra_field.site_id = %s",
-            $this->_db->makeQueryInteger($candidateID),
+            $this->_db->makeQueryInteger($record_id),
             $this->_dataItemType,
             $this->_siteID
             
@@ -436,17 +446,63 @@ class ExtraFields
 
         return $this->_db->getAllAssoc($sql);
     }
+    /**
+     * transfer all the extra field data to another site if the field name matches
+     * @param type $moduleID
+     * @param type $siteID
+     */
+    public function transferSite($moduleID, $siteID)
+    {
+        /**
+         * get all the fields from the field settings
+         */
+        $objSQL=new ClsNaanalSQL();
+        $objSQL->addTable("extra_field_settings");
+        $objSQL->addWhereNew("extra_field_settings","data_item_type", $this->_dataItemType);
+        $objSQL->addWhereNew("extra_field_settings","site_id", $this->_siteID);
+        $sql=$objSQL->render();
+        $records=$this->_db->getAllAssoc($sql);
+        if($records)
+        foreach($records as $record)
+        {
+            /**
+             * verify whether the field exist in remote site
+             */
+            $objSQL=new ClsNaanalSQL();
+            $objSQL->addTable("extra_field_settings");
+            $objSQL->addWhereNew("extra_field_settings","data_item_type", $this->_dataItemType);
+            $objSQL->addWhereNew("extra_field_settings","field_name", $record["field_name"]);
+            $objSQL->addWhereNew("extra_field_settings","site_id", $siteID);
+            $sql=$objSQL->render();
+            $row=$this->_db->getAssoc($sql);
+            if(empty($row)) continue;
+            $sql="update extra_field set site_id={$siteID} where field_name='{$record["field_name"]}' 
+            and site_id={$this->_siteID} and data_item_type='{$this->_dataItemType}'
+            and data_item_id={$moduleID}";
+            $this->_db->query($sql);
+        }
+        return true;
+    }
 
     /**
      * Sets an extra field (even if it previously existed).
-     *
+     * If the requested field not exist, the data will not updated
+     * 
      * @param string field name
      * @param string field value
      * @param integer candidate ID
      * @return boolean True if successful; false otherwise.
      */
-    public function setValue($field, $value, $candidateID)
+    public function setValue($field, $value, $moduleID)
     {
+        $objSQL=new ClsNaanalSQL();
+        $objSQL->addTable("extra_field_settings");
+        $objSQL->addWhereNew("extra_field_settings","data_item_type", $this->_dataItemType);
+        $objSQL->addWhereNew("extra_field_settings","field_name", $field);
+        $objSQL->addWhereNew("extra_field_settings","site_id", $this->_siteID);
+        $sql=$objSQL->render();
+        $row=$this->_db->getAssoc($sql);
+        if(empty($row)) return false;
         /* Delete old entries. */
         $sql = sprintf(
             "DELETE FROM
@@ -460,7 +516,7 @@ class ExtraFields
             AND
                 extra_field.data_item_type = %s",
             $this->_db->makeQueryString($field),
-            $this->_db->makeQueryInteger($candidateID),
+            $this->_db->makeQueryInteger($moduleID),
             $this->_siteID,
             $this->_dataItemType
         );

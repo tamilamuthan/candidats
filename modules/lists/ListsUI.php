@@ -60,7 +60,7 @@ class ListsUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
 
@@ -103,9 +103,9 @@ class ListsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the list / main page.
+     * Called by render() to process loading the list / main page.
      */
-    private function listByView()
+    public function listByView()
     {
         /* First, if we are operating in HR mode we will never see the
            companies pager.  Immediantly forward to My Company. */
@@ -133,10 +133,10 @@ class ListsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the static list display.
+     * Called by render() to process loading the static list display.
      */
 
-    private function showList()
+    public function showList()
     {
         /* Bail out if we don't have a valid candidate ID. */
         if (!$this->isRequiredIDValid('savedListID', $_GET))
@@ -207,9 +207,9 @@ class ListsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest to process loading the add to list popup window.
+     * Called by render to process loading the add to list popup window.
      */
-    private function quickActionAddToListModal()
+    public function quickActionAddToListModal()
     {
         /* Bail out if we don't have a valid type. */
         if (!$this->isRequiredIDValid('dataItemType', $_GET))
@@ -245,9 +245,9 @@ class ListsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest to process loading the add to list popup window from a datagrid.
+     * Called by render to process loading the add to list popup window from a datagrid.
      */
-    private function addToListFromDatagridModal()
+    public function addToListFromDatagridModal()
     {
         /* Bail out if we don't have a valid type. */
         if (!$this->isRequiredIDValid('dataItemType', $_GET))
@@ -288,9 +288,9 @@ class ListsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest to process the remove items from datagrid popup.
+     * Called by render to process the remove items from datagrid popup.
      */
-    private function removeFromListDatagrid()
+    public function removeFromListDatagrid()
     {
         /* Bail out if we don't have a valid type. */
         if (!$this->isRequiredIDValid('dataItemType', $_GET))
@@ -350,9 +350,9 @@ class ListsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest to delete a list.
+     * Called by render to delete a list.
      */
-    private function onDeleteStaticList()
+    public function onDeleteStaticList()
     {
         /* Bail out if we don't have a valid type. */
         if (!$this->isRequiredIDValid('savedListID', $_GET))

@@ -56,7 +56,7 @@ class CareersUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
 
@@ -68,7 +68,7 @@ class CareersUI extends UserInterface
         }
     }
 
-    private function careersPage()
+    public function careersPage()
     {
         global $careerPage;
 
@@ -108,7 +108,7 @@ class CareersUI extends UserInterface
         if ($enabled == 0)
         {
             // FIXME: Generate valid XHTML error pages. Create an error/fatal method!
-            die('<html><body><!-- Job Board Disabled --></body></html>');
+            die('<html><body>Job Board Not Active</body></html>');
         }
 
         if (isset($_GET['templateName']))
@@ -978,7 +978,7 @@ class CareersUI extends UserInterface
     }
 
 
-    private function _makeApplyValidator($template)
+    public function _makeApplyValidator($template)
     {
         $validator = '';
 
@@ -1120,7 +1120,7 @@ class CareersUI extends UserInterface
      * Gets HTML content for the job order response array.
      */
     // FIXME: More of this needs to be done in the template. The UI shouldn't generate HTML.
-    private function getResultsTable($rs, $settings, $unformatted = false, $parameters = '')
+    public function getResultsTable($rs, $settings, $unformatted = false, $parameters = '')
     {
         if ($unformatted)
         {
@@ -1178,7 +1178,7 @@ class CareersUI extends UserInterface
             }
 
             $html .= '<td>';
-            $html .= '<a href="' . CATSUtility::getIndexName() . '?m=careers' . (isset($_GET['templateName']) ? '&amp;templateName=' . urlencode($_GET['templateName']) : '').'&amp;p=showJob&amp;ID=' . $line['jobOrderID'] . '">';
+            $html .= '<a href="' . CATSUtility::getIndexName() . '?m=careers' . (isset($_GET['templateName']) ? '&templateName=' . urlencode($_GET['templateName']) : '').'&p=showJob&amp;ID=' . $line['jobOrderID'] . '">';
             $html .= htmlspecialchars($line['title']);
             $html .= '</a>';
             $html .= '</td>';
@@ -1195,7 +1195,7 @@ class CareersUI extends UserInterface
     }
 
     /* Called by Careers Page function to handle the processing of candidate input. */
-    private function onApplyToJobOrder($siteID, $candidateID = false)
+    public function onApplyToJobOrder($siteID, $candidateID = false)
     {
         $jobOrders = new JobOrders($siteID);
         $careerPortalSettings = new CareerPortalSettings($siteID);
@@ -1633,13 +1633,13 @@ class CareersUI extends UserInterface
         return $hiddenTags;
     }
 
-    private function isCandidateRegistered($siteID, $template)
+    public function isCandidateRegistered($siteID, $template)
     {
         $fields = $this->getCookieFields($siteID);
         return $this->ProcessCandidateRegistration($siteID, $template, $fields, true) ? true : false;
     }
 
-    private function ProcessCandidateRegistration($siteID, $template, $cookieFields = array(), $ignorePost = false)
+    public function ProcessCandidateRegistration($siteID, $template, $cookieFields = array(), $ignorePost = false)
     {
         $db = DatabaseConnection::getInstance();
 
@@ -1741,12 +1741,12 @@ class CareersUI extends UserInterface
         return false;
     }
 
-    private function getCareerPortalCookieName($siteID)
+    public function getCareerPortalCookieName($siteID)
     {
         return sprintf('cats%dcw', $siteID);
     }
 
-    private function getCookieFields($siteID)
+    public function getCookieFields($siteID)
     {
         $fields = array();
 
@@ -1769,7 +1769,7 @@ class CareersUI extends UserInterface
         return $fields;
     }
 
-    private function getRegisteredCandidateBlock($siteID, $template)
+    public function getRegisteredCandidateBlock($siteID, $template)
     {
         $fields = $this->getCookieFields($siteID);
         $candidate = $this->ProcessCandidateRegistration($siteID, $template, $fields);

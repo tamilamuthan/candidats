@@ -99,10 +99,10 @@ class TemplateUtility
 
         echo '<div id="headerBlock">', "\n";
 
-        /* CATS Logo */
+        /* CandidATS Logo */
         echo '<table cellspacing="0" cellpadding="0" style="margin: 0px; padding: 0px; float: left;">', "\n";
         echo '<tr>', "\n";
-        echo '<td rowspan="2"><img src="images/applicationLogo.jpg" border="0" alt="CATS Applicant Tracking System" /></td>', "\n";
+        echo '<td rowspan="2"><img src="images/applicationLogo.jpg" border="0" alt="CandidATS Applicant Tracking System" /></td>', "\n";
         echo '</tr>', "\n";
         echo '</table>', "\n";
 
@@ -628,7 +628,7 @@ class TemplateUtility
             }
 
             /* Inactive Tab? */
-            if ($active === null || $moduleName != $active->getModuleName())
+            if ($active === null || empty($active) || $moduleName != $active->getModuleName())
             {
                 if ($moduleName == $forceHighlight)
                 {
@@ -1172,15 +1172,15 @@ class TemplateUtility
         echo '"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">', "\n";
         echo '<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">', "\n";
         echo '<head>', "\n";
-        echo '<title>CATS - ', $pageTitle, '</title>', "\n";
+        echo '<title>CandidATS - ', $pageTitle, '</title>', "\n";
         echo '<meta http-equiv="Content-Type" content="text/html; charset=', HTML_ENCODING, '" />', "\n";
         echo '<link rel="icon" href="images/favicon.ico" type="image/x-icon" />', "\n";
         echo '<link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon" />', "\n";
         echo '<link rel="alternate" type="application/rss+xml" title="RSS" href="',
              CATSUtility::getIndexName(), '?m=rss" />', "\n";
-        echo '            <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-            <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
-<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>';
+        echo '            <script src="js/jquery-ui/external/jquery/jquery.js"></script>
+            <link rel="stylesheet" href="js/jquery-ui/jquery-ui.min.css" />
+<script src="js/jquery-ui/jquery-ui.min.js"></script>';
         /* Core JS files */
         echo '<script type="text/javascript" src="js/lib.js'.$javascriptAntiCache.'"></script>', "\n";
         echo '<script type="text/javascript" src="js/quickAction.js'.$javascriptAntiCache.'"></script>', "\n";

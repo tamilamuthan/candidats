@@ -650,6 +650,12 @@ class CATSSession
 
             return;
         }
+        
+        $arrUsername=explode("@",$username);
+        if(!isset($arrUsername[1])) $arrUsername[1]=1;
+        
+        $username=$arrUsername[0];
+        $siteID=$arrUsername[1];
 
         $sql = sprintf(
             "SELECT
@@ -686,8 +692,9 @@ class CATSSession
             LEFT JOIN site
                 ON site.site_id = user.site_id
             WHERE
-                user.user_name = %s",
-            $db->makeQueryString($username)
+                user.user_name = %s and user.site_id=%s",
+            $db->makeQueryString($username),
+            $siteID
         );
         $rs = $db->getAssoc($sql);
 

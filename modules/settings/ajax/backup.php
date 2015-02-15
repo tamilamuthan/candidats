@@ -231,12 +231,13 @@ if ($action == 'backup')
             site_id = %s",
         $siteID
     );
-    $queryResult = mysql_query($sql);
-    $totalAttachments = mysql_num_rows($queryResult);
+    $db=DatabaseConnection::getInstance();
+    $arrRow = $db->getAllAssoc($sql);// mysql_query($sql);
+    $totalAttachments = count($arrRow);
 
     /* Add each attachment to the zip file. */
     $attachmentCount = 0;
-    while ($row = mysql_fetch_assoc($queryResult))
+    foreach ($arrRow as $row)
     {
         ++$attachmentCount;
 

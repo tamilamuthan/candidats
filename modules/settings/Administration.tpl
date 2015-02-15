@@ -30,135 +30,22 @@
             <table width="100%">
                 <tr>
                     <td width="100%">
-                        <p class="noteUnsized">CATS Professional</p>
+                        <p class="noteUnsized">CandidATS Career Portal</p>
                         <table class="searchTable" width="100%" style="background-color: #E7EFFF; border: 1px solid #7F9BD6">
-                        <?php if (!file_exists('modules/asp')): ?>
-
-                            <tr>
-                                <td colspan="2" style="background: #E7EFFF url(images/settingsAdminProf.jpg) no-repeat; height: 50px;">
-                                    &nbsp;
-                                </td>
-                            </tr>
 
                             <tr>
                                 <td width="230">
                                     <img src="images/bullet_black.gif" alt="" />
-                                    <?php if (LicenseUtility::isProfessional()): ?>
-                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=professional">
-                                        Professional Account
-                                    </a>
-                                    <?php else: ?>
-                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=professional">
-                                        Register / Enter License Key
-                                    </a>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <?php if (LicenseUtility::isProfessional()): ?>
-                                    Manage your account, add more licenses or renew your subscription.
-                                    <?php else: ?>
-                                    Professional users get features like our plug-ins, resume importer and a careers website.
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
 
-                            <tr>
-                                <td width="230">
-                                    <img src="images/bullet_black.gif" alt="" />
-                                    <?php if ($this->careerPortalUnlock): ?>
-                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=careerPortalSettings">Careers Website</a>
-                                    <?php else: ?>
-                                    <a href="http://www.catsone.com/?a=careerswebsite" target="_blank">Careers Website</a>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    Configure your website where applicants can apply and post their resumes for your jobs.
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td width="230">
-                                    <img src="images/bullet_black.gif" alt="" />
-                                    <?php if (LicenseUtility::isProfessional()): ?>
-                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=downloads">
-                                        Plug-ins and Downloads
-                                    </a>
-                                    <?php else: ?>
-                                    <a href="http://www.catsone.com/?a=addons" target="_blank">Plug-ins and Downloads</a>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    Downloads that extend CATS to make recruiting easy.
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td colspan="2">
-                                    <?php if (LicenseUtility::isProfessional()): ?>
-                                    <br />
-                                    <img src="images/professional_icon.gif" border="0" align="left" style="padding-right: 10px;" />
-                                    Licensed to <b><?php echo LicenseUtility::getName(); ?></b> with <?php echo LicenseUtility::getNumberOfSeats(); ?> seats until <?php echo date('F j, Y', LicenseUtility::getExpirationDate()); ?>.
-                                    <br />
-                                    To renew or add user licenses, log in to the CATS Professional website, <a href="http://www.catsone.com/professional" target="_blank">http://www.catsone.com/<b>professional</b></a>.
-                                    <?php else: ?>
-                                    <div id="profButton" onclick="document.location.href='http://www.catsone.com/professional';">&nbsp;</div>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-
-                        <?php else: ?>
-
-                            <tr>
-                                <td colspan="2" style="background: #E7EFFF url(images/settingsAdminProf.jpg) no-repeat; height: 50px;">
-                                    &nbsp;
-                                </td>
-                            </tr>
-
-                            <?php if ($_SESSION['CATS']->isFree()): ?>
-                            <tr>
-                                <td width="230">
-                                    <img src="images/bullet_black.gif" alt="" />
-                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=asp&amp;a=purchaseinfo">
-                                        <b>Upgrade to Professional</b>
-                                    </a>
-                                </td>
-                                <td>
-                                    Professional users get features like our plug-ins, resume importer and a careers website.
-                                </td>
-                            </tr>
-                            <?php endif; ?>
-
-                            <tr>
-                                <td width="230">
-                                    <img src="images/bullet_black.gif" alt="" />
-                                    <?php if ($this->careerPortalUnlock): ?>
                                     <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=careerPortalSettings"><b>Careers Website</b></a>
-                                    <?php else: ?>
-                                    <a href="http://www.catsone.com/?a=careerswebsite"><b>Careers Website</b></a>
-                                    <?php endif; ?>
+
                                 </td>
                                 <td>
                                     Configure your website where applicants can apply and post their resumes for your jobs.
                                 </td>
                             </tr>
 
-                            <tr>
-                                <td width="230">
-                                    <img src="images/bullet_black.gif" alt="" />
-                                    <?php if (!$_SESSION['CATS']->isFree()): ?>
-                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=downloads">
-                                        <b>Plug-ins and Downloads</b>
-                                    </a>
-                                    <?php else: ?>
-                                    <a href="http://www.catsone.com/?a=addons"><b>Plug-ins and Downloads</b></a>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    Downloads that extend CATS to make recruiting easy.
-                                </td>
-                            </tr>
-
-                        <?php endif; ?>
+ 
                         </table>
                         <br />
 
@@ -253,6 +140,25 @@
                                     Produce a downloadable backup with all the content in your site.
                                 </td>
                             </tr>
+                            <?php
+                            
+                            if($_SESSION['CATS']->getSiteID()<=1)
+                            {
+                            ?>
+                            <tr>
+                                <td>
+                                    <img src="images/bullet_black.gif" alt="" />
+                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=manageSites">
+                                        Manage Sites
+                                    </a>
+                                </td>
+                                <td>
+                                    Manage Sites
+                                </td>
+                            </tr>
+                            <?php
+                            }
+                            ?>
                         </table>
                         <br />
 

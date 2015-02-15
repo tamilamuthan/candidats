@@ -67,24 +67,12 @@ class SettingsUI extends UserInterface
         $this->_moduleName = 'settings';
         $this->_moduleTabText = 'Settings';
 
-        /* Only CATS professional on site gets to make career portal customizer users. */
-        if (!file_exists('modules/asp') && LicenseUtility::isProfessional())
-        {
-            $this->_settingsUserCategories = array(
-                array('Career Portal Customizer', 'careerportal', 'This user can\'t do anything but modify the career portal settings.  It is intended to be used by the CATS Professional Support Team.  This user does not count against your maximum users.', ACCESS_LEVEL_SA, ACCESS_LEVEL_READ)
-            );
-        }
-
         $mp = array(
             'Administration' => CATSUtility::getIndexName() . '?m=settings&amp;a=administration',
             'My Profile'     => CATSUtility::getIndexName() . '?m=settings'
         );
 
-        /* Only CATS professional can download addons. */
-        if (file_exists('modules/asp') || LicenseUtility::isProfessional())
-        {
-            $mp['Downloads'] = CATSUtility::getIndexName() . '?m=settings&amp;a=downloads';
-        }
+        $mp['Downloads'] = CATSUtility::getIndexName() . '?m=settings&a=downloads';
 
         $this->_subTabs = $mp;
         
@@ -134,7 +122,7 @@ class SettingsUI extends UserInterface
         );
     }
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
 
@@ -483,7 +471,7 @@ class SettingsUI extends UserInterface
         }
     }
 
-    private function filtergrouping($value)
+    public function filtergrouping($value)
     {
         $_siteID = $_SESSION['CATS']->getSiteID();;
         $_db = DatabaseConnection::getInstance();
@@ -502,23 +490,83 @@ class SettingsUI extends UserInterface
             'm=settings&a=administration'
         );
     }
+
+    public function duplicate()
+    {
+        /* Bail out if the user doesn't have SA permissions. */
+        if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this);
+            return;
+            //$this->fatal(ERROR_NO_PERMISSION);
+        }
+
+        $sites = new Site($this->_siteID);
+        $rs = $sites->getAll();
+
+        $this->_template->assign('active', $this);
+        $this->_template->assign('subActive', 'Site Management');
+        $this->_template->assign('rs', $rs);
+        $this->_template->display('./modules/settings/duplicate.php');
+    }
+    
+    public function transfer()
+    {
+        /* Bail out if the user doesn't have SA permissions. */
+        if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this);
+            return;
+            //$this->fatal(ERROR_NO_PERMISSION);
+        }
+
+        $sites = new Site($this->_siteID);
+        $rs = $sites->getAll();
+
+        $this->_template->assign('active', $this);
+        $this->_template->assign('subActive', 'Site Management');
+        $this->_template->assign('rs', $rs);
+        $this->_template->display('./modules/settings/transfer.php');
+    }
     
     /*
-     * Called by handleRequest() to process loading the get firefox modal dialog.
+     * Called by render() to process loading the site users page.
      */
-    private function getFirefoxModal()
+    public function manageSites()
+    {
+        /* Bail out if the user doesn't have SA permissions. */
+        if ($this->_siteID > 1 || $this->_realAccessLevel < ACCESS_LEVEL_DEMO)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this);
+            return;
+            //$this->fatal(ERROR_NO_PERMISSION);
+        }
+
+        $sites = new Site($this->_siteID);
+        $rs = $sites->getAll();
+
+        $this->_template->assign('active', $this);
+        $this->_template->assign('subActive', 'Site Management');
+        $this->_template->assign('rs', $rs);
+        $this->_template->display('./modules/settings/Sites.php');
+    }
+    
+    /*
+     * Called by render() to process loading the get firefox modal dialog.
+     */
+    public function getFirefoxModal()
     {
         $this->_template->display(
             './modules/settings/getFirefoxModal.tpl'
         );
     }
-    private function customizeFilter()
+    public function customizeFilter()
     {
         $_siteID = $_SESSION['CATS']->getSiteID();;
         $_db = DatabaseConnection::getInstance();
         $sql="Select * from settings where setting='filtergrouping' and site_id='{$_siteID}'";
         $arrData=$_db->getAssoc($sql);
-        if(isset($arrData) && $arrData["value"]>0)
+        if(isset($arrData) && !empty($arrData) && $arrData["value"]>0)
         {
             $this->_template->assign("checked","checked");
         }
@@ -530,16 +578,16 @@ class SettingsUI extends UserInterface
             './modules/settings/customizeFilter.tpl'
         );
     }
-    private function onCustomizeFilter()
+    public function onCustomizeFilter()
     {
         $this->_template->display(
             './modules/settings/customizeFilter.tpl'
         );
     }
     /*
-     * Called by handleRequest() to process loading the my profile page.
+     * Called by render() to process loading the my profile page.
      */
-    private function myProfile()
+    public function myProfile()
     {
         $isDemoUser = $_SESSION['CATS']->isDemo();
 
@@ -569,11 +617,41 @@ class SettingsUI extends UserInterface
         $this->_template->assign('subActive', 'My Profile');
         $this->_template->display($templateFile);
     }
+    
+    /*
+     * Called by render() to process loading the user details page.
+     */
+    public function showSite()
+    {
+        /* Bail out if the user doesn't have SA permissions. */
+        if ($this->_siteID > 1 || $this->_realAccessLevel < ACCESS_LEVEL_DEMO)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this);
+            return;
+            //$this->fatal(ERROR_NO_PERMISSION);
+        }
+        $privledged = true;
+
+        $siteID = $_GET['siteID'];
+
+        $site = new Site($this->_siteID);
+        $data = $site->get($siteID);
+
+        if (empty($data))
+        {
+            CommonErrors::fatal(COMMONERROR_BADINDEX, $this, 'No Site found with selected ID.');
+        }
+        $this->_template->assign('site_id', $siteID);
+        $this->_template->assign('active', $this);
+        $this->_template->assign('subActive', '');
+        $this->_template->assign('data', $data);
+        $this->_template->display('./modules/settings/ShowSite.php');
+    }
 
     /*
-     * Called by handleRequest() to process loading the user details page.
+     * Called by render() to process loading the user details page.
      */
-    private function showUser()
+    public function showUser()
     {
         // FIXME: Does $_GET['userID'] exist?
         if (isset($_GET['privledged']) &&  $_GET['privledged'] == 'false' &&
@@ -679,11 +757,11 @@ class SettingsUI extends UserInterface
         $this->_template->assign('loginAttempts', $loginAttempts);
         $this->_template->display('./modules/settings/ShowUser.tpl');
     }
-
+    
     /*
-     * Called by handleRequest() to process loading the user add page.
+     * Called by render() to process loading the user add page.
      */
-    private function addUser()
+    public function addUser()
     {
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO)
@@ -737,9 +815,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process adding a user.
+     * Called by render() to process adding a user.
      */
-    private function onAddUser()
+    public function onAddUser()
     {
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
@@ -842,9 +920,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the user edit page.
+     * Called by render() to process loading the user edit page.
      */
-    private function editUser()
+    public function editUser()
     {
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO)
@@ -939,9 +1017,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process updating a user.
+     * Called by render() to process updating a user.
      */
-    private function onEditUser()
+    public function onEditUser()
     {
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
@@ -1070,12 +1148,319 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process deleting a user.
+     * Called by render() to process loading the user add page.
+     */
+    public function addSite()
+    {
+        /* Bail out if the user doesn't have SA permissions. */
+        if ($this->_siteID > 1 || $this->_realAccessLevel < ACCESS_LEVEL_DEMO)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this);
+            return;
+            //$this->fatal(ERROR_NO_PERMISSION);
+        }
+
+        $sites = new Site($this->_siteID);
+
+        $rs = $sites->getAll();
+
+        $EEOSettings = new EEOSettings($this->_siteID);
+        $EEOSettingsRS = $EEOSettings->getAll();
+
+        $this->_template->assign('active', $this);
+        $this->_template->assign('subActive', '');
+        $this->_template->assign('EEOSettingsRS', $EEOSettingsRS);
+        $this->_template->assign('defaultAccessLevel', ACCESS_LEVEL_DELETE);
+        $this->_template->assign('currentUser', $this->_userID);
+
+        if (!eval(Hooks::get('SETTINGS_ADD_USER'))) return;
+
+        $this->_template->display('./modules/settings/AddSite.php');
+    }
+
+    /*
+     * Called by render() to process adding a user.
+     */
+    public function onAddSite()
+    {
+        /* Bail out if the user doesn't have SA permissions. */
+        if ($this->_siteID > 1 ||$this->_realAccessLevel < ACCESS_LEVEL_SA)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this);
+            return;
+            //$this->fatal(ERROR_NO_PERMISSION);
+        }
+
+        $siteName      = $this->getTrimmedInput('siteName', $_POST);
+        $unixName       = $this->getTrimmedInput('unixName', $_POST);
+        $isDemo   = $this->isChecked('isDemo', $_POST);
+        $isDemo = empty($isDemo)?0:1;
+
+        $eeoIsVisible   = $this->isChecked('eeoIsVisible', $_POST);
+
+        $sites = new Site($this->_siteID);
+
+        /* Bail out if any of the required fields are empty. */
+        if (empty($siteName) || empty($unixName))
+        {
+            CommonErrors::fatal(COMMONERROR_MISSINGFIELDS, $this, 'Required fields are missing.');
+        }
+
+        /* Bail out if the specified username already exists. */
+        if ($sites->getSiteByUnixName($unixName))
+        {
+            CommonErrors::fatal(COMMONERROR_BADFIELDS, $this, 'The specified site already exists.');
+        }
+
+        $siteID = $sites->add(
+            $unixName, $siteName, $isDemo
+        );
+
+        if ($siteID <= 0)
+        {
+            CommonErrors::fatal(COMMONERROR_RECORDERROR, $this, 'Failed to add site.');
+        }
+
+        CATSUtility::transferRelativeURI(
+            'm=settings&a=showSite&siteID=' . $siteID
+        );
+    }
+
+    /*
+     * Called by render() to process loading the user edit page.
+     */
+    public function editSite()
+    {
+        /* Bail out if the user doesn't have SA permissions. */
+        if ($this->_siteID > 1 ||$this->_realAccessLevel < ACCESS_LEVEL_DEMO)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this);
+            return;
+            //$this->fatal(ERROR_NO_PERMISSION);
+        }
+
+        /* Bail out if we don't have a valid user ID. */
+        if (!$this->isRequiredIDValid('userID', $_GET))
+        {
+            CommonErrors::fatal(COMMONERROR_BADINDEX, $this, 'Invalid user ID.');
+        }
+
+        $userID = $_GET['userID'];
+
+        $users = new Users($this->_siteID);
+        $license = $users->getLicenseData();
+        $accessLevels = $users->getAccessLevels();
+        $data = $users->get($userID);
+
+        if (empty($data))
+        {
+            CommonErrors::fatal(COMMONERROR_BADINDEX, $this, 'No user found with that ID.');
+        }
+
+        if ($this->_userID == $userID)
+        {
+            $disableAccessChange = true;
+            $cannotEnableMessage = false;
+        }
+        else if (($data['accessLevel'] <= ACCESS_LEVEL_READ) && ($license['diff'] < 1) && ($license['userLicenses'] != 0))
+        {
+            $disableAccessChange = true;
+            $cannotEnableMessage = true;
+        }
+        else
+        {
+            $disableAccessChange = false;
+            $cannotEnableMessage = false;
+        }
+
+        /* Change multisite usernames into single site usernames. */
+        // FIXME: The last test here might be redundant.
+        // FIXME: Put this in a private method. It is duplicated twice so far.
+        $siteIDPosition = strpos($data['username'], '@' . $_SESSION['CATS']->getSiteID());
+
+        if ($siteIDPosition !== false &&
+            substr($data['username'], $siteIDPosition) == '@' . $_SESSION['CATS']->getSiteID())
+        {
+           $data['username'] = str_replace(
+               '@' . $_SESSION['CATS']->getSiteID(), '', $data['username']
+           );
+        }
+
+        /* Get user categories, if any. */
+        $modules = ModuleUtility::getModules();
+        $categories = array();
+        foreach ($modules as $moduleName => $parameters)
+        {
+            $moduleCategories = $parameters[MODULE_SETTINGS_USER_CATEGORIES];
+
+            if ($moduleCategories != false)
+            {
+                foreach ($moduleCategories as $category)
+                {
+                    /* index 3 is the user level required to assign this type of category. */
+                    if (!isset($category[3]) || $category[3] <= $this->_realAccessLevel)
+                    {
+                        $categories[] = $category;
+                    }
+                }
+            }
+        }
+
+        $EEOSettings = new EEOSettings($this->_siteID);
+        $EEOSettingsRS = $EEOSettings->getAll();
+
+        $this->_template->assign('active', $this);
+        $this->_template->assign('subActive', '');
+        $this->_template->assign('data', $data);
+        $this->_template->assign('accessLevels', $accessLevels);
+        $this->_template->assign('defaultAccessLevel', ACCESS_LEVEL_DELETE);
+        $this->_template->assign('EEOSettingsRS', $EEOSettingsRS);
+        $this->_template->assign('license', $license);
+        $this->_template->assign('categories', $categories);
+        $this->_template->assign('currentUser', $this->_userID);
+        $this->_template->assign('cannotEnableMessage', $cannotEnableMessage);
+        $this->_template->assign('disableAccessChange', $disableAccessChange);
+        $this->_template->display('./modules/settings/EditUser.tpl');
+    }
+
+    /*
+     * Called by render() to process updating a user.
+     */
+    public function onEditSite()
+    {
+        /* Bail out if the user doesn't have SA permissions. */
+        if ($this->_siteID > 1 ||$this->_realAccessLevel < ACCESS_LEVEL_SA)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this);
+            return;
+            //$this->fatal(ERROR_NO_PERMISSION);
+        }
+
+        /* Bail out if we don't have a valid user ID. */
+        if (!$this->isRequiredIDValid('userID', $_POST))
+        {
+            CommonErrors::fatal(COMMONERROR_BADINDEX, $this, 'Invalid user ID.');
+        }
+
+        if ($this->isRequiredIDValid('accessLevel', $_POST, true))
+        {
+            $accessLevel = $_POST['accessLevel'];
+        }
+        else
+        {
+            $accessLevel = -1;
+        }
+
+        $userID = $_POST['userID'];
+
+        $firstName   = $this->getTrimmedInput('firstName', $_POST);
+        $lastName    = $this->getTrimmedInput('lastName', $_POST);
+        $email       = $this->getTrimmedInput('email', $_POST);
+        $username    = $this->getTrimmedInput('username', $_POST);
+        $password1   = $this->getTrimmedInput('password1', $_POST);
+        $password2   = $this->getTrimmedInput('password2', $_POST);
+        $passwordRst = $this->getTrimmedInput('passwordIsReset', $_POST);
+        $role        = $this->getTrimmedInput('role', $_POST);
+        $eeoIsVisible   = $this->isChecked('eeoIsVisible', $_POST);
+
+        /* Bail out if any of the required fields are empty. */
+        if (empty($firstName) || empty($lastName) || empty($username))
+        {
+            CommonErrors::fatal(COMMONERROR_MISSINGFIELDS, $this, 'First name, last name and username are required.');
+        }
+
+        /* Bail out if reseting password to null. */
+        if (trim($password1) == '' && $passwordRst == 1)
+        {
+            CommonErrors::fatal(COMMONERROR_BADFIELDS, $this, 'Cannot set a blank password.');
+        }
+
+        /* Bail out if the two passwords don't match. */
+        if ($password1 !== $password2)
+        {
+            CommonErrors::fatal(COMMONERROR_NOPASSWORDMATCH, $this, 'Passwords do not match.');
+        }
+
+        /* Don't allow access level changes to the currently logged-in user's
+         * account.
+         */
+        if ($userID == $this->_userID)
+        {
+            $accessLevel = $this->_realAccessLevel;
+        }
+
+        /* If adding an e-mail username, verify it is a valid e-mail. */
+        // FIXME: PREG!
+        if (strpos($username, '@') !== false && !eregi("^[_a-z0-9-]+(.[_a-z0-9-]+)*@[a-z0-9-]+(.[a-z0-9-]+)*(.[a-z]{2,4})$", $username))
+        {
+            CommonErrors::fatal(COMMONERROR_BADFIELDS, $this, 'Username is in improper format for an E-Mail address.');
+        }
+
+        /* Make it a multisite user name if the user is part of a hosted site. */
+        $unixName = $_SESSION['CATS']->getUnixName();
+        if (strpos($username, '@') === false && !empty($unixName))
+        {
+           $username .= '@' . $_SESSION['CATS']->getSiteID();
+        }
+
+        $users = new Users($this->_siteID);
+
+        if (!$users->update($userID, $lastName, $firstName, $email, $username,
+            $accessLevel, $eeoIsVisible))
+        {
+            CommonErrors::fatal(COMMONERROR_RECORDERROR, $this, 'Failed to update user.');
+        }
+
+        if (trim($password1) !== '')
+        {
+            /* Bail out if the password is 'cats'. */
+            if ($password1 == 'cats')
+            {
+                CommonErrors::fatal(COMMONERROR_BADFIELDS, $this, 'New password can not equal \'cats\'.');
+            }
+
+            if (!$users->resetPassword($userID, $password1))
+            {
+                CommonErrors::fatal(COMMONERROR_RECORDERROR, $this, 'Failed to reset password.');
+            }
+        }
+
+        /* Set categories. */
+        $modules = ModuleUtility::getModules();
+        $users->updateCategories($userID, '');
+        foreach ($modules as $moduleName => $parameters)
+        {
+            $moduleCategories = $parameters[MODULE_SETTINGS_USER_CATEGORIES];
+
+            if ($moduleCategories != false)
+            {
+                foreach ($moduleCategories as $category)
+                {
+                    if ($category[1] == $role)
+                    {
+                       /* index 3 is the user level required to assign this type of category. */
+                        if (!isset($category[3]) || $category[3] <= $this->_realAccessLevel)
+                        {
+                            /* Set this category. */
+                            $users->updateCategories($userID, $role);
+                        }
+                    }
+                }
+            }
+        }
+
+        CATSUtility::transferRelativeURI(
+            'm=settings&a=showUser&userID=' . $userID
+        );
+    }
+
+    /*
+     * Called by render() to process deleting a user.
      *
      * This is only for automated testing right now. Deleting a user this way,
      * except for in special cases, will cause referential integrity problems.
      */
-    private function onDeleteUser()
+    public function onDeleteUser()
     {
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
@@ -1106,9 +1491,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to show the customize extra fields template.
+     * Called by render() to show the customize extra fields template.
      */
-    private function customizeExtraFields()
+    public function customizeExtraFields()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO)
         {
@@ -1141,9 +1526,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process the customize extra fields template.
+     * Called by render() to process the customize extra fields template.
      */
-    private function onCustomizeExtraFields()
+    public function onCustomizeExtraFields()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
         {
@@ -1217,7 +1602,7 @@ class SettingsUI extends UserInterface
     }
 
     //FIXME: Document me.
-    private function emailTemplates()
+    public function emailTemplates()
     {
         if(isset($_REQUEST["s"]))
         {
@@ -1242,37 +1627,102 @@ class SettingsUI extends UserInterface
             $this->_template->assign('active', $this);
             $this->_template->assign('subActive', 'Administration');
             $this->_template->assign('emailTemplatesRS', $emailTemplatesRS);
-            $this->_template->display('./modules/settings/EmailTemplates.tpl');
+            $this->_template->display('./modules/settings/emailTemplates.php');
         }
     }
 
-    //FIXME: Document me.
-    private function onEmailTemplates()
+    public function templateVariables()
     {
-        if(isset($_REQUEST["newTitleSelect"]))
+        $objRequest=ClsNaanalRequest::getInstance();
+        $templatemodule=$objRequest->getData("templatemodule");
+        $templateID=$objRequest->getData("templateID");
+        if(empty($templatemodule))
+        {
+            $template="";
+            if(!empty($templateID))
+            {
+                $emailTemplates = new EmailTemplates($this->_siteID);
+                $template=$emailTemplates->get($templateID);
+                $template["text"]=  addslashes($template["text"]);
+            }
+            $arrTplVar=array();
+            $arrTplVar = $template;
+        }
+        else
+        {
+            $arrModule=array();
+            $arrModuleTable["candidates"]=array("module"=>"candidate","extra"=>"Candidate");
+            $arrModuleTable["joborders"]=array("module"=>"joborder","extra"=>"Joborder");
+            $arrModuleTable["contacts"]=array("module"=>"contact","extra"=>"Contact");
+            $arrModuleTable["companies"]=array("module"=>"company","extra"=>"Company");
+            $arrCandidateParentModule["candidates"]=array("joborders","companies");
+            $arrCandidateParentModule["contacts"]=array("companies");
+            $arrTplVar=array();
+         
+            $allModules=$arrCandidateParentModule[$templatemodule];
+            array_unshift($allModules,$templatemodule);
+            foreach($allModules as $amodule)
+            {
+                $tableName=$arrModuleTable[$amodule]["module"];
+                $extraFieldTableName=$arrModuleTable[$amodule]["extra"];
+                $objDatabase = DatabaseConnection::getInstance();
+                $sql="SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '".DATABASE_NAME."' AND TABLE_NAME = '{$tableName}' order by COLUMN_NAME";
+                $arrRow=$objDatabase->getAllAssoc($sql);
+                $arrMainColumn=array();
+                if($arrRow)
+                foreach($arrRow as $row)
+                {
+                    $arrMainColumn[$row["COLUMN_NAME"]]=$row["COLUMN_NAME"];
+                }
+                asort($arrMainColumn,SORT_STRING);
+                $arrTplVar[$amodule]["main"]=$arrMainColumn;
+                $arrExtraColumn=array();
+                $sql="select extra_field_settings_id,field_name from extra_field_settings left join data_item_type on data_item_type_id=data_item_type where short_description='{$extraFieldTableName}' order by field_name";
+                $arrRow=$objDatabase->getAllAssoc($sql);
+                if($arrRow)
+                foreach($arrRow as $row)
+                {
+                    $arrExtraColumn["EXTRA_".$row["field_name"]]=$row["field_name"];
+                }
+                asort($arrExtraColumn,SORT_STRING);
+                $arrTplVar[$amodule]["extra"]=$arrExtraColumn;
+            }
+            if(empty($arrTplVar))
+            {
+                $arrTplVar=array();
+                $arrTplVar["a"]="b";
+            }
+        }
+        echo json_encode($arrTplVar);exit;
+    }
+    
+    //FIXME: Document me.
+    public function onEmailTemplates()
+    {
+        if (!isset($_POST['templateID']))
+        {
+            CommonErrors::fatal(COMMONERROR_MISSINGFIELDS, $this, 'Required fields are missing.');
+        }
+        if(empty($_POST['templateID']))
         {
             if ($this->_realAccessLevel < ACCESS_LEVEL_SA && !$_SESSION['CATS']->hasUserCategory('careerportal'))
             {
                 CommonErrors::fatal(COMMONERROR_PERMISSION, $this);
                 return;
-                //$this->fatal(ERROR_NO_PERMISSION);
             }
 
-            
             $useThisTemplate = isset($_POST['useThisTemplate']);
-
+            $text = $this->getTrimmedInput('emailBody', $_POST);
             if ($useThisTemplate)
             {
-                $text = $this->getTrimmedInput('messageText', $_POST);
                 $disabled = 0;
             }
             else
             {
-                $text = $this->getTrimmedInput('messageTextOrigional', $_POST);
                 $disabled = 1;
             }
             $emailTemplates = new EmailTemplates($this->_siteID);
-            $emailTemplates->insert($_REQUEST["newTitleSelect"], $text, $disabled);
+            $emailTemplates->insert($_REQUEST["emailSubject"], $text, $disabled);
         }
         else
         {
@@ -1288,30 +1738,18 @@ class SettingsUI extends UserInterface
                 CommonErrors::fatal(COMMONERROR_BADINDEX, $this, 'Invalid template ID.');
             }
 
-            if (!isset($_POST['templateID']))
-            {
-                CommonErrors::fatal(COMMONERROR_MISSINGFIELDS, $this, 'Required fields are missing.');
-            }
-
             $templateID = $_POST['templateID'];
             $useThisTemplate = isset($_POST['useThisTemplate']);
-
+            
+            $text = $this->getTrimmedInput('emailBody', $_POST);
             if ($useThisTemplate)
-            {
-                $text = $this->getTrimmedInput('messageText', $_POST);
+            {    
                 $disabled = 0;
             }
             else
             {
-                $text = $this->getTrimmedInput('messageTextOrigional', $_POST);
                 $disabled = 1;
             }
-
-            if (!isset($_POST['templateID']))
-            {
-                CommonErrors::fatal(COMMONERROR_MISSINGFIELDS, $this, 'Required fields are missing.');
-            }
-
             $emailTemplates = new EmailTemplates($this->_siteID);
             $emailTemplates->update($templateID, $text, $disabled);
         }
@@ -1319,10 +1757,10 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to show a page with a message in the top frame
+     * Called by render() to show a page with a message in the top frame
      * with a close window button.
      */
-    private function previewPage()
+    public function previewPage()
     {
         $previewPage = $_GET['url'];
         $previewMessage = $_GET['message'];
@@ -1332,10 +1770,10 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to show the message in the top frame
+     * Called by render() to show the message in the top frame
      * with a close window button.
      */
-    private function previewPageTop()
+    public function previewPageTop()
     {
         $previewMessage = $_GET['message'];
         $this->_template->assign('previewMessage', $previewMessage);
@@ -1343,9 +1781,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to show the careers website settings editor.
+     * Called by render() to show the careers website settings editor.
      */
-    private function careerPortalTemplateEdit()
+    public function careerPortalTemplateEdit()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO && !$_SESSION['CATS']->hasUserCategory('careerportal'))
         {
@@ -1421,7 +1859,7 @@ class SettingsUI extends UserInterface
     }
 
     //FIXME: Document me.
-    private function onCareerPortalTemplateEdit()
+    public function onCareerPortalTemplateEdit()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA && !$_SESSION['CATS']->hasUserCategory('careerportal'))
         {
@@ -1481,9 +1919,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to show the careers website settings template.
+     * Called by render() to show the careers website settings template.
      */
-    private function careerPortalSettings()
+    public function careerPortalSettings()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO && !$_SESSION['CATS']->hasUserCategory('careerportal'))
         {
@@ -1515,7 +1953,7 @@ class SettingsUI extends UserInterface
     }
 
     //FIXME: Document me.
-    private function onCareerPortalSettings()
+    public function onCareerPortalSettings()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA && !$_SESSION['CATS']->hasUserCategory('careerportal'))
         {
@@ -1604,7 +2042,7 @@ class SettingsUI extends UserInterface
         CATSUtility::transferRelativeURI('m=settings&a=administration');
     }
 
-    private function onCareerPortalTweak()
+    public function onCareerPortalTweak()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA && !$_SESSION['CATS']->hasUserCategory('careerportal'))
         {
@@ -1686,9 +2124,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to show the careers website settings template.
+     * Called by render() to show the careers website settings template.
      */
-    private function EEOEOCSettings()
+    public function EEOEOCSettings()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO)
         {
@@ -1708,7 +2146,7 @@ class SettingsUI extends UserInterface
     }
 
     //FIXME: Document me.
-    private function onEEOEOCSettings()
+    public function onEEOEOCSettings()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
         {
@@ -1736,9 +2174,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to show the e-mail settings template.
+     * Called by render() to show the e-mail settings template.
      */
-    private function emailSettings()
+    public function emailSettings()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO)
         {
@@ -1765,9 +2203,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process the e-mail settings template.
+     * Called by render() to process the e-mail settings template.
      */
-    private function onEmailSettings()
+    public function onEmailSettings()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
         {
@@ -1813,9 +2251,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to show the customize calendar template.
+     * Called by render() to show the customize calendar template.
      */
-    private function customizeCalendar()
+    public function customizeCalendar()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO)
         {
@@ -1835,9 +2273,9 @@ class SettingsUI extends UserInterface
 
 
     /*
-     * Called by handleRequest() to process the customize calendar template.
+     * Called by render() to process the customize calendar template.
      */
-    private function onCustomizeCalendar()
+    public function onCustomizeCalendar()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
         {
@@ -1876,9 +2314,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to show the customize reports template.
+     * Called by render() to show the customize reports template.
      */
-    private function reports()
+    public function reports()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO)
         {
@@ -1893,9 +2331,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading new site pages.
+     * Called by render() to process loading new site pages.
      */
-    private function newInstallPassword()
+    public function newInstallPassword()
     {
         $this->_template->assign('inputType', 'password');
         $this->_template->assign('title', 'Create Administrator Password');
@@ -1905,7 +2343,7 @@ class SettingsUI extends UserInterface
         $this->_template->display('./modules/settings/NewInstallWizard.tpl');
     }
 
-    private function newSiteName()
+    public function newSiteName()
     {
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
@@ -1922,7 +2360,7 @@ class SettingsUI extends UserInterface
         $this->_template->display('./modules/settings/NewInstallWizard.tpl');
     }
 
-    private function upgradeSiteName()
+    public function upgradeSiteName()
     {
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
@@ -1939,7 +2377,7 @@ class SettingsUI extends UserInterface
         $this->_template->display('./modules/settings/NewInstallWizard.tpl');
     }
 
-    private function createBackup()
+    public function createBackup()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
         {
@@ -1967,7 +2405,7 @@ class SettingsUI extends UserInterface
         $this->_template->display('./modules/settings/Backup.tpl');
     }
 
-    private function deleteBackup()
+    public function deleteBackup()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
         {
@@ -1986,7 +2424,7 @@ class SettingsUI extends UserInterface
         CATSUtility::transferRelativeURI('m=settings&a=createBackup');
     }
 
-    private function forceEmail()
+    public function forceEmail()
     {
         $this->_template->assign('inputType', 'siteName');
         $this->_template->assign('inputTypeTextParam', 'E-Mail Address');
@@ -1997,7 +2435,7 @@ class SettingsUI extends UserInterface
         $this->_template->display('./modules/settings/NewInstallWizard.tpl');
     }
 
-    private function onForceEmail()
+    public function onForceEmail()
     {
         $emailAddress = $this->getTrimmedInput('siteName', $_POST);
 
@@ -2021,7 +2459,7 @@ class SettingsUI extends UserInterface
         }
     }
 
-    private function newInstallFinished()
+    public function newInstallFinished()
     {
         NewVersionCheck::checkForUpdate();
 
@@ -2049,9 +2487,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process handling new site pages.
+     * Called by render() to process handling new site pages.
      */
-    private function onNewInstallPassword()
+    public function onNewInstallPassword()
     {
         $error = '';
 
@@ -2098,7 +2536,7 @@ class SettingsUI extends UserInterface
         }
     }
 
-    private function onNewSiteName()
+    public function onNewSiteName()
     {
         /* The user shouldn't be here if they are not an SA */
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
@@ -2142,15 +2580,15 @@ class SettingsUI extends UserInterface
         }
     }
 
-    private function onNewInstallFinished()
+    public function onNewInstallFinished()
     {
         CATSUtility::transferRelativeURI('m=home');
     }
 
     /*
-     * Called by handleRequest() to process loading the administration page.
+     * Called by render() to process loading the administration page.
      */
-    private function administration()
+    public function administration()
     {
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO && !$_SESSION['CATS']->hasUserCategory('careerportal'))
@@ -2329,9 +2767,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the administration page.
+     * Called by render() to process loading the administration page.
      */
-    private function downloads()
+    public function downloads()
     {
         //FIXME: This needs to give an appropriate error message to both Open Source and ASP Free users.
         //       The current message is geared toward Open Source users.
@@ -2372,9 +2810,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process the administration page.
+     * Called by render() to process the administration page.
      */
-    private function onAdministration()
+    public function onAdministration()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
         {
@@ -2458,9 +2896,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest to change localization settings at administrator login for ASP systems.
+     * Called by render to change localization settings at administrator login for ASP systems.
      */
-    private function onAspLocalization()
+    public function onAspLocalization()
     {
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
         {
@@ -2499,7 +2937,7 @@ class SettingsUI extends UserInterface
     /*
      * Called by Administration to change site name.
      */
-    private function changeSiteName($newSiteName)
+    public function changeSiteName($newSiteName)
     {
         $site = new Site($this->_siteID);
         $site->setName($newSiteName);
@@ -2511,7 +2949,7 @@ class SettingsUI extends UserInterface
     /*
      *  Called by Administration to change new version preferences.
      */
-    private function changeNewVersionCheck($enableNewVersionCheck)
+    public function changeNewVersionCheck($enableNewVersionCheck)
     {
         $systemInfo = new SystemInfo();
         $systemInfo->updateVersionCheckPrefs($enableNewVersionCheck);
@@ -2520,9 +2958,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the site users page.
+     * Called by render() to process loading the site users page.
      */
-    private function manageUsers()
+    public function manageUsers()
     {
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO)
@@ -2566,7 +3004,7 @@ class SettingsUI extends UserInterface
         $this->_template->display('./modules/settings/Users.tpl');
     }
 
-    private function manageProfessional()
+    public function manageProfessional()
     {
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO)
@@ -2647,9 +3085,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process changing a user's password.
+     * Called by render() to process changing a user's password.
      */
-    private function onChangePassword()
+    public function onChangePassword()
     {
         /* Bail out if the user is demo. */
         if ($this->_realAccessLevel == ACCESS_LEVEL_DEMO)
@@ -2759,9 +3197,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the login activity page.
+     * Called by render() to process loading the login activity page.
      */
-    private function loginActivity()
+    public function loginActivity()
     {
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO)
@@ -2845,9 +3283,9 @@ class SettingsUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the item history page.
+     * Called by render() to process loading the item history page.
      */
-    private function viewItemHistory()
+    public function viewItemHistory()
     {
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_DEMO)

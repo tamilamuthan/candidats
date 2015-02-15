@@ -70,7 +70,7 @@ class GraphsUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
 
@@ -134,7 +134,7 @@ class GraphsUI extends UserInterface
     }
 
 
-    private function testGraph()
+    public function testGraph()
     {
         /* I am used for development purposes and intentionally empty. */
         $x = array(1, 2, 3, 4);
@@ -147,7 +147,7 @@ class GraphsUI extends UserInterface
         die();
     }
 
-    private function jobOrderReportGraph()
+    public function jobOrderReportGraph()
     {
         /* Build X values. */
         $data = $this->getTrimmedInput('data', $_GET);
@@ -188,7 +188,7 @@ class GraphsUI extends UserInterface
         die();
     }
 
-    private function activity()
+    public function activity()
     {
         /* Grab an instance of Statistics. */
         $statistics = new Statistics($this->_siteID);
@@ -245,7 +245,7 @@ class GraphsUI extends UserInterface
         die();
     }
 
-    private function newCandidates()
+    public function newCandidates()
     {
         /* Grab an instance of Statistics. */
         $statistics = new Statistics($this->_siteID);
@@ -300,7 +300,7 @@ class GraphsUI extends UserInterface
         die();
     }
 
-    private function newJobOrders()
+    public function newJobOrders()
     {
         /* Grab an instance of Statistics. */
         $statistics = new Statistics($this->_siteID);
@@ -354,7 +354,7 @@ class GraphsUI extends UserInterface
         die();
     }
 
-    private function generic()
+    public function generic()
     {
         /* Get passed data. */
         $labels = explode(',', $this->getTrimmedInput('labels', $_GET));
@@ -385,7 +385,7 @@ class GraphsUI extends UserInterface
         die();
     }
 
-    private function genericPie()
+    public function genericPie()
     {
         /* Get passed data. */
         $labels = explode(',', $this->getTrimmedInput('labels', $_GET));
@@ -402,7 +402,7 @@ class GraphsUI extends UserInterface
     }
 
     //TODO: Document me.
-    private function miniPlacementStatistics()
+    public function miniPlacementStatistics()
     {
         if (isset($_GET['view']))
         {
@@ -462,7 +462,7 @@ class GraphsUI extends UserInterface
     }
     
 
-    private function miniJobOrderPipeline()
+    public function miniJobOrderPipeline()
     {
         $statistics = new Statistics($this->_siteID);
         if (!$this->isRequiredIDValid('params', $_GET))
@@ -534,7 +534,7 @@ class GraphsUI extends UserInterface
     }
 
  
-    private function newSubmissions()
+    public function newSubmissions()
     {
         /* Grab an instance of Statistics. */
         $statistics = new Statistics($this->_siteID);
@@ -588,7 +588,7 @@ class GraphsUI extends UserInterface
         die();
     }
 
-    private function wordVerify()
+    public function wordVerify()
     {
         if (!$this->isRequiredIDValid('wordVerifyID', $_GET) &&
             !isset($_GET['wordVerifyString']))

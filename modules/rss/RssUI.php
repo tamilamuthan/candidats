@@ -54,7 +54,7 @@ class RssUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
         switch ($action)
@@ -66,7 +66,7 @@ class RssUI extends UserInterface
         }
     }
 
-    private function outputRSSError($title, $errorMessage)
+    public function outputRSSError($title, $errorMessage)
     {
         /* XML Headers */
         header('Content-type: text/xml');
@@ -96,7 +96,7 @@ class RssUI extends UserInterface
         );
     }
 
-    private function displayPublicJobOrders()
+    public function displayPublicJobOrders()
     {
         $site = new Site(-1);
 

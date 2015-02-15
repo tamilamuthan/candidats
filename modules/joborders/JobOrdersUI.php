@@ -45,7 +45,8 @@ include_once('./lib/ExtraFields.php');
 include_once('./lib/Graphs.php');
 include_once('./lib/Questionnaire.php');
 include_once('./lib/CommonErrors.php');
-
+include_once('./lib/Search.php');
+include_once('./lib/DocumentToText.php');
 
 class JobOrdersUI extends UserInterface
 {
@@ -87,7 +88,7 @@ class JobOrdersUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         $action = $this->getAction();
 
@@ -136,7 +137,6 @@ class JobOrdersUI extends UserInterface
                 break;
 
             case 'search':
-                include_once('./lib/Search.php');
 
                 if ($this->isGetBack())
                 {
@@ -167,7 +167,6 @@ class JobOrdersUI extends UserInterface
              * consider for this job order.
              */
             case 'considerCandidateSearch':
-                include_once('./lib/Search.php');
 
                 if ($this->isPostBack())
                 {
@@ -215,7 +214,6 @@ class JobOrdersUI extends UserInterface
 
             /* Add an attachment */
             case 'createAttachment':
-                include_once('./lib/DocumentToText.php');
 
                 if ($this->isPostBack())
                 {
@@ -251,9 +249,9 @@ class JobOrdersUI extends UserInterface
 
 
     /*
-     * Called by handleRequest() to process loading the list / main page.
+     * Called by render() to process loading the list / main page.
      */
-    private function listByView($errMessage = '')
+    public function listByView($errMessage = '')
     {
         $dataGridProperties = DataGrid::getRecentParamaters("joborders:JobOrdersListByViewDataGrid");
 
@@ -283,9 +281,9 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the details page.
+     * Called by render() to process loading the details page.
      */
-    private function show()
+    public function show()
     {
         /* Is this a popup? */
         if (isset($_GET['display']) && $_GET['display'] == 'popup')
@@ -466,9 +464,9 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to render the add popup.
+     * Called by render() to render the add popup.
      */
-    private function addJobOrderPopup()
+    public function addJobOrderPopup()
     {
         $jobOrders = new JobOrders($this->_siteID);
 
@@ -483,9 +481,9 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the add page.
+     * Called by render() to process loading the add page.
      */
-    private function add()
+    public function add()
     {
         $users = new Users($this->_siteID);
         $usersRS = $users->getSelectList();
@@ -614,9 +612,9 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process saving / submitting the add page.
+     * Called by render() to process saving / submitting the add page.
      */
-    private function onAdd()
+    public function onAdd()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -742,9 +740,9 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the edit page.
+     * Called by render() to process loading the edit page.
      */
-    private function edit()
+    public function edit()
     {
         /* Bail out if we don't have a valid candidate ID. */
         if (!$this->isRequiredIDValid('jobOrderID', $_GET))
@@ -883,9 +881,9 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process saving / submitting the edit page.
+     * Called by render() to process saving / submitting the edit page.
      */
-    private function onEdit()
+    public function onEdit()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -1083,7 +1081,7 @@ class JobOrdersUI extends UserInterface
         );
     }
     
-    private function deleteSelected()
+    public function deleteSelected()
     {
         foreach($_REQUEST as $k=>$v)
         {
@@ -1099,9 +1097,9 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process deleting a job order.
+     * Called by render() to process deleting a job order.
      */
-    private function onDelete()
+    public function onDelete()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_DELETE)
         {
@@ -1132,10 +1130,10 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to handle loading the "Add candidate to this
+     * Called by render() to handle loading the "Add candidate to this
      * Job Order Pipeline" initial search page in the modal dialog.
      */
-    private function considerCandidateSearch()
+    public function considerCandidateSearch()
     {
         /* Bail out if we don't have a valid job order ID. */
         if (!$this->isRequiredIDValid('jobOrderID', $_GET))
@@ -1154,11 +1152,11 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to handle processing an "Add candidate to
+     * Called by render() to handle processing an "Add candidate to
      * this Job Order Pipeline" search and displaying the results in the
      * modal dialog.
      */
-    private function onConsiderCandidateSearch()
+    public function onConsiderCandidateSearch()
     {
         /* Bail out if we don't have a valid candidate ID. */
         if (!$this->isRequiredIDValid('jobOrderID', $_POST))
@@ -1229,10 +1227,10 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process adding a candidate to the pipeline
+     * Called by render() to process adding a candidate to the pipeline
      * in the modal dialog.
      */
-    private function onAddToPipeline()
+    public function onAddToPipeline()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -1284,10 +1282,10 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to handle loading the quick add candidate form
+     * Called by render() to handle loading the quick add candidate form
      * in the modal dialog.
      */
-    private function addCandidateModal($contents = '', $fields = array())
+    public function addCandidateModal($contents = '', $fields = array())
     {
         /* Bail out if we don't have a valid job order ID. */
         if (!$this->isRequiredIDValid('jobOrderID', $_GET))
@@ -1350,10 +1348,10 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to handle processing the quick add candidate
+     * Called by render() to handle processing the quick add candidate
      * form in the modal dialog.
      */
-    private function onAddCandidateModal()
+    public function onAddCandidateModal()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -1390,7 +1388,7 @@ class JobOrdersUI extends UserInterface
         );
     }
 
-    private function addActivityChangeStatus()
+    public function addActivityChangeStatus()
     {
         /* Bail out if we don't have a valid candidate ID. */
         if (!$this->isRequiredIDValid('candidateID', $_GET))
@@ -1509,7 +1507,7 @@ class JobOrdersUI extends UserInterface
         );
     }
 
-    private function onAddActivityChangeStatus()
+    public function onAddActivityChangeStatus()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -1534,10 +1532,10 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process removing a candidate from the
+     * Called by render() to process removing a candidate from the
      * pipeline for  a job order.
      */
-    private function onRemoveFromPipeline()
+    public function onRemoveFromPipeline()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_DELETE)
         {
@@ -1572,9 +1570,9 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the search page.
+     * Called by render() to process loading the search page.
      */
-    private function search()
+    public function search()
     {
         $savedSearches = new SavedSearches($this->_siteID);
         $savedSearchRS = $savedSearches->get(DATA_ITEM_JOBORDER);
@@ -1594,9 +1592,9 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process displaying the search results.
+     * Called by render() to process displaying the search results.
      */
-    private function onSearch()
+    public function onSearch()
     {
         $query_jobTitle = '';
         $query_companyName = '';
@@ -1645,7 +1643,7 @@ class JobOrdersUI extends UserInterface
         }
 
         $baseURL = CATSUtility::getFilteredGET(
-            array('sortBy', 'sortDirection', 'page'), '&amp;'
+            array('sortBy', 'sortDirection', 'page'), '&'
         );
         $searchPager->setSortByParameters($baseURL, $sortBy, $sortDirection);
 
@@ -1740,10 +1738,10 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the create attachment
+     * Called by render() to process loading the create attachment
      * modal dialog.
      */
-    private function createAttachment()
+    public function createAttachment()
     {
         /* Bail out if we don't have a valid joborder ID. */
         if (!$this->isRequiredIDValid('jobOrderID', $_GET))
@@ -1764,9 +1762,9 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process creating an attachment.
+     * Called by render() to process creating an attachment.
      */
-    private function onCreateAttachment()
+    public function onCreateAttachment()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -1804,9 +1802,9 @@ class JobOrdersUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process deleting an attachment.
+     * Called by render() to process deleting an attachment.
      */
-    private function onDeleteAttachment()
+    public function onDeleteAttachment()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_DELETE)
         {
@@ -1842,7 +1840,7 @@ class JobOrdersUI extends UserInterface
 
     //Only accessable by MSA users - hides this job order from everybody by
     // FIXME: Document me.
-    private function administrativeHideShow()
+    public function administrativeHideShow()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_MULTI_SA)
         {

@@ -624,6 +624,31 @@ class Users
 
         return $this->_db->getAllAssoc($sql);
     }
+    
+    public function getFirstUser()
+    {
+        $sql = sprintf(
+            "SELECT
+                *
+            FROM
+                user
+            WHERE
+                user.site_id = %s
+            AND
+                user.access_level > %s
+            ORDER BY
+                user.last_name ASC,
+                user.first_name ASC",
+            $this->_siteID,
+            ACCESS_LEVEL_DISABLED
+        );
+
+        if (!eval(Hooks::get('USERS_GET_SELECT_SQL'))) return;
+
+        $arrAssoc = $this->_db->getAllAssoc($sql);
+        if(isset($arrAssoc[0])) return $arrAssoc[0];
+        return array();
+    }
 
     /**
      * Changes a user's password to the password specified.
@@ -764,7 +789,13 @@ class Users
         {
             return LOGIN_INVALID_PASSWORD;
         }
-
+        
+        $arrUsername=explode("@",$username);
+        if(!isset($arrUsername[1])) $arrUsername[1]=1;
+        
+        $username=$arrUsername[0];
+        $siteID=$arrUsername[1];
+        
         $sql = sprintf(
             "SELECT
                 user.user_name AS username,
@@ -773,8 +804,9 @@ class Users
             FROM
                 user
             WHERE
-                user.user_name = %s",
-            $this->_db->makeQueryString($username)
+                user.user_name = %s and user.site_id=%s",
+            $this->_db->makeQueryString($username),
+            $siteID
         );
         $rs = $this->_db->getAssoc($sql);
 
@@ -1133,6 +1165,16 @@ class Users
         );
 
         return $this->_db->getAllAssoc($sql);
+    }
+    
+    public static function &getInstance($siteID)
+    {
+        static $objUser=null;
+        if(is_null($objUser))
+        {
+            $objUser=new Users($siteID);
+        }
+        return $objUser;
     }
 
     /**

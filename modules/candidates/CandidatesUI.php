@@ -47,6 +47,8 @@ include_once('./lib/CommonErrors.php');
 include_once('./lib/License.php');
 include_once('./lib/ParseUtility.php');
 include_once('./lib/Questionnaire.php');
+include_once('./lib/Search.php');
+include_once('./lib/DocumentToText.php');
 
 class CandidatesUI extends UserInterface
 {
@@ -76,7 +78,7 @@ class CandidatesUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         if (!eval(Hooks::get('CANDIDATES_HANDLE_REQUEST'))) return;
         
@@ -121,7 +123,7 @@ class CandidatesUI extends UserInterface
                 $this->merge();
                 break;
             case 'search':
-                include_once('./lib/Search.php');
+                
 
                 if ($this->isGetBack())
                 {
@@ -135,7 +137,6 @@ class CandidatesUI extends UserInterface
                 break;
 
             case 'viewResume':
-                include_once('./lib/Search.php');
 
                 $this->viewResume();
                 break;
@@ -145,7 +146,6 @@ class CandidatesUI extends UserInterface
              * consider a candidate.
              */
             case 'considerForJobSearch':
-                include_once('./lib/Search.php');
 
                 $this->considerForJobSearch();
 
@@ -191,7 +191,6 @@ class CandidatesUI extends UserInterface
 
             /* Add an attachment to the candidate. */
             case 'createAttachment':
-                include_once('./lib/DocumentToText.php');
 
                 if ($this->isPostBack())
                 {
@@ -276,9 +275,9 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the list / main page.
+     * Called by render() to process loading the list / main page.
      */
-    private function listByView($errMessage = '')
+    public function listByView($errMessage = '')
     {
         // Log message that shows up on the top of the list page
         $topLog = '';
@@ -311,9 +310,9 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the details page.
+     * Called by render() to process loading the details page.
      */
-    private function show()
+    public function show()
     {
         /* Is this a popup? */
         if (isset($_GET['display']) && $_GET['display'] == 'popup')
@@ -588,11 +587,11 @@ class CandidatesUI extends UserInterface
 
         if (!eval(Hooks::get('CANDIDATE_SHOW'))) return;
 
-        $this->_template->display('./modules/candidates/Show.tpl');
+        $this->_template->display('./modules/candidates/Show.php');
     }
 
     /*
-     * Called by handleRequest() to process loading the add page.
+     * Called by render() to process loading the add page.
      *
      * The user could have already added a resume to the system
      * before this page is displayed.  They could have indicated
@@ -600,7 +599,7 @@ class CandidatesUI extends UserInterface
      * stored in the  session.  These ocourances are looked
      * for here, and the Add.tpl file displays the results.
      */
-    private function add($contents = '', $fields = array())
+    public function add($contents = '', $fields = array())
     {
         $candidates = new Candidates($this->_siteID);
 
@@ -879,9 +878,9 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process saving / submitting the add page.
+     * Called by render() to process saving / submitting the add page.
      */
-    private function onAdd()
+    public function onAdd()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -906,9 +905,9 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the edit page.
+     * Called by render() to process loading the edit page.
      */
-    private function edit()
+    public function edit()
     {
         /* Bail out if we don't have a valid candidate ID. */
         if (!$this->isRequiredIDValid('candidateID', $_GET))
@@ -972,7 +971,7 @@ class CandidatesUI extends UserInterface
         $statusChangeTemplateRS = $emailTemplates->getByTag(
             'EMAIL_TEMPLATE_OWNERSHIPASSIGNCANDIDATE'
         );
-        if ($statusChangeTemplateRS['disabled'] == 1)
+        if (isset($statusChangeTemplateRS['disabled']) && $statusChangeTemplateRS['disabled'] == 1)
         {
             $emailTemplateDisabled = true;
         }
@@ -1012,7 +1011,7 @@ class CandidatesUI extends UserInterface
         $this->_template->display('./modules/candidates/Edit.tpl');
     }
     
-    private function merge()
+    public function merge()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -1429,9 +1428,9 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process saving / submitting the edit page.
+     * Called by render() to process saving / submitting the edit page.
      */
-    private function onEdit()
+    public function onEdit()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -1667,7 +1666,7 @@ class CandidatesUI extends UserInterface
         );
     }
 
-    private function deleteSelected()
+    public function deleteSelected()
     {
         foreach($_REQUEST as $k=>$v)
         {
@@ -1683,9 +1682,9 @@ class CandidatesUI extends UserInterface
     }
     
     /*
-     * Called by handleRequest() to process deleting a candidate.
+     * Called by render() to process deleting a candidate.
      */
-    private function onDelete()
+    public function onDelete()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_DELETE)
         {
@@ -1738,11 +1737,11 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to handle processing an "Add to a Job Order
+     * Called by render() to handle processing an "Add to a Job Order
      * Pipeline" search and displaying the results in the modal dialog, or
      * to show the initial dialog.
      */
-    private function considerForJobSearch($candidateIDArray = array())
+    public function considerForJobSearch($candidateIDArray = array())
     {
         /* Get list of candidates. */
         if (isset($_REQUEST['candidateIDArrayStored']) && $this->isRequiredIDValid('candidateIDArrayStored', $_REQUEST, true))
@@ -1864,10 +1863,10 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process adding a candidate to a pipeline
+     * Called by render() to process adding a candidate to a pipeline
      * in the modal dialog.
      */
-    private function onAddToPipeline()
+    public function onAddToPipeline()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -1969,7 +1968,7 @@ class CandidatesUI extends UserInterface
         );
     }
 
-    private function addActivityChangeStatus()
+    public function addActivityChangeStatus()
     {
         /* Bail out if we don't have a valid candidate ID. */
         if (!$this->isRequiredIDValid('candidateID', $_GET))
@@ -2088,7 +2087,7 @@ class CandidatesUI extends UserInterface
         );
     }
 
-    private function onAddActivityChangeStatus()
+    public function onAddActivityChangeStatus()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -2107,10 +2106,10 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process removing a candidate from the
+     * Called by render() to process removing a candidate from the
      * pipeline for a job order.
      */
-    private function onRemoveFromPipeline()
+    public function onRemoveFromPipeline()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_DELETE)
         {
@@ -2145,9 +2144,9 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the search page.
+     * Called by render() to process loading the search page.
      */
-    private function search()
+    public function search()
     {
         $savedSearches = new SavedSearches($this->_siteID);
         $savedSearchRS = $savedSearches->get(DATA_ITEM_CANDIDATE);
@@ -2169,9 +2168,9 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process displaying the search results.
+     * Called by render() to process displaying the search results.
      */
-    private function onSearch()
+    public function onSearch()
     {
         /* Bail out to prevent an error if the GET string doesn't even contain
          * a field named 'wildCardString' at all.
@@ -2460,9 +2459,9 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process showing a resume preview.
+     * Called by render() to process showing a resume preview.
      */
-    private function viewResume()
+    public function viewResume()
     {
         /* Bail out if we don't have a valid candidate ID. */
         if (!$this->isRequiredIDValid('attachmentID', $_GET))
@@ -2492,7 +2491,7 @@ class CandidatesUI extends UserInterface
         $this->_template->display('./modules/candidates/ResumeView.tpl');
     }
 
-    private function addEditImage()
+    public function addEditImage()
     {
         /* Bail out if we don't have a valid candidate ID. */
         if (!$this->isRequiredIDValid('candidateID', $_GET))
@@ -2518,9 +2517,9 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process creating an attachment.
+     * Called by render() to process creating an attachment.
      */
-    private function onAddEditImage()
+    public function onAddEditImage()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -2559,10 +2558,10 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process loading the create attachment
+     * Called by render() to process loading the create attachment
      * modal dialog.
      */
-    private function createAttachment()
+    public function createAttachment()
     {
         /* Bail out if we don't have a valid candidate ID. */
         if (!$this->isRequiredIDValid('candidateID', $_GET))
@@ -2582,9 +2581,9 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process creating an attachment.
+     * Called by render() to process creating an attachment.
      */
-    private function onCreateAttachment()
+    public function onCreateAttachment()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
@@ -2651,9 +2650,9 @@ class CandidatesUI extends UserInterface
     }
 
     /*
-     * Called by handleRequest() to process deleting an attachment.
+     * Called by render() to process deleting an attachment.
      */
-    private function onDeleteAttachment()
+    public function onDeleteAttachment()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_DELETE)
         {
@@ -2689,7 +2688,7 @@ class CandidatesUI extends UserInterface
 
     //TODO: Document me.
     //Only accessable by MSA users - hides this job order from everybody by
-    private function administrativeHideShow()
+    public function administrativeHideShow()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_MULTI_SA)
         {
@@ -2726,7 +2725,7 @@ class CandidatesUI extends UserInterface
      * @param array result set from listByView()
      * @return array formatted result set
      */
-    private function _formatListByViewResults($resultSet)
+    public function _formatListByViewResults($resultSet)
     {
         if (empty($resultSet))
         {
@@ -2809,7 +2808,7 @@ class CandidatesUI extends UserInterface
      * @param string module directory
      * @return integer candidate ID
      */
-    private function _addCandidate($isModal, $directoryOverride = '')
+    public function _addCandidate($isModal, $directoryOverride = '')
     {
         /* Module directory override for fatal() calls. */
         if ($directoryOverride != '')
@@ -3158,7 +3157,7 @@ class CandidatesUI extends UserInterface
      * @param string module directory
      * @return void
      */
-    private function _addActivityChangeStatus($isJobOrdersMode, $regardingID,
+    public function _addActivityChangeStatus($isJobOrdersMode, $regardingID,
         $directoryOverride = '')
     {
         $notificationHTML = '';
@@ -3545,7 +3544,7 @@ class CandidatesUI extends UserInterface
     /*
      * Sends mass emails from the datagrid
      */
-    private function onEmailCandidates()
+    public function onEmailCandidates()
     {
         if ($this->_accessLevel == ACCESS_LEVEL_DEMO)
         {
@@ -3643,7 +3642,7 @@ class CandidatesUI extends UserInterface
         }
     }
 
-    private function onShowQuestionnaire()
+    public function onShowQuestionnaire()
     {
         $candidateID = isset($_GET[$id='candidateID']) ? $_GET[$id] : false;
         $title = isset($_GET[$id='questionnaireTitle']) ? urldecode($_GET[$id]) : false;

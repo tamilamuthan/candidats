@@ -48,7 +48,7 @@ class ReportsUI extends UserInterface
     }
 
 
-    public function handleRequest()
+    public function render()
     {
         if (!eval(Hooks::get('REPORTS_HANDLE_REQUEST'))) return;
 
@@ -90,7 +90,7 @@ class ReportsUI extends UserInterface
         }
     }
 
-    private function reports()
+    public function reports()
     {
         /* Grab an instance of Statistics. */
         $statistics = new Statistics($this->_siteID);
@@ -168,7 +168,7 @@ class ReportsUI extends UserInterface
         $this->_template->display('./modules/reports/Reports.tpl');
     }
 
-    private function graphView()
+    public function graphView()
     {
         if (isset($_GET['theImage']))
         {
@@ -185,7 +185,7 @@ class ReportsUI extends UserInterface
         $this->_template->display('./modules/reports/GraphView.tpl');
     }
 
-    private function showSubmissionReport()
+    public function showSubmissionReport()
     {
         //FIXME: getTrimmedInput
         if (isset($_GET['period']) && !empty($_GET['period']))
@@ -265,7 +265,7 @@ class ReportsUI extends UserInterface
         $this->_template->display('./modules/reports/SubmissionReport.tpl');
     }
 
-    private function showPlacementReport()
+    public function showPlacementReport()
     {
         //FIXME: getTrimmedInput
         if (isset($_GET['period']) && !empty($_GET['period']))
@@ -345,7 +345,7 @@ class ReportsUI extends UserInterface
         $this->_template->display('./modules/reports/PlacedReport.tpl');
     }
 
-    private function customizeJobOrderReport()
+    public function customizeJobOrderReport()
     {
         /* Bail out if we don't have a valid candidate ID. */
         if (!$this->isRequiredIDValid('jobOrderID', $_GET))
@@ -397,7 +397,7 @@ class ReportsUI extends UserInterface
         $this->_template->display('./modules/reports/JobOrderReport.tpl');
     }
 
-    private function customizeEEOReport()
+    public function customizeEEOReport()
     {
         $this->_template->assign('modePeriod', 'all');
         $this->_template->assign('modeStatus', 'all');
@@ -406,7 +406,7 @@ class ReportsUI extends UserInterface
         $this->_template->display('./modules/reports/EEOReport.tpl');
     }
 
-    private function generateJobOrderReportPDF()
+    public function generateJobOrderReportPDF()
     {
         /* E_STRICT doesn't like FPDF. */
         $errorReporting = error_reporting();
