@@ -42,7 +42,7 @@ include_once('./lib/CommonErrors.php');
 include_once('./lib/Questionnaire.php');
 include_once('./lib/DocumentToText.php');
 include_once('./lib/FileUtility.php');
-include_once('./lib/ParseUtility.php');
+//include_once('./lib/ParseUtility.php');
 
 class CareersUI extends UserInterface
 {
@@ -65,6 +65,155 @@ class CareersUI extends UserInterface
             default:
                 $this->careersPage();
                 break;
+        }
+    }
+    
+    public function candidateRegistration()
+    {
+        global $careerPage;
+
+        /* Get information on what site we are in, our environment, etc. */
+
+        $site = new Site(-1);
+
+        $siteID = $site->getFirstSiteID();
+
+        if (!eval(Hooks::get('CAREERS_SITEID'))) return;
+
+        /*
+        if (!eval(Hooks::get('CAREERS_IS_ENABLED'))) return;
+        if (!file_exists('modules/asp') && !LicenseUtility::isProfessional())
+        {
+            CommonErrors::fatal(COMMONERROR_INVALIDMODULE, $this, 'Career Portal');
+        }
+        */
+
+        $siteRS = $site->getSiteBySiteID($siteID);
+
+        if (!isset($siteRS['name']))
+        {
+            die('An error has occurred:  No site exists with this site name.');
+        }
+
+        $siteName = $siteRS['name'];
+
+        /* Get information on the current template. */
+
+        $careerPortalSettings = new CareerPortalSettings($siteID);
+        $careerPortalSettingsRS = $careerPortalSettings->getAll();
+
+        $templateName = $careerPortalSettingsRS['activeBoard'];
+        $enabled = $careerPortalSettingsRS['enabled'];
+
+        if ($enabled == 0)
+        {
+            // FIXME: Generate valid XHTML error pages. Create an error/fatal method!
+            die('<html><body>Job Board Not Active</body></html>');
+        }
+
+        if (isset($_GET['templateName']))
+        {
+            $templateName = $_GET['templateName'];
+        }
+
+        $template = $careerPortalSettings->getTemplate($templateName);
+
+        /* At this point the entire template is loaded, we just need to add data to the
+           template for the specific page. */
+
+        /* Get all public job orders for this site. */
+        $jobOrders = new JobOrders($siteID);
+        $rs = $jobOrders->getAll(JOBORDERS_STATUS_ACTIVE, -1, -1, -1, false, true);
+
+        $useCookie = true;
+
+        $isRegistrationEnabled = $careerPortalSettingsRS['candidateRegistration'];
+
+        $content = $template['Content - Candidate Registration'];
+
+        $jobID = intval($_GET['ID']);
+        $jobOrderData = $jobOrders->get($jobID);
+        $js = '';
+
+        $content = str_replace(array('<applyContent>','</applyContent>'), '', $content);
+
+        $content = str_replace('<input-submit>', '<input type="submit" id="submitButton" name="submitButton" value="Continue to Application" />', $content);
+        $content = str_replace('<input-new>', '<input type="radio" id="isNewYes" name="isNew" value="yes" onchange="isCandidateRegisteredChange();" checked />', $content);
+        $content = str_replace('<input-registered>', '<input type="radio" id="isNewNo" name="isNew" value="no" onchange="isCandidateRegisteredChange();" />', $content);
+        $content = str_replace('<input-rememberMe>', '<input type="checkbox" id="rememberMe" name="rememberMe" value="yes" checked />', $content);
+        $content = str_replace('<title>', $jobOrderData['title'], $content);
+
+        // Process html-ish fields like <input-firstName> into the proper form
+        $content = preg_replace(
+            '/\<input\-([A-Za-z0-9]+)\>/',
+            '<input type="text" class="inputBoxNormal" style="width: 270px;" name="$1" id="$1" onfocus="onFocusFormField(this)" />',
+            $content
+        );
+
+        if (count($fields = $this->getCookieFields($siteID)))
+        {
+            $js = '<script language="javascript" type="text/javascript">' . "\n"
+                . 'function populateSavedFields() { var obj; obj = document.getElementById(\'isNewNo\'); '
+                . 'if (obj) { obj.checked = true; enableFormFields(true); } ' . "\n";
+            foreach ($fields as $tagName => $tagValue)
+            {
+                $js .= sprintf(
+                    'if (obj = document.getElementById(\'%s\')) obj.value = \'%s\';%s',
+                    urldecode($tagName),
+                    str_replace("'", "\\'", urldecode($tagValue)),
+                    "\n"
+                );
+            }
+            $js .= "}\n</script>\n";
+        }
+
+        // Insert the form block
+        $content = sprintf(
+            '%s<form name="register" id="register" method="post" onsubmit="return validateCandidateRegistration()" '
+            . 'action="%s?m=careers&p=applyToJob&ID=%d">'
+            . '<input type="hidden" name="applyToJobSubAction" value="processLogin" />',
+            $js,
+            CATSUtility::getIndexName(),
+            $jobID
+        ) . $content . '<script>enableFormFields(false); ' . ($js != '' ? 'populateSavedFields();' : '')
+        . '</script></form>';
+
+        $template['Content'] = $content;
+        
+         $indexName = CATSUtility::getIndexName();
+        foreach ($template as $index => $data)
+        {
+            $template[$index] = str_replace('<a-LinkMain>',   '<a href="'.$indexName.'?m=careers'.(isset($_GET['templateName']) ? '&templateName='.urlencode($_GET['templateName']) : '').'">', $template[$index]);
+            $template[$index] = str_replace('<a-LinkSearch>', '<a href="'.$indexName.'?m=careers'.(isset($_GET['templateName']) ? '&templateName='.urlencode($_GET['templateName']) : '').'&amp;p=search">', $template[$index]);
+            $template[$index] = str_replace('<a-ListAll>',    '<a href="'.$indexName.'?m=careers'.(isset($_GET['templateName']) ? '&templateName='.urlencode($_GET['templateName']) : '').'&amp;p=showAll">', $template[$index]);
+            $template[$index] = str_replace('<siteName>', $siteName, $template[$index]);
+            $template[$index] = str_replace('<numberOfOpenPositions>', count($rs), $template[$index]);
+
+            /* Hacks for loading from a nonstandard root directory. */
+            if (isset($careerPage) && $careerPage == true)
+            {
+                $template[$index] = str_replace('"images/', '"../images/', $template[$index]);
+                $template[$index] = str_replace('\'images/', '\'../images/', $template[$index]);
+                $template[$index] = str_replace('<rssURL>', '../rss/', $template[$index]);
+            }
+            else
+            {
+                $template[$index] = str_replace('<rssURL>', 'rss/', $template[$index]);
+            }
+        }
+
+        $this->_template->assign('template', $template);
+        $this->_template->assign('siteName', $siteName);
+
+        if (!eval(Hooks::get('CAREERS_PAGE_BOTTOM'))) return;
+
+        if ($careerPortalSettingsRS['useCATSTemplate'] != '')
+        {
+            $this->_template->display($careerPortalSettingsRS['useCATSTemplate']);
+        }
+        else
+        {
+            $this->_template->display('./modules/careers/candidateRegistration.php');
         }
     }
 
@@ -366,7 +515,7 @@ class CareersUI extends UserInterface
         }
         else if ($p == 'candidateRegistration' && $isRegistrationEnabled)
         {
-            $content = $template['Content - Candidate Registration'];
+            /*$content = $template['Content - Candidate Registration'];
 
             $jobID = intval($_GET['ID']);
             $jobOrderData = $jobOrders->get($jobID);
@@ -415,7 +564,7 @@ class CareersUI extends UserInterface
             ) . $content . '<script>enableFormFields(false); ' . ($js != '' ? 'populateSavedFields();' : '')
             . '</script></form>';
 
-            $template['Content'] = $content;
+            $template['Content'] = $content;*/
         }
         else if ($p == 'applyToJob' || isset($_POST[$id='applyToJobSubAction']) && $_POST[$id] != '')
         {
@@ -529,7 +678,7 @@ class CareersUI extends UserInterface
                 if (!strcmp($subAction, 'resumeParse'))
                 {
                     // Check if the resume contents need to be parsed (user clicked parse contents button)
-                    if (LicenseUtility::isParsingEnabled())
+                    /*if (LicenseUtility::isParsingEnabled())
                     {
                         $pu = new ParseUtility();
                         $fileName = isset($uploadFile) ? $uploadFile : '';
@@ -546,7 +695,7 @@ class CareersUI extends UserInterface
                             if (isset($res[$id='phone_number']) && $res[$id] != '' && $phone == '') $phone = $res[$id];
                             if (isset($res[$id='skills']) && $res[$id] != '' && $keySkills == '') $keySkills = $res[$id];
                         }
-                    }
+                    }*/
                 }
             }
 
@@ -973,7 +1122,7 @@ class CareersUI extends UserInterface
         }
         else
         {
-            $this->_template->display('./modules/careers/Blank.tpl');
+            $this->_template->display('./modules/careers/Blank.php');
         }
     }
 
@@ -1522,7 +1671,11 @@ class CareersUI extends UserInterface
 
         if (!empty($emailContents))
         {
-            $careerPortalSettings->sendEmail(
+            if(!$candidates->isLoaded())
+            {
+                $candidates->load($candidateID);
+            }
+            $candidates->sendEMail(
                 $automatedUser['userID'],
                 $email,
                 CAREERS_CANDIDATEAPPLY_SUBJECT,
@@ -1589,7 +1742,11 @@ class CareersUI extends UserInterface
 
         if (!empty($emailContents))
         {
-            $careerPortalSettings->sendEmail(
+            if(!$jobOrders->isLoaded())
+            {
+                $jobOrders->load($jobOrderID);
+            }
+            $jobOrders->sendEmail(
                 $automatedUser['userID'],
                 $jobOrderData['owner_email'],
                 CAREERS_OWNERAPPLY_SUBJECT,
@@ -1599,7 +1756,7 @@ class CareersUI extends UserInterface
 
             if ($jobOrderData['owner_email'] != $jobOrderData['recruiter_email'])
             {
-                $careerPortalSettings->sendEmail(
+                $jobOrders->sendEmail(
                     $automatedUser['userID'],
                     $jobOrderData['recruiter_email'],
                     CAREERS_OWNERAPPLY_SUBJECT,
@@ -1753,7 +1910,7 @@ class CareersUI extends UserInterface
         // Check if there's a cookie to prefill the fields with
         if (isset($_COOKIE[$id=$this->getCareerPortalCookieName($siteID)]))
         {
-            if (preg_match_all('/\\\"([^\"]+)\\\"\=\\\"([^\"]*)\\\"/', $_COOKIE[$id], $matches) > 0)
+            if (preg_match_all('/"([^"]+)"="([^"]+)"/', $_COOKIE[$id], $matches) > 0)
             {
                 for ($i = 0; $i < count($matches[1]); $i++)
                 {

@@ -82,12 +82,21 @@ class ReportsUI extends UserInterface
             case 'generateEEOReportPreview':
                 $this->generateEEOReportPreview();
                 break;
+            
+            case 'builder':
+                $this->builder();
+                break;
 
             case 'reports':
             default:
                 $this->reports();
                 break;
         }
+    }
+    
+    public function builder()
+    {
+        
     }
 
     public function reports()
@@ -165,7 +174,7 @@ class ReportsUI extends UserInterface
 
         $this->_template->assign('active', $this);
         $this->_template->assign('statisticsData', $statisticsData);
-        $this->_template->display('./modules/reports/Reports.tpl');
+        $this->_template->display('./modules/reports/Reports.php');
     }
 
     public function graphView()
@@ -262,7 +271,7 @@ class ReportsUI extends UserInterface
 
         $this->_template->assign('reportTitle', $reportTitle);
         $this->_template->assign('submissionJobOrdersRS', $submissionJobOrdersRS);
-        $this->_template->display('./modules/reports/SubmissionReport.tpl');
+        $this->_template->display('./modules/reports/SubmissionReport.php');
     }
 
     public function showPlacementReport()
@@ -342,7 +351,7 @@ class ReportsUI extends UserInterface
 
         $this->_template->assign('reportTitle', $reportTitle);
         $this->_template->assign('placementsJobOrdersRS', $placementsJobOrdersRS);
-        $this->_template->display('./modules/reports/PlacedReport.tpl');
+        $this->_template->display('./modules/reports/PlacedReport.php');
     }
 
     public function customizeJobOrderReport()
@@ -394,7 +403,7 @@ class ReportsUI extends UserInterface
         $this->_template->assign('reportParameters', $reportParameters);
         $this->_template->assign('active', $this);
         $this->_template->assign('subActive', '');
-        $this->_template->display('./modules/reports/JobOrderReport.tpl');
+        $this->_template->display('./modules/reports/JobOrderReport.php');
     }
 
     public function customizeEEOReport()
@@ -403,7 +412,7 @@ class ReportsUI extends UserInterface
         $this->_template->assign('modeStatus', 'all');
         $this->_template->assign('active', $this);
         $this->_template->assign('subActive', '');
-        $this->_template->display('./modules/reports/EEOReport.tpl');
+        $this->_template->display('./modules/reports/EEOReport.php');
     }
 
     public function generateJobOrderReportPDF()
@@ -440,17 +449,17 @@ class ReportsUI extends UserInterface
 
         /* PDF Font Face. */
         // FIXME: Customizable.
-        $fontFace = 'Arial';
-
-        $pdf = new FPDF();
+        $fontFace = 'helvetica';
+        $pdf=new \TCPDF();
+        //$pdf = new FPDF();
         $pdf->AddPage();
 
         if (!eval(Hooks::get('REPORTS_CUSTOMIZE_JO_REPORT_PRE'))) return;
-
+        $pdf->SetFont($fontFace, 'B', 10);
         if ($isASP && $unixName == 'cognizo')
         {
             /* TODO: MAKE THIS CUSTOMIZABLE FOR EVERYONE. */
-            $pdf->SetFont($fontFace, 'B', 10);
+            
             $pdf->Image('images/cognizo-logo.jpg', 130, 10, 59, 20);
             $pdf->SetXY(129,27);
             $pdf->Write(5, 'Information Technology Consulting');
@@ -718,7 +727,7 @@ class ReportsUI extends UserInterface
         $this->_template->assign('EEOSettingsRS', $EEOSettingsRS);
         $this->_template->assign('active', $this);
         $this->_template->assign('subActive', '');
-        $this->_template->display('./modules/reports/EEOReport.tpl');
+        $this->_template->display('./modules/reports/EEOReport.php');
     }
 }
 

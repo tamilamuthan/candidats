@@ -77,6 +77,65 @@ function toggleChecksAll()
     }
 }
 
+function addToProject()
+{
+    var projectid=jQuery("#projectid").val();
+    if(projectid=="")
+    {
+        addToProjectSelected();
+    }
+    else
+    {
+        updateToProjectSelected();
+    }
+}
+
+function addToProjectSelected()
+{
+    var arrCheck=jQuery("table.sortable").find("input:checked");
+    if(arrCheck.size()>0)
+    {
+        var project=null;
+        if(project=prompt("Project Name"))
+        {
+            //var modname=jQuery("#moduleName").val();
+            jQuery(document.selectedObjects).find("input[name=m]",0).val("projects");
+            jQuery("<input type='hidden' name='project' />").appendTo(jQuery(document.selectedObjects)).val(project);
+            jQuery("<input type='hidden' name='a' />").appendTo(jQuery(document.selectedObjects)).val("addJobordersToPoject");
+            var updateSearchMode=jQuery('#searchMode').val();
+            jQuery("<input type='hidden' name='mode' />").appendTo(jQuery(document.selectedObjects)).val(updateSearchMode);
+            var updateSearchText=jQuery('#searchText').val();
+            jQuery("<input type='hidden' name='wildCardString' />").appendTo(jQuery(document.selectedObjects)).val(updateSearchText);
+            document.selectedObjects.submit();
+        }
+    }
+    else
+    {
+        alert("No item selected.");
+    }
+}
+
+function updateToProjectSelected()
+{
+    var arrCheck=jQuery("table.sortable").find("input:checked");
+    if(arrCheck.size()>0)
+    {
+        //var modname=jQuery("#moduleName").val();
+        jQuery(document.selectedObjects).find("input[name=m]",0).val("projects");
+        jQuery("<input type='hidden' name='projectid' />").appendTo(jQuery(document.selectedObjects)).val(jQuery("#projectid").val());
+        jQuery("<input type='hidden' name='a' />").appendTo(jQuery(document.selectedObjects)).val("updateJobordersToPoject");
+        var updateSearchMode=jQuery('#searchMode').val();
+        jQuery("<input type='hidden' name='mode' />").appendTo(jQuery(document.selectedObjects)).val(updateSearchMode);
+        var updateSearchText=jQuery('#searchText').val();
+        jQuery("<input type='hidden' name='wildCardString' />").appendTo(jQuery(document.selectedObjects)).val(updateSearchText);
+        document.selectedObjects.submit();
+    }
+    else
+    {
+        alert("No item selected.");
+    }
+}
+
 function deleteSelected()
 {
     var arrCheck=jQuery("table.sortable").find("input:checked");

@@ -34,10 +34,16 @@
  * $Id: ajax.php 3431 2007-11-06 21:10:12Z will $
  */
 
-
+include_once("debug.php");
 include_once('./config.php');
 include_once('./constants.php');
+include_once('./lib/vendor/autoload.php');
+Logger::configure('logger.xml');
+Logger::getLogger("AuieoATS")->info("Start....");
+if(!class_exists("ClsNaanalPDO"))include_once("./lib/ClsNaanalPDO.php");
+include_once("lib/ClsLInputValidator.php");
 include_once('./lib/DatabaseConnection.php');
+include_once("./lib/Modules.php");
 include_once('./lib/Session.php'); /* Depends: MRU, Users, DatabaseConnection. */
 include_once('./lib/AJAXInterface.php');
 include_once('./lib/CATSUtility.php');

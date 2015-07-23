@@ -31,7 +31,7 @@
  */
 
 include_once('./lib/CATSUtility.php');
-include_once('./lib/ParseUtility.php');
+//include_once('./lib/ParseUtility.php');
 
 define('LICENSE_VERSION', 1);
 define('LICENSE_CHUNK_SIZE', 9.0);
@@ -655,7 +655,7 @@ class LicenseUtility
         return $license->getExpirationDate();
     }
 
-    public static function validateProfessionalKey($key = '')
+    /*public static function validateProfessionalKey($key = '')
     {
         if (!CATSUtility::isSOAPEnabled()) return false;
 
@@ -683,7 +683,7 @@ class LicenseUtility
         {
             return true;
         }
-    }
+    }*/
 
     // FIXME: Document me!
     public static function isProfessional()
@@ -732,7 +732,7 @@ class LicenseUtility
 
     public static function getParsingStatus()
     {
-        $license = new License();
+        /*$license = new License();
 
         //if (!eval(Hooks::get('PARSER_ENABLE_CHECK'))) return;
         if (!defined('PARSING_ENABLED') || !PARSING_ENABLED)
@@ -744,11 +744,11 @@ class LicenseUtility
         $status = $pu->status(LICENSE_KEY);
 
         if (!$status || !is_array($status) || !count($status))
-        {
+        {*/
             return false;
-        }
+        /*}
 
-        return $status;
+        return $status;*/
     }
 }
 

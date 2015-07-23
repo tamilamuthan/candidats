@@ -296,7 +296,7 @@ class CalendarUI extends UserInterface
         $this->_template->assign('isCurrentMonth', $isCurrentMonth);
         $this->_template->assign('eventsString', $eventsString);
         $this->_template->assign('allowEventReminders', $allowEventReminders);
-        $this->_template->display('./modules/calendar/Calendar.tpl');
+        $this->_template->display('./modules/calendar/Calendar.php');
     }
 
     /*

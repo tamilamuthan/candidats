@@ -324,11 +324,15 @@ class Pager
         {
             echo '<span class="pagerPrevNext">&lt;&lt; Previous</span>', "\n";
         }
-
+        $bulk_resume_url="";
+        if(isset($_REQUEST["bulk_resume"]))
+        {
+            $bulk_resume_url="&amp;bulk_resume=1";
+        }
         /* Selection drop down menu JavaScript. */
         $javaScript = sprintf(
             'var pageList = document.getElementById(\'pageSelection%s\'); goToURL(\'%s?%s&amp;page=\''
-            . ' + pageList[pageList.selectedIndex].value + \'&amp;sortBy=%s&amp;sortDirection=%s\');',
+            . ' + pageList[pageList.selectedIndex].value + \'&amp;sortBy=%s'.$bulk_resume_url.'&amp;sortDirection=%s\');',
             $ID,
             $indexName,
             $this->_baseURL,

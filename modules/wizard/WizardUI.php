@@ -127,7 +127,7 @@ class WizardUI extends UserInterface
         $this->_template->assign('enablePrevious', $_SESSION['CATS_WIZARD']['curPage']==1 ? false : true);
         $this->_template->assign('enableNext', true);
 
-        $this->_template->display('./modules/wizard/Show.tpl');
+        $this->_template->display('./modules/wizard/Show.php');
     }
 
     public function ajax_getPage()

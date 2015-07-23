@@ -78,7 +78,8 @@ class CATSSession
     private $_dataGridColumnPreferences = array();
     private $_dataGridParameters = array();
     private $_isFirstTimeSetup = false;
-    private $_isAgreedToLicense = false;
+    private $_roleid=0;
+    //private $_isAgreedToLicense = false;
     private $_isLocalizationConfigured = false;
     private $_loggedInDirectory = '';
 
@@ -179,10 +180,10 @@ class CATSSession
         }
         
         /* Sanity check. */
-        if ($this->getUnixName() == '')
+        /*if ($this->getUnixName() == '')
         {
             return false;
-        }
+        }*/
         
         /* Forced logouts can only occur if Single Session mode is enabled. */
         if (!ENABLE_SINGLE_SESSION)
@@ -194,9 +195,7 @@ class CATSSession
          * account.
          */
         if ($this->isDemo() ||
-            $this->_accessLevel == ACCESS_LEVEL_READ ||
-            $this->_accessLevel >= ACCESS_LEVEL_ROOT ||
-            $this->_unixName == 'cognizo')
+            $this->_accessLevel == ACCESS_LEVEL_READ)
         {
             return false;
         }
@@ -279,10 +278,10 @@ class CATSSession
         return $this->_isFirstTimeSetup;
     }
 
-    public function isAgreedToLicense()
+    /*public function isAgreedToLicense()
     {
         return $this->_isAgreedToLicense;
-    }
+    }*/
 
     public function isLocalizationConfigured()
     {
@@ -637,6 +636,7 @@ class CATSSession
      */
     public function processLogin($username, $password, $addToHistory = true)
     {
+        Logger::getLogger("AuieoATS")->info("Login process start");
         $db = DatabaseConnection::getInstance();
 
         /* Is the login information supplied correct? Get the status flag. */
@@ -672,6 +672,7 @@ class CATSSession
                 user.pipeline_entries_per_page AS pipelineEntriesPerPage,
                 user.column_preferences as columnPreferences,
                 user.can_see_eeo_info as canSeeEEOInfo,
+                user.roleid,
                 site.name AS siteName,
                 site.unix_name AS unixName,
                 site.user_licenses AS userLicenses,
@@ -811,7 +812,7 @@ class CATSSession
                 $this->_canSeeEEOInfo          = ($rs['canSeeEEOInfo'] == 0 ? false : true);
                 $this->_pipelineEntriesPerPage = $rs['pipelineEntriesPerPage'];
                 $this->_loggedInScript         = CATSUtility::getDirectoryName(); 
-
+                $this->_roleid                  = $rs["roleid"];
                 /* SA's can always see EEO Info. */
                 if ($this->_accessLevel >= ACCESS_LEVEL_SA)
                 {
@@ -901,9 +902,28 @@ class CATSSession
                     $this->_siteID
                 );
                 $rs = $db->query($sql);
-
+                
+                /**
+                 * insert Administrator to newly created site.
+                 */
+                $sql = "SELECT * FROM auieo_roles where site_id={$this->_siteID}";
+                $rec=$db->getAssoc($sql);
+                if(!$rec)
+                {
+                    $sql="INSERT INTO `auieo_roles` (`rolename`, `site_id`, `date_created`, `parentid`) VALUES ('AUIEO_ROOT', '{$this->_siteID}', '0000-00-00 00:00:00.000000', '0');";
+                    $db->query($sql);
+                    $sql="INSERT INTO `auieo_roles` (`rolename`, `site_id`, `date_created`, `parentid`) VALUES ('Administrator', '{$this->_siteID}', '0000-00-00 00:00:00.000000', '1');";
+                    $db->query($sql);
+                    $roleid=$db->getLastInsertID();
+                    if($this->_accessLevel==500 && $this->_roleid<=0)
+                    {
+                        $sql="update user set roleid={$roleid} where user_id={$this->_userID}";
+                        $db->query($sql);
+                    }
+                }
                 break;
         }
+        Logger::getLogger("AuieoATS")->info("Login process end");
     }
 
     /**

@@ -49,7 +49,7 @@ if (file_exists(dirname(__FILE__) . "/trace.html")) {
     file_put_contents(dirname(__FILE__) . "/trace.html", "");
 }
 
-function getUserIP() {
+/*$getUserIP=function() {
     if (!empty($_SERVER['HTTP_CLIENT_IP']))
         $ip = $_SERVER['HTTP_CLIENT_IP'];
     else if (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
@@ -57,7 +57,7 @@ function getUserIP() {
     else
         $ip = $_SERVER['REMOTE_ADDR'];
     return $ip;
-}
+};*/
 
 function errorCount($errCode = false, $isReturn = true) {
     static $__arrErrorCode = array();
@@ -135,14 +135,14 @@ function traceToFile($message, $num = null, $isLog = false, $showTrace = true, $
     ob_start();
     traceDirect($message, $num, $isLog, $showTrace, $fileName, $isAppend);
     $out=ob_get_clean();
-    file_put_contents($fileName, $out); 
+    file_put_contents($fileName, $out, FILE_APPEND); 
 }
 
 function traceDirect($message, $num = null, $isLog = false, $showTrace = true, $fileName = false, $isAppend = false, $context = array()) {
     return trace($message, $num, $isLog, $showTrace, $fileName, $isAppend, $context,true);
 }
 
-function trace($message, $num = null, $isLog = false, $showTrace = true, $fileName = false, $isAppend = false, $context = array(),$forceShowError=false,$arrIgnore=array()) {
+function trace($message="", $num = null, $isLog = false, $showTrace = true, $fileName = false, $isAppend = false, $context = array(),$forceShowError=false,$arrIgnore=array()) {
     global $debugToFile, $errorTraceFolder;
     static $count = null;
     if($arrIgnore)
@@ -155,7 +155,7 @@ function trace($message, $num = null, $isLog = false, $showTrace = true, $fileNa
     }
 
     $developerIP = defined("DEVELOPER_IP") ? DEVELOPER_IP : "";
-    
+    if(!isset($message)) $message="";
     $isDebugValid = false;
     if(file_exists(realpath(".")."/trace.ini"))
     {
@@ -207,10 +207,9 @@ function trace($message, $num = null, $isLog = false, $showTrace = true, $fileNa
         $width = "100%";
     }
     if(!file_exists("tmp/phptrace")) mkdir("tmp/phptrace", 0777, true);
-    $debug = ' <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-            <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
-  <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
-  <script type="text/javascript">
+    $debug = '<script type="text/javascript" src="js/jquery/jquery.js"></script>
+            <link href="js/jquery/jqueryui.css" rel="stylesheet" type="text/css"/>;
+  <script src="js/jquery/jqueryui.js"></script><script>
   $(document).ready(function() {
     $("#accordion").accordion({ heightStyle: "content" });
   });
@@ -275,7 +274,6 @@ function trace($message, $num = null, $isLog = false, $showTrace = true, $fileNa
             if(isset($_REQUEST) && !empty($_REQUEST)) ksort($_REQUEST);
             $context["_REQUEST"] = $_REQUEST;
             if(isset($_SESSION) && !empty($_SESSION))ksort($_SESSION);
-            $context["_SESSION"] = $_SESSION;
             krsort($context);
             foreach ($context as $variable => $vvalue) {
                 $details = '<a href="#" onclick="showDialog(\'' . $variable . '\')">' . $variable . "</a>, " . $details;
@@ -421,6 +419,7 @@ $errIgnoreCode=array(2);
 if(function_exists("phptrace_ignore_code"))
 {
     $arrNewIgnoreCode=phptrace_ignore_code();
+    if($arrNewIgnoreCode)
     foreach($arrNewIgnoreCode as $code)
     {
         $errIgnoreCode[]=$code;
@@ -483,26 +482,28 @@ if(function_exists("phptrace_ignore_code"))
         trace($code . ": " . $message . "<br /> File:" . $file . ", Line:" . $line, null, false, true, false, false, $context);
     }
 }
-
-if (isset($disableAutoTrace))
+if(defined("DEVELOPER_MODE") && DEVELOPER_MODE==true)
 {
-}
-else 
-{
-    if(!isset($error_handler))
+    if (isset($disableAutoTrace))
     {
-        $error_handler="error_handler";
     }
-    if($error_handler!==false) set_error_handler($error_handler);
-    if(!isset($exception_handler))
+    else 
     {
-        $exception_handler="exception_handler";
+        if(!isset($error_handler))
+        {
+            $error_handler="error_handler";
+        }
+        if($error_handler!==false) set_error_handler($error_handler);
+        if(!isset($exception_handler))
+        {
+            $exception_handler="exception_handler";
+        }
+        if($exception_handler!==false) set_exception_handler($exception_handler);
+        if(!isset($fatal_shutdown_handler))
+        {
+            $fatal_shutdown_handler="fatalErrorShutdownHandler";
+        }
+        register_shutdown_function($fatal_shutdown_handler);
     }
-    if($exception_handler!==false) set_exception_handler($exception_handler);
-    if(!isset($fatal_shutdown_handler))
-    {
-        $fatal_shutdown_handler="fatalErrorShutdownHandler";
-    }
-    register_shutdown_function($fatal_shutdown_handler);
 }
 ?>

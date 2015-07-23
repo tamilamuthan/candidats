@@ -3,6 +3,8 @@
 <?php
     include_once('constants.php');
     include_once('config.php');
+    if(!class_exists("ClsNaanalPDO"))include_once("./lib/ClsNaanalPDO.php");
+    include_once("./lib/Modules.php");
 
     /* We aren't using any TemplateUtility methods that require us to pull in
      * any of its dependencies.
@@ -176,6 +178,7 @@
                                                     </td>
                                                 </tr>
                                             </table>
+                                            (Default Inbuilt PDF converter is more efficient than PDFToText Executable)
                                             <br />
                                             <hr />
                                             <input type="checkbox" id="htmlEnabled" checked onclick="if (this.checked) { document.getElementById('htmlExecutable').disabled = false; document.getElementById('htmlExecutable').value = document.getElementById('htmlExecutableOrg').value; } else { document.getElementById('htmlExecutable').disabled = true; document.getElementById('htmlExecutable').value = ''; }">

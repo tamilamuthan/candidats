@@ -1,3 +1,29 @@
+Changed made in Beta
 1) DocX support added
 2) Inbuilt Doc parser added. Even though less efficient than antiword, it will be useful for get away from antiword dependency.
 3) Delete password popup removed 
+
+Changes made in RC1
+1) PDF converter added
+2) Site Management Feature added
+3) Transfer and Copy the Candidated to another site added
+4) Transfer Company record to another site added
+5) PDO support added
+
+Changes made in RC2
+1) Site managent improved
+2) EMail template improved
+3) Show EMails under relevent modules
+4) Basic theme support added. Currently default theme only supported
+
+Changes made in minor versions after 1.3.3 RC2
+1) Bugs fixed
+2) Career portal improved
+
+Changes made in 2.0.0 Beta
+1) Bugs fixed
+2) Implemented enable or disable Developer Mode - Default is disable
+3) Roles, Permission, Group and SharingAccess added
+4) Removed all mysql extension dependency
+5) Migration issue resolved
+6) Issue related to case sensistive files cleared(Issue in linux only)

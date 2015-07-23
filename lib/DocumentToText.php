@@ -109,7 +109,7 @@ class DocumentToText
         /* Find the absolute path to the filename and escape it for use in a
          * system command.
          */
-        $escapedFilename = escapeshellarg(realpath($fileName));
+        //$escapedFilename = escapeshellarg(realpath($fileName));
         $nativeEncoding="";
         $command = false;
         /* Use different methods to extract text depending on the type of document. */
@@ -118,6 +118,7 @@ class DocumentToText
             case DOCUMENT_TYPE_DOC:
                 if (ANTIWORD_PATH != '')
                 {
+                    $escapedFilename = escapeshellarg(realpath($fileName));
                     $nativeEncoding = 'ISO-8859-1';
                     $command = '"'. ANTIWORD_PATH . '" -m ' . ANTIWORD_MAP . ' '
                         . $escapedFilename;
@@ -128,6 +129,7 @@ class DocumentToText
             case DOCUMENT_TYPE_PDF:
                 if (PDFTOTEXT_PATH != '')
                 {
+                    $escapedFilename = escapeshellarg(realpath($fileName));
                     $nativeEncoding = 'ISO-8859-1';
                     $convertEncoding = false;
                     $command = '"'. PDFTOTEXT_PATH . '" -layout ' . $escapedFilename . ' -';
@@ -137,6 +139,7 @@ class DocumentToText
             case DOCUMENT_TYPE_HTML:
                 if (HTML2TEXT_PATH != '')
                 {
+                    $escapedFilename = escapeshellarg(realpath($fileName));
                     $nativeEncoding = 'ISO-8859-1';
                     $convertEncoding = false;
 
@@ -166,7 +169,7 @@ class DocumentToText
                     $this->_setError('The RTF format has not been configured.');
                     return false;
                 }
-
+                $escapedFilename = escapeshellarg(realpath($fileName));
                 $nativeEncoding = 'ISO-8859-1';
                 $convertEncoding = false;
                 $command = '"'. UNRTF_PATH . '" '.$escapedFilename.' | "'. HTML2TEXT_PATH . '" -nobs ';

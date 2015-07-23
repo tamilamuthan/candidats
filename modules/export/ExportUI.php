@@ -123,7 +123,7 @@ class ExportUI extends UserInterface
         header('Content-Length: ' . strlen($output));
         header('Connection: close');
         header('Content-Type: text/x-csv; name=' . $filename);
-        echo $output;
+        echo $output;exit;
     }
 
     /**

@@ -292,6 +292,9 @@ if (!eval(Hooks::get('JO_AJAX_GET_PIPELINE'))) return;
                             <img src="images/actions/delete.gif" width="16" height="16" class="absmiddle" alt="remove" style="border: none;" title="Remove from Pipeline"  />
                         </a>
                     <?php endif; ?>
+                        <a href="<?php echo($indexFile); ?>?m=candidates&amp;a=emailCandidateJoborder&amp;idlist=<?php echo($pipelinesData['candidateID']); ?>&amp;jobOrderID=<?php echo($jobOrderID); ?>&amp;candidateID=<?php echo($pipelinesData['candidateID']); ?>">
+                        EMail
+                    </a> 
                 <?php endif; ?>
             </td>
 <?php endif; ?>

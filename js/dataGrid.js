@@ -367,8 +367,14 @@ function updateMove()
 function setTableWidth(tableID, tableWidth, objectOverrideCell,
     objectOverrideDiv, minimumTableWidth, objectTableResizing)
 {
-    document.getElementById(tableID).style.width = tableWidth + 'px';
-    
+    if(tableWidth=="100%")
+    {
+        document.getElementById(tableID).style.width = tableWidth;
+    }
+    else
+    {
+        document.getElementById(tableID).style.width = tableWidth + 'px';
+    }
     _objectTableResizing = document.getElementById(tableID);
     _minimumTableWidth = minimumTableWidth;
     _objectOverrideCell = objectOverrideCell;

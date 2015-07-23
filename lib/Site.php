@@ -53,7 +53,7 @@ class Site
      * @param string new site name
      * @return boolean True if successful; false otherwise.
      */
-    public function add($unixName,$siteName,$isDemo=0)
+    public function add($unixName,$siteName,$isDemo=0,$modelSite=false)
     {
         $sql = sprintf(
             "INSERT INTO
@@ -74,6 +74,11 @@ class Site
         
         $siteCreated=(boolean) $this->_db->query($sql);
         $siteID=$this->_db->getLastInsertID();
+        
+        $date_created=date("Y-m-d H:i:s");
+        $sql="insert into extra_field_settings (field_name,site_id,date_created,data_item_type,extra_field_type,extra_field_options,position) (select field_name,{$siteID},'{$date_created}',data_item_type,extra_field_type,extra_field_options,position from extra_field_settings where site_id={$modelSite})";
+        $this->_db->query($sql);
+        
         $objUser=new Users($siteID);
         $objUser->add("Administrator", "CandidATS", "", "admin", "candidats", 500);
 
@@ -186,8 +191,7 @@ class Site
     
     public function getAll()
     {
-        $sql = sprintf(
-            "SELECT
+        $sql =  "SELECT
                 site_id AS siteID,
                 name AS name,
                 unix_name AS unix_name,
@@ -199,10 +203,7 @@ class Site
             FROM
                 site
             WHERE
-                account_deleted = 0",
-            $this->_siteID
-        );
-
+                account_deleted = 0";
         return $this->_db->getAllAssoc($sql);
     }
     

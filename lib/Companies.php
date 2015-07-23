@@ -69,6 +69,27 @@ class Companies extends Modules
         $this->extraFields = new ExtraFields($siteID, DATA_ITEM_COMPANY);
     }
 
+    public function __get($var)
+    {
+        if(strpos($var, "EXTRA_")===0)
+        {
+            $arrVar=explode("EXTRA_",$var);
+            $var=$arrVar[1];
+            return isset($this->extraRecord[$var])?$this->extraRecord[$var]:"";
+        }
+        else if(isset($this->$var))
+        {
+            return $this->$var;
+        }
+        else if (isset($this->record[$var]))
+        {
+            return $this->record[$var];
+        }
+        else
+        {
+            return ""; 
+        }
+    }
 
     /**
      * Adds a company to the database and returns its company ID.
@@ -92,6 +113,12 @@ class Companies extends Modules
                         $phone2, $faxNumber, $url, $keyTechnologies, $isHot,
                         $notes, $enteredBy, $owner)
     {
+        $record=  get_defined_vars();
+        $hook=_AuieoHook("companies_insert_before");
+        if($hook)
+        {
+            $hook($record);
+        }
         $sql = sprintf(
             "INSERT INTO company (
                 name,
@@ -155,7 +182,12 @@ class Companies extends Modules
         }
 
         $companyID = $this->_db->getLastInsertID();
-
+        $hook=_AuieoHook("companies_insert_after");
+        if($hook)
+        {
+            $record["id"]=$companyID;
+            $hook($record);
+        }
         $history = new History($this->_siteID);
         $history->storeHistoryNew(DATA_ITEM_COMPANY, $companyID);
 
@@ -184,8 +216,14 @@ class Companies extends Modules
     public function update($companyID, $name, $address, $city, $state,
                            $zip, $phone1, $phone2, $faxNumber, $url,
                            $keyTechnologies, $isHot, $notes, $owner,
-                           $billingContact, $email, $emailAddress)
+                           $billingContact, $email, $emailAddress,$ownertype=0)
     {
+        $record=get_defined_vars();
+        $hook=_AuieoHook("companies_update_before");
+        if($hook)
+        {
+            $hook($record);
+        }
         $sql = sprintf(
             "UPDATE
                 company
@@ -204,6 +242,7 @@ class Companies extends Modules
                 notes            = %s,
                 billing_contact  = %s,
                 owner            = %s,
+                ownertype        = %s,
                 date_modified    = NOW()
             WHERE
                 company_id = %s
@@ -223,6 +262,7 @@ class Companies extends Modules
             $this->_db->makeQueryString($notes),
             $this->_db->makeQueryInteger($billingContact),
             $this->_db->makeQueryInteger($owner),
+            $this->_db->makeQueryInteger($ownertype),
             $this->_db->makeQueryInteger($companyID),
             $this->_siteID
         );
@@ -235,7 +275,12 @@ class Companies extends Modules
         {
             return false;
         }
-
+        $hook=_AuieoHook("companies_update_after");
+        if($hook)
+        {
+            $record["id"]=$companyID;
+            $hook($record);
+        }
         $history = new History($this->_siteID);
         $history->storeHistoryChanges(DATA_ITEM_COMPANY, $companyID, $preHistory, $postHistory);
 
@@ -243,13 +288,16 @@ class Companies extends Modules
         {
             /* Send e-mail notification. */
             //FIXME: Make subject configurable.
-            $mailer = new Mailer($this->_siteID);
+            $objUser=new Users($this->_siteID);
+            $objUser->load($owner);
+            $objUser->sendEMail('CATS Notification: Company Ownership Change', $email);
+            /*$mailer = new Mailer($this->_siteID);
             $mailerStatus = $mailer->sendToOne(
                 array($emailAddress, ''),
                 'CATS Notification: Company Ownership Change',
                 $email,
                 true
-            );
+            );*/
         }
 
         return true;
@@ -354,6 +402,53 @@ class Companies extends Modules
         /* Delete extra fields. */
         $this->extraFields->deleteValueByDataItemID($companyID);
     }
+    
+    public function load($companyID)
+    {
+        $sql = sprintf(
+            "SELECT
+                company.company_id,
+                company.owner,
+                company.name,
+                company.is_hot,
+                company.address,
+                company.city,
+                company.state,
+                company.zip,
+                company.phone1,
+                company.phone2,
+                company.fax_number,
+                company.url,
+                company.key_technologies,
+                company.notes,
+                company.default_company,
+                billing_contact.contact_id,
+                owner_user.email AS owner_email
+            FROM
+                company
+            LEFT JOIN user AS entered_by_user
+                ON company.entered_by = entered_by_user.user_id
+            LEFT JOIN user AS owner_user
+                ON company.owner = owner_user.user_id
+            LEFT JOIN contact AS billing_contact
+                ON company.billing_contact = billing_contact.contact_id
+            WHERE
+                company.company_id = %s
+            AND
+                company.site_id = %s",
+            $this->_db->makeQueryInteger($companyID),
+            $this->_siteID
+        );
+
+        $this->record = $this->_db->getAssoc($sql);
+        $sql="select * from extra_field where data_item_type=200 and data_item_id='{$companyID}'";
+        $arrAssoc = $this->_db->getAllAssoc($sql);
+        $this->extraRecord=array();
+        foreach($arrAssoc as $ind=>$row)
+        {
+            $this->extraRecord[$row["field_name"]]=$row["value"];
+        }
+    }
 
     /**
      * Returns all relevent company information for a given company ID.
@@ -365,21 +460,27 @@ class Companies extends Modules
     {
         $sql = sprintf(
             "SELECT
-                company.company_id AS companyID,
-                company.owner AS owner,
-                company.name AS name,
-                company.is_hot AS isHot,
-                company.address AS address,
-                company.city AS city,
-                company.state AS state,
-                company.zip AS zip,
-                company.phone1 AS phone1,
-                company.phone2 AS phone2,
-                company.fax_number AS faxNumber,
-                company.url AS url,
-                company.key_technologies AS keyTechnologies,
-                company.notes AS notes,
-                company.default_company AS defaultCompany,
+                company.company_id,
+                company.owner,
+                company.ownertype,
+                company.name,
+                company.is_hot,
+                company.address,
+                company.city,
+                company.state,
+                company.zip,
+                company.phone1,
+                company.phone2,
+                company.fax_number,
+                company.url,
+                company.key_technologies,
+                company.notes,
+                company.default_company,
+                company.billing_contact,
+                company.entered_by,
+                company.date_created,
+                company.date_modified,
+                company.import_id,
                 billing_contact.contact_id AS billingContact,
                 CONCAT(
                     billing_contact.first_name, ' ', billing_contact.last_name
@@ -424,21 +525,26 @@ class Companies extends Modules
     {
         $sql = sprintf(
             "SELECT
-                company.company_id AS companyID,
-                company.owner AS owner,
-                company.name AS name,
-                company.is_hot AS isHot,
-                company.address AS address,
-                company.city AS city,
-                company.state AS state,
-                company.zip AS zip,
-                company.phone1 AS phone1,
-                company.phone2 AS phone2,
-                company.fax_number AS faxNumber,
-                company.url AS url,
-                company.key_technologies AS keyTechnologies,
-                company.notes AS notes,
-                company.default_company AS defaultCompany,
+                company.company_id,
+                company.owner,
+                company.ownertype,
+                company.name,
+                company.is_hot,
+                company.address,
+                company.city,
+                company.state,
+                company.zip,
+                company.phone1,
+                company.phone2,
+                company.fax_number,
+                company.url,
+                company.key_technologies,
+                company.notes,
+                company.default_company,
+                company.entered_by,
+                company.date_created,
+                company.date_modified,
+                company.import_id,
                 billing_contact.contact_id AS billingContact
             FROM
                 company
@@ -856,7 +962,7 @@ class CompaniesDataGrid extends DataGrid
                                      'pagerWidth'   => 80,
                                      'filter'         => 'company.url'),
 
-            'Owner' =>         array('select'   => 'owner_user.first_name AS ownerFirstName,' .
+            /*'Owner' =>         array('select'   => 'owner_user.first_name AS ownerFirstName,' .
                                                    'owner_user.last_name AS ownerLastName,' .
                                                    'CONCAT(owner_user.last_name, owner_user.first_name) AS ownerSort',
                                      'pagerRender'      => 'return StringUtility::makeInitialName($rsData[\'ownerFirstName\'], $rsData[\'ownerLastName\'], false, LAST_NAME_MAXLEN);',
@@ -864,7 +970,7 @@ class CompaniesDataGrid extends DataGrid
                                      'sortableColumn'     => 'ownerSort',
                                      'pagerWidth'    => 75,
                                      'alphaNavigation' => true,
-                                     'filter'         => 'CONCAT(owner_user.first_name, owner_user.last_name)'),
+                                     'filter'         => 'CONCAT(owner_user.first_name, owner_user.last_name)'),*/
 
             'Contact' =>       array('select'   => 'contact.first_name AS contactFirstName,' .
                                                    'contact.last_name AS contactLastName,' .

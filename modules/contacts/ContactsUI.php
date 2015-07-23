@@ -40,6 +40,7 @@ include_once('./lib/Calendar.php');
 include_once('./lib/CommonErrors.php');
 include_once('./lib/Search.php');
 include_once('./lib/VCard.php');
+include_once('./lib/ContactTemplate.php');
 
 class ContactsUI extends UserInterface
 {
@@ -184,14 +185,25 @@ class ContactsUI extends UserInterface
         $this->_template->assign('active', $this);
         $this->_template->assign('dataGrid', $dataGrid);
         $this->_template->assign('userID', $_SESSION['CATS']->getUserID());
+        
         $this->_template->assign('errMessage', $errMessage);
 
-        $contacts = new Contacts($this->_siteID);
+        $contacts = new Contacts($this->_siteID);//trace($contacts);
         $this->_template->assign('totalContacts', $contacts->getCount());
 
         if (!eval(Hooks::get('CONTACTS_LIST_BY_VIEW'))) return;
-
-        $this->_template->display('./modules/contacts/Contacts.tpl');
+        if($errMessage != '')
+        {
+            $this->_template->display('./modules/contacts/ErrorMessage.php');
+        }
+        else if($contacts->getCount()>0)
+        {
+            $this->_template->display('./modules/contacts/Contacts.php');
+        }
+        else
+        {
+            $this->_template->display('./modules/contacts/NoRecord.php');
+        }
     }
 
     /*
@@ -244,9 +256,21 @@ class ContactsUI extends UserInterface
             $data['shortNotes'] = $data['notes'];
             $isShortNotes = false;
         }
-
+        /**
+         * if ownertype is group, override the user full name
+         */
+        if($data['ownertype']>0)
+        {
+            $sql="select * from auieo_groups where id={$data['owner']}";
+            $objDB=DatabaseConnection::getInstance();
+            $row=$objDB->getAssoc($sql);
+            if($row)
+            {
+                $data["ownerFullName"]=$row["groupname"];
+            }
+        }
         /* Hot contacts [can] have different title styles than normal contacts. */
-        if ($data['isHotContact'] == 1)
+        if ($data['is_hot'] == 1)
         {
             $data['titleClassContact'] = 'jobTitleHot';
         }
@@ -305,6 +329,11 @@ class ContactsUI extends UserInterface
                 );
             }
         }
+        
+        $emailList=array();
+        $sql="select * from email_history where for_id={$contactID} and for_module='contacts'";
+        $db = DatabaseConnection::getInstance();
+        $emailList=$db->getAllAssoc($sql);
 
         $activityEntries = new ActivityEntries($this->_siteID);
         $activityRS = $activityEntries->getAllByDataItem($contactID, DATA_ITEM_CONTACT);
@@ -349,7 +378,7 @@ class ContactsUI extends UserInterface
 
         /* Add an MRU entry. */
         $_SESSION['CATS']->getMRU()->addEntry(
-            DATA_ITEM_CONTACT, $contactID, $data['firstName'] . ' ' . $data['lastName']
+            DATA_ITEM_CONTACT, $contactID, $data['first_name'] . ' ' . $data['last_name']
         );
 
         /* Get extra fields. */
@@ -373,12 +402,14 @@ class ContactsUI extends UserInterface
         $this->_template->assign('calendarRS', $calendarRS);
         $this->_template->assign('activityRS', $activityRS);
         $this->_template->assign('contactID', $contactID);
+        $this->_template->assign('email_list', $emailList);
         $this->_template->assign('privledgedUser', $privledgedUser);
         $this->_template->assign('sessionCookie', $_SESSION['CATS']->getCookie());
+        $arrTpl["email_list"]=$emailList;
 
         if (!eval(Hooks::get('CONTACTS_SHOW'))) return;
 
-        $this->_template->display('./modules/contacts/Show.tpl');
+        $this->_template->display('./modules/contacts/show.php');
     }
 
     /*
@@ -433,7 +464,7 @@ class ContactsUI extends UserInterface
         $this->_template->assign('reportsToRS', $reportsToRS);
         $this->_template->assign('selectedCompanyID', $selectedCompanyID);
         $this->_template->assign('sessionCookie', $_SESSION['CATS']->getCookie());
-        $this->_template->display('./modules/contacts/Add.tpl');
+        $this->_template->display('./modules/contacts/Add.php');
     }
 
     /*
@@ -584,17 +615,17 @@ class ContactsUI extends UserInterface
 
         $users = new Users($this->_siteID);
         $usersRS = $users->getSelectList();
-
+        $groupRS = $users->getSelectGroupList();
         /* Add an MRU entry. */
         $_SESSION['CATS']->getMRU()->addEntry(
-            DATA_ITEM_CONTACT, $contactID, $data['firstName'] . ' ' . $data['lastName']
+            DATA_ITEM_CONTACT, $contactID, $data['first_name'] . ' ' . $data['last_name']
         );
 
         /* Get extra fields. */
         $extraFieldRS = $contacts->extraFields->getValuesForEdit($contactID);
 
         /* Get departments. */
-        $departmentsRS = $companies->getDepartments($data['companyID']);
+        $departmentsRS = $companies->getDepartments($data['company_id']);
         $departmentsString = ListEditor::getStringFromList($departmentsRS, 'name');
 
         $emailTemplates = new EmailTemplates($this->_siteID);
@@ -611,7 +642,7 @@ class ContactsUI extends UserInterface
             $emailTemplateDisabled = false;
         }
 
-        $reportsToRS = $contacts->getAll(-1, $data['companyID']);
+        $reportsToRS = $contacts->getAll(-1, $data['company_id']);
 
         if ($this->_accessLevel == ACCESS_LEVEL_DEMO)
         {
@@ -646,10 +677,11 @@ class ContactsUI extends UserInterface
         $this->_template->assign('departmentsRS', $departmentsRS);
         $this->_template->assign('departmentsString', $departmentsString);
         $this->_template->assign('usersRS', $usersRS);
+        $this->_template->assign('groupRS', $groupRS);
         $this->_template->assign('reportsToRS', $reportsToRS);
         $this->_template->assign('contactID', $contactID);
         $this->_template->assign('sessionCookie', $_SESSION['CATS']->getCookie());
-        $this->_template->display('./modules/contacts/Edit.tpl');
+        $this->_template->display('./modules/contacts/Edit.php');
     }
 
     /*
@@ -674,15 +706,13 @@ class ContactsUI extends UserInterface
             CommonErrors::fatal(COMMONERROR_BADINDEX, $this, 'Invalid company ID.');
         }
 
-        /* Bail out if we don't have a valid owner user ID. */
-        if (!$this->isOptionalIDValid('owner', $_POST))
-        {
-            CommonErrors::fatal(COMMONERROR_BADINDEX, $this, 'Invalid owner user ID.');
-        }
-
         $contactID  = $_POST['contactID'];
         $companyID  = $_POST['companyID'];
         $owner      = $_POST['owner'];
+        
+        $arrOwner=explode(":",$_POST['owner']);
+        $owner       = isset($arrOwner[1])?trim($arrOwner[1]):0;
+        $ownertype   = trim($arrOwner[0]);
 
         $formattedPhoneWork = StringUtility::extractPhoneNumber(
             $this->getTrimmedInput('phoneWork', $_POST)
@@ -722,7 +752,7 @@ class ContactsUI extends UserInterface
 
         $contacts = new Contacts($this->_siteID);
 
-        if ($this->isChecked('ownershipChange', $_POST) && $owner > 0)
+        if ($this->isChecked('ownershipChange', $_POST) && $owner > 0 && $ownertype<=0)
         {
             $contactDetails = $contacts->get($contactID);
 
@@ -761,8 +791,8 @@ class ContactsUI extends UserInterface
                     $contactDetails['firstName'],
                     $contactDetails['firstName'] . ' ' . $contactDetails['lastName'],
                     $contactDetails['companyName'],
-                    '<a href="http://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '?')) . '?m=contacts&amp;a=show&amp;contactID=' . $contactID . '">'.
-                        'http://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '?')) . '?m=contacts&amp;a=show&amp;contactID=' . $contactID . '</a>'
+                    '<a href="http://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '?')) . '?m=contacts&a=show&contactID=' . $contactID . '">'.
+                        'http://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '?')) . '?m=contacts&a=show&contactID=' . $contactID . '</a>'
                 );
                 $statusChangeTemplate = str_replace(
                     $stringsToFind,
@@ -822,7 +852,8 @@ class ContactsUI extends UserInterface
         if (!$contacts->update($contactID, $companyID, $firstName, $lastName,
             $title, $department, $reportsTo, $email1, $email2, $phoneWork, $phoneCell,
             $phoneOther, $address, $city, $state, $zip, $isHot,
-            $leftCompany, $notes, $owner, $email, $emailAddress))
+            $leftCompany, $notes, $owner, $email, $emailAddress,
+            $ownertype))
         {
             CommonErrors::fatal(COMMONERROR_RECORDERROR, $this, 'Failed to update contact.');
         }
@@ -904,7 +935,7 @@ class ContactsUI extends UserInterface
         $this->_template->assign('wildCardCompanyName', '');
         $this->_template->assign('wildCardContactTitle', '');
         $this->_template->assign('mode', '');
-        $this->_template->display('./modules/contacts/Search.tpl');
+        $this->_template->display('./modules/contacts/Search.php');
     }
 
     /*
@@ -1076,7 +1107,7 @@ class ContactsUI extends UserInterface
         if (!eval(Hooks::get('CONTACTS_COLD_CALL_LIST'))) return;
 
         $this->_template->assign('rs', $rs);
-        $this->_template->display('./modules/contacts/ColdCallList.tpl');
+        $this->_template->display('./modules/contacts/ColdCallList.php');
     }
 
     //TODO: Document me.
@@ -1162,7 +1193,7 @@ class ContactsUI extends UserInterface
         $contact = $contacts->get($contactID);
 
         $companies = new Companies($this->_siteID);
-        $company = $companies->get($contact['companyID']);
+        $company = $companies->get($contact['company_id']);
 
         /* Bail out if we got an empty result set. */
         if (empty($contact))
@@ -1173,16 +1204,16 @@ class ContactsUI extends UserInterface
         /* Create a new vCard. */
         $vCard = new VCard();
 
-        $vCard->setName($contact['lastName'], $contact['firstName']);
+        $vCard->setName($contact['last_name'], $contact['first_name']);
 
-        if (!empty($contact['phoneWork']))
+        if (!empty($contact['phone_work']))
         {
-            $vCard->setPhoneNumber($contact['phoneWork'], 'PREF;WORK;VOICE');
+            $vCard->setPhoneNumber($contact['phone_work'], 'PREF;WORK;VOICE');
         }
 
-        if (!empty($contact['phoneCell']))
+        if (!empty($contact['phone_cell']))
         {
-            $vCard->setPhoneNumber($contact['phoneCell'], 'CELL;VOICE');
+            $vCard->setPhoneNumber($contact['phone_cell'], 'CELL;VOICE');
         }
 
         /* FIXME: Add fax to contacts and use setPhoneNumber('WORK;FAX') here */
@@ -1556,8 +1587,218 @@ class ContactsUI extends UserInterface
         $this->_template->assign('changesMade', $changesMade);
         $this->_template->assign('isFinishedMode', true);
         $this->_template->display(
-            './modules/contacts/AddActivityScheduleEventModal.tpl'
+            './modules/contacts/AddActivityScheduleEventModal.php'
         );
+    }
+    
+    public function emailContacts()
+    {
+        Logger::getLogger("AuieoATS")->info("emailContacts:start");
+        if ($this->_accessLevel == ACCESS_LEVEL_DEMO)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this, 'Sorry, but demo accounts are not allowed to send e-mails.');
+        }
+        
+        if(isset($_REQUEST["idlist"]))
+        {
+            $db = DatabaseConnection::getInstance();
+            $idlist=trim($_REQUEST["idlist"]);
+            $rs = $db->getAllAssoc(sprintf(
+                'SELECT contact_id, email1, email2 '
+                    . 'FROM contact '
+                    . 'WHERE contact_id IN (%s)',
+                $idlist
+            ));
+            $emailTemplates = new EmailTemplates($this->_siteID);
+            $emailTemplatesRS = $emailTemplates->getAll();
+            $this->_template->assign('emailTemplatesRS', $emailTemplatesRS);
+            $this->_template->assign('active', $this);
+            $this->_template->assign('success', false);
+            $this->_template->assign('recipients', $rs);
+            $this->_template->display('./modules/contacts/emailContacts.php');
+        }
+        else
+        {
+            $dataGrid = DataGrid::getFromRequest();
+
+            $contactIDs = $dataGrid->getExportIDs();
+
+            /* Validate each ID */
+            foreach ($contactIDs as $index => $contactID)
+            {
+                if (!$this->isRequiredIDValid($index, $contactIDs))
+                {
+                    Logger::getLogger("AuieoATS")->error("Invalid contact ID.");
+                    CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this, 'Invalid contact ID.');
+                    return;
+                }
+            }
+
+            $db_str = implode(", ", $contactIDs);
+
+            $db = DatabaseConnection::getInstance();
+
+            $rs = $db->getAllAssoc(sprintf(
+                'SELECT contact_id, email1, email2 '
+                    . 'FROM contact '
+                    . 'WHERE contact_id IN (%s)',
+                $db_str
+            ));
+
+            //$this->_template->assign('privledgedUser', $privledgedUser);
+            $emailTemplates = new EmailTemplates($this->_siteID);
+            $emailTemplatesRS = $emailTemplates->getAll();
+            $this->_template->assign('emailTemplatesRS', $emailTemplatesRS);
+            $this->_template->assign('active', $this);
+            $this->_template->assign('success', false);
+            $this->_template->assign('recipients', $rs);
+            $this->_template->display('./modules/contacts/emailContacts.php');
+        }
+        Logger::getLogger("AuieoATS")->info("emailContacts:end");
+    }
+    
+    private function renderTemplateVars($template,$contid)
+    {
+        $contacts=new ContactTemplate($this->_siteID);
+        $contacts->load($contid);
+        $template=  html_entity_decode($template);
+        try
+        {
+        ob_start();
+        $render="";
+        eval('echo <<< EOT
+'.$template.'
+EOT;
+');
+        $render = ob_get_clean();
+    }
+        catch(Exception $e)
+        {
+            trace($e);
+        }
+        return $render;
+    }
+    
+    /*
+     * Sends mass emails from the datagrid
+     */
+    public function onEmailContacts()
+    {
+        if ($this->_accessLevel == ACCESS_LEVEL_DEMO)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this, 'Sorry, but demo accounts are not allowed to send e-mails.');
+        }
+        Logger::getLogger("AuieoATS")->info("inside onEmailContacts");
+        //if (isset($_POST['postback']))
+        //{
+            $templateid = $_POST['titleSelect'];
+            
+            $emailTo = $_POST['emailTo'];
+            $emailSubject = $_POST['emailSubject'];
+            
+            $idlist=$_POST["idlist"];
+            $obj=json_decode(urldecode($idlist),true);
+            foreach($obj as $candid=>$details)
+            {
+                $emailBody = $_POST['emailBody'];
+                $emailData=array();
+                $emailData["id"]=$candid;
+                $emailData["email"]=array();
+                foreach($details["email"] as $emailind=>$data)
+                {
+                    //$objTemplate=new EmailTemplates($this->_siteID); 
+                    //$rowTemplate=$objTemplate->get($templateid);
+                    $emailBody=$this->renderTemplateVars($emailBody, $candid);
+
+                    $tmpDestination = $data["email"];
+                    $emailData["email"][]=array("email"=>$tmpDestination,"name"=>$tmpDestination);
+                    $mailer = new Mailer($this->_siteID);
+                    // FIXME: Use sendToOne()?
+                    $mailerStatus = $mailer->send(
+                        array($_SESSION['CATS']->getEmail(), $_SESSION['CATS']->getEmail()),
+                        $emailData,
+                        $emailSubject,
+                        $emailBody,
+                        true,
+                        true
+                    );
+                }
+            }
+
+            $this->_template->assign('active', $this);
+            $this->_template->assign('success_to', $emailTo);
+            if($mailer->getError())
+            {
+                $this->_template->assign('error', $mailer->getError());
+                $this->_template->display('./modules/contacts/emailFail.php');
+            }
+            else
+            {
+                $this->_template->assign('success', true);
+                $this->_template->display('./modules/contacts/emailSuccess.php');
+            }
+            return;
+        /*}
+        else
+        {
+            if(isset($_REQUEST["idlist"]))
+            {
+                $db = DatabaseConnection::getInstance();
+                $idlist=trim($_REQUEST["idlist"]);
+                $rs = $db->getAllAssoc(sprintf(
+                    'SELECT candidate_id, email1, email2, last_name, first_name '
+                    . 'FROM candidate '
+                    . 'WHERE candidate_id IN (%s)',
+                    $idlist
+                ));
+				
+                $emailTemplates = new EmailTemplates($this->_siteID);
+                $emailTemplatesRS = $emailTemplates->getAll();
+                $this->_template->assign('emailTemplatesRS', $emailTemplatesRS);
+                $this->_template->assign('active', $this);
+                $this->_template->assign('success', true);
+                $this->_template->assign('recipients', $rs);
+                $this->_template->display('./modules/candidates/emailCandidates.php');
+                return;
+            }
+            else
+            {
+                $dataGrid = DataGrid::getFromRequest();
+
+                $candidateIDs = $dataGrid->getExportIDs();
+
+                // Validate each ID
+                foreach ($candidateIDs as $index => $candidateID)
+                {
+                    if (!$this->isRequiredIDValid($index, $candidateIDs))
+                    {
+                        CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this, 'Invalid candidate ID.');
+                        return;
+                    }
+                }
+
+                $db_str = implode(", ", $candidateIDs);
+
+                $db = DatabaseConnection::getInstance();
+
+                $rs = $db->getAllAssoc(sprintf(
+                    'SELECT candidate_id, email1, email2, last_name, first_name '
+                    . 'FROM candidate '
+                    . 'WHERE candidate_id IN (%s)',
+                    $db_str
+                ));
+
+                if(!$mailerStatus)
+                {
+                    CommonErrors::fatal(COMMONERROR_EMAILFAILED, NULL, $mailer->getError());
+                }
+                $this->_template->assign('active', $this);
+                $this->_template->assign('success', true);
+                $this->_template->assign('success_to', $emailTo);
+                $this->_template->display('./modules/candidates/emailSuccess.php');
+
+            }
+        }*/
     }
 }
 

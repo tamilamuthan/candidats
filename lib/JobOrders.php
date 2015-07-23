@@ -76,9 +76,69 @@ class JobOrders extends Modules
         $this->_siteID = $siteID;
         $this->_db = DatabaseConnection::getInstance();
         $this->extraFields = new ExtraFields($siteID, DATA_ITEM_JOBORDER);
+        parent::__construct();
     }
 
+    public function __get($var)
+    {
+        if(strpos($var, "EXTRA_")===0)
+        {
+            $arrVar=explode("EXTRA_",$var);
+            $var=$arrVar[1];
+            return isset($this->extraRecord[$var])?$this->extraRecord[$var]:"";
+        }
+        else if(isset($this->$var))
+        {
+            return $this->$var;
+        }
+        else if (isset($this->record[$var]))
+        {
+            return $this->record[$var];
+        }
+        else
+        {
+            return null; 
+        }
+    }
 
+    // FIXME: Document me.
+    public function getExport($IDs)
+    {
+        if (count($IDs) != 0)
+        {
+            $IDsValidated = array();
+            
+            foreach ($IDs as $id)
+            {
+                $IDsValidated[] = $this->_db->makeQueryInteger($id);
+            }
+            
+            $criterion = 'AND '.$this->module_table.'.'.$this->module_id.' IN ('.implode(',', $IDsValidated).')';
+        }
+        else
+        {
+            $criterion = '';
+        }
+
+        $sql = sprintf(
+            "SELECT
+                joborder.joborder_id AS joborderID,
+                joborder.title AS Title,
+                joborder.city AS City,
+                joborder.state AS State
+            FROM
+                joborder
+            WHERE
+                joborder.site_id = %s
+                %s
+            ",
+            $this->_siteID,
+            $criterion
+        );
+
+        return $this->_db->getAllAssoc($sql);
+    }
+    
     /**
      * Adds a job order to the database and returns its job order ID.
      *
@@ -104,16 +164,26 @@ class JobOrders extends Modules
     public function add($title, $companyID, $contactID, $description, $notes,
         $duration, $maxRate, $type, $isHot, $public, $openings, $companyJobID,
         $salary, $city, $state, $startDate, $enteredBy, $recruiter, $owner,
-        $department, $questionnaire = false)
+        $department, $questionnaire = false,$candidate_mapping=false,$ownertype=0)
     {
+        if(!empty($candidate_mapping))
+        {
+            $candidate_mapping =  json_encode($candidate_mapping);
+        }
+        $record=  get_defined_vars();
         /* Get the department ID of the selected department. */
         // FIXME: Move this up to the UserInterface level. I don't like this
         //        tight coupling, and calling Contacts methods as static is
         //        bad.
-        $departmentID = Contacts::getDepartmentIDByName(
+        $objContacts=new Contacts($this->_siteID);
+        $departmentID = $objContacts->getDepartmentIDByName(
             $department, $companyID, $this->_db
         );
-
+        $hook=_AuieoHook("joborders_add_before");
+        if($hook)
+        {
+            $hook($record);
+        }
         // FIXME: Is the OrNULL usage below correct? Can these fields be NULL?
         $sql = sprintf(
             "INSERT INTO joborder (
@@ -138,10 +208,12 @@ class JobOrders extends Modules
                 entered_by,
                 recruiter,
                 owner,
+                ownertype,
                 site_id,
                 date_created,
                 date_modified,
-                questionnaire_id
+                questionnaire_id,
+                candidate_mapping
             )
             VALUES (
                 %s,
@@ -166,8 +238,10 @@ class JobOrders extends Modules
                 %s,
                 %s,
                 %s,
+                %s,
                 NOW(),
                 NOW(),
+                %s,
                 %s
             )",
             $this->_db->makeQueryString($title),
@@ -191,9 +265,12 @@ class JobOrders extends Modules
             $this->_db->makeQueryInteger($enteredBy),
             $this->_db->makeQueryInteger($recruiter),
             $this->_db->makeQueryInteger($owner),
+            $this->_db->makeQueryInteger($ownertype),
             $this->_siteID,
-            // Questionnaire ID or NULL if none
-            $questionnaire !== false ? $this->_db->makeQueryInteger($questionnaire) : 'NULL'
+            /// Questionnaire ID or NULL if none
+            $questionnaire !== false ? $this->_db->makeQueryInteger($questionnaire) : 'NULL',
+            /// $candidate_mapping or NULL if none
+            $candidate_mapping !== false ? $this->_db->makeQueryString($candidate_mapping) : 'NULL'
         );
 
         $queryResult = $this->_db->query($sql);
@@ -204,6 +281,12 @@ class JobOrders extends Modules
 
         $jobOrderID = $this->_db->getLastInsertID();
 
+        $hook=_AuieoHook("joborders_add_after");
+        if($hook)
+        {
+            $record["id"]=$jobOrderID;
+            $hook($record);
+        }
         /* Store history. */
         $history = new History($this->_siteID);
         $history->storeHistoryNew(DATA_ITEM_JOBORDER, $jobOrderID);
@@ -238,15 +321,29 @@ class JobOrders extends Modules
     public function update($jobOrderID, $title, $companyJobID, $companyID,
         $contactID, $description, $notes, $duration, $maxRate, $type, $isHot,
         $openings, $openingsAvailable, $salary, $city, $state, $startDate, $status, $recruiter,
-        $owner, $public, $email, $emailAddress, $department, $questionnaire = false)
+        $owner, $public, $email, $emailAddress, $department, $questionnaire = false,$candidate_mapping=false,
+            $ownertype=0)
     {
+        if($candidate_mapping!==false)
+        {
+            $candidate_mapping=  json_encode($candidate_mapping);
+        }
+        $record=  get_defined_vars();
+ 
         /* Get the department ID of the selected department. */
         // FIXME: Move this up to the UserInterface level. I don't like this
         //        tight coupling, and calling Contacts methods as static is
         //        bad.
-        $departmentID = Contacts::getDepartmentIDByName(
+        $objContacts=new Contacts($this->_siteID);
+        $departmentID = $objContacts->getDepartmentIDByName(
             $department, $companyID, $this->_db
         );
+        
+        $hook=_AuieoHook("joborders_update_before");
+        if($hook)
+        {
+            $hook($record);
+        }
 
         // FIXME: Is the OrNULL usage below correct? Can these fields be NULL?
         $sql = sprintf(
@@ -273,9 +370,11 @@ class JobOrders extends Modules
                 company_department_id = %s,
                 recruiter          = %s,
                 owner              = %s,
+                ownertype          = %s,
                 public             = %s,
                 date_modified      = NOW(),
-                questionnaire_id   = %s
+                questionnaire_id   = %s,
+                candidate_mapping  = %s
             WHERE
                 joborder_id = %s
             AND
@@ -300,9 +399,12 @@ class JobOrders extends Modules
             $this->_db->makeQueryInteger($departmentID),
             $this->_db->makeQueryInteger($recruiter),
             $this->_db->makeQueryInteger($owner),
+            $this->_db->makeQueryInteger($ownertype),
             ($public ? '1' : '0'),
             // Questionnaire ID or NULL if none
             $questionnaire !== false ? $this->_db->makeQueryInteger($questionnaire) : 'NULL',
+            /// $candidate_mapping or NULL if none
+            $candidate_mapping !== false ? $this->_db->makeQueryString($candidate_mapping) : 'NULL',
             $this->_db->makeQueryInteger($jobOrderID),
             $this->_siteID
         );
@@ -321,7 +423,12 @@ class JobOrders extends Modules
         {
             return false;
         }
-
+        $hook=_AuieoHook("joborders_update_after");
+        if($hook)
+        {
+            $record["id"]=$jobOrderID;
+            $hook($record);
+        }
         if (!empty($emailAddress))
         {
             /* Send e-mail notification. */
@@ -439,6 +546,120 @@ class JobOrders extends Modules
 
         return $this->_db->getColumn($sql, 0, 0);
     }
+    
+    public function load($jobOrderID)
+    {
+        $sql = sprintf(
+            "SELECT
+                joborder.joborder_id,
+                joborder.company_id,
+                joborder.contact_id,
+                joborder.client_job_id,
+                joborder.title,
+                joborder.description,
+                joborder.type,
+                joborder.is_hot,
+                joborder.openings,
+                joborder.openings_available,
+                joborder.notes,
+                joborder.duration,
+                joborder.rate_max,
+                joborder.salary,
+                joborder.status,
+                joborder.city,
+                joborder.state,
+                joborder.recruiter,
+                joborder.owner,
+                joborder.public,
+                joborder.questionnaire_id,
+                joborder.is_admin_hidden,
+                joborder.candidate_mapping,
+                company_department.name,
+                CONCAT(
+                    contact.first_name, ' ', contact.last_name
+                ) AS contactFullName,
+                contact.phone_work AS contactWorkPhone,
+                contact.email1 AS contactEmail,
+                CONCAT(
+                    recruiter_user.first_name, ' ', recruiter_user.last_name
+                ) AS recruiterFullName,
+                CONCAT(
+                    entered_by_user.first_name, ' ', entered_by_user.last_name
+                ) AS enteredByFullName,
+                CONCAT(
+                    owner_user.first_name, ' ', owner_user.last_name
+                ) AS ownerFullName,
+                owner_user.email AS owner_email,
+                recruiter_user.email AS recruiter_email,
+                DATE_FORMAT(
+                    joborder.start_date, '%%m-%%d-%%y'
+                ) AS startDate,
+                DATEDIFF(
+                    NOW(), joborder.date_created
+                ) AS daysOld,
+                DATE_FORMAT(
+                    joborder.date_created, '%%m-%%d-%%y (%%h:%%i %%p)'
+                ) AS dateCreated,
+                DATE_FORMAT(
+                    joborder.date_modified, '%%m-%%d-%%y (%%h:%%i %%p)'
+                ) AS dateModified,
+                COUNT(
+                    candidate_joborder.joborder_id
+                ) AS pipeline,
+                (
+                    SELECT
+                        COUNT(*)
+                    FROM
+                        candidate_joborder_status_history
+                    WHERE
+                        joborder_id = %s
+                    AND
+                        status_to = %s
+                    AND
+                        site_id = %s
+                ) AS submitted,
+                company.name AS companyName
+            FROM
+                joborder
+            LEFT JOIN company
+                ON joborder.company_id = company.company_id
+            LEFT JOIN contact
+                ON joborder.contact_id = contact.contact_id
+            LEFT JOIN user AS recruiter_user
+                ON joborder.recruiter = recruiter_user.user_id
+            LEFT JOIN user AS owner_user
+                ON joborder.owner = owner_user.user_id
+            LEFT JOIN user AS entered_by_user
+                ON joborder.entered_by = entered_by_user.user_id
+            LEFT JOIN candidate_joborder
+                ON joborder.joborder_id = candidate_joborder.joborder_id
+            LEFT JOIN company_department
+                ON joborder.company_department_id = company_department.company_department_id
+            WHERE
+                joborder.joborder_id = %s
+            AND
+                joborder.site_id = %s
+            GROUP BY
+                joborder.joborder_id",
+            $this->_db->makeQueryInteger($jobOrderID),
+            PIPELINE_STATUS_SUBMITTED,
+            $this->_siteID,
+            $this->_db->makeQueryInteger($jobOrderID),
+            $this->_siteID
+        );
+        $this->record = $this->_db->getAssoc($sql);
+        if(isset($this->record["candidate_mapping"]) && !empty($this->record["candidate_mapping"]))
+        {
+            $this->record["candidate_mapping"]=  json_decode($this->record["candidate_mapping"]);
+        }
+        $sql="select * from extra_field where data_item_type=100 and data_item_id='{$jobOrderID}'";
+        $arrAssoc = $this->_db->getAllAssoc($sql);
+        $this->extraRecord=array();
+        foreach($arrAssoc as $ind=>$row)
+        {
+            $this->extraRecord[$row["field_name"]]=$row["value"];
+        }
+    }
 
     /**
      * Returns all relevent job order information for a given job order ID.
@@ -450,28 +671,35 @@ class JobOrders extends Modules
     {
         $sql = sprintf(
             "SELECT
-                joborder.joborder_id AS jobOrderID,
-                joborder.company_id AS companyID,
-                joborder.contact_id AS contactID,
-                joborder.client_job_id AS companyJobID,
-                joborder.title AS title,
-                joborder.description AS description,
-                joborder.type AS type,
-                joborder.is_hot AS isHot,
-                joborder.openings AS openings,
-                joborder.openings_available AS openingsAvailable,
-                joborder.notes AS notes,
-                joborder.duration AS duration,
-                joborder.rate_max AS maxRate,
-                joborder.salary AS salary,
-                joborder.status AS status,
-                joborder.city AS city,
-                joborder.state AS state,
-                joborder.recruiter AS recruiter,
-                joborder.owner AS owner,
-                joborder.public AS public,
-                joborder.questionnaire_id as questionnaireID,
-                joborder.is_admin_hidden AS isAdminHidden,
+                joborder.joborder_id,
+                joborder.company_id,
+                joborder.contact_id,
+                joborder.client_job_id,
+                joborder.title,
+                joborder.description,
+                joborder.type,
+                joborder.is_hot,
+                joborder.openings,
+                joborder.openings_available,
+                joborder.notes,
+                joborder.duration,
+                joborder.rate_max,
+                joborder.salary,
+                joborder.status,
+                joborder.city,
+                joborder.state,
+                joborder.recruiter,
+                joborder.owner,
+                joborder.ownertype,
+                joborder.public,
+                joborder.questionnaire_id,
+                joborder.is_admin_hidden,
+                joborder.entered_by,
+                joborder.start_date,
+                joborder.date_created,
+                joborder.date_modified,
+                joborder.company_department_id,
+                joborder.candidate_mapping,
                 company_department.name AS department,
                 CONCAT(
                     contact.first_name, ' ', contact.last_name
@@ -562,33 +790,38 @@ class JobOrders extends Modules
     {
         $sql = sprintf(
             "SELECT
-                joborder.joborder_id AS jobOrderID,
-                joborder.company_id AS companyID,
-                company.name AS companyName,
-                company_department.name AS department,
-                joborder.contact_id AS contactID,
-                joborder.client_job_id AS companyJobID,
-                joborder.title AS title,
-                joborder.description AS description,
-                joborder.type AS type,
-                joborder.is_hot AS isHot,
-                joborder.openings AS openings,
-                joborder.openings_available AS openingsAvailable,
-                joborder.notes AS notes,
-                joborder.duration AS duration,
-                joborder.rate_max AS maxRate,
-                joborder.salary AS salary,
-                joborder.status AS status,
-                joborder.city AS city,
-                joborder.state AS state,
-                joborder.recruiter AS recruiter,
-                joborder.owner AS owner,
-                joborder.public AS public,
-                joborder.questionnaire_id as questionnaireID,
-                joborder.company_department_id AS departmentID,
+                joborder.joborder_id,
+                joborder.company_id,
+                company.name,
+                company_department.name,
+                joborder.contact_id,
+                joborder.client_job_id,
+                joborder.title,
+                joborder.description,
+                joborder.type,
+                joborder.is_hot,
+                joborder.openings,
+                joborder.openings_available,
+                joborder.notes,
+                joborder.duration,
+                joborder.rate_max,
+                joborder.salary,
+                joborder.status,
+                joborder.city,
+                joborder.state,
+                joborder.recruiter,
+                joborder.owner,
+                joborder.ownertype,
+                joborder.public,
+                joborder.questionnaire_id,
+                joborder.company_department_id,
+                joborder.candidate_mapping,
+                joborder.start_date,
                 DATE_FORMAT(
                     joborder.start_date, '%%m-%%d-%%y'
-                ) AS startDate
+                ) AS startDate,
+                joborder.candidate_mapping,
+                company.name AS companyName
             FROM
                 joborder
             LEFT JOIN company
@@ -608,6 +841,60 @@ class JobOrders extends Modules
         $rs = $this->_db->getAssoc($sql);
 
         return $rs;
+    }
+    
+    /**
+     * Returns the entire job orders list.
+     *
+     * @param flag job order status flag
+     * @param integer assigned-to owner/recruiter user ID (optional)
+     * @param integer assigned-to company ID (optional)
+     * @param integer assigned-to contact ID (optional)
+     * @param boolean only hot job orders
+     * @return array job orders data
+     */
+    public function getAllByProject($projectID,$status='Active')
+    {        
+        switch ($status)
+        {
+            case JOBORDERS_STATUS_ACTIVE:
+                $statusCriterion = "AND joborder.status = 'Active'";
+                break;
+
+            case JOBORDERS_STATUS_ONHOLDFULL:
+                $statusCriterion = "AND joborder.status IN ('OnHold', 'Full')";
+                break;
+
+            case JOBORDERS_STATUS_ACTIVEONHOLDFULL:
+                $statusCriterion = "AND joborder.status IN ('Active', 'OnHold', 'Full')";
+                break;
+
+            case JOBORDERS_STATUS_CLOSED:
+                $statusCriterion = "AND joborder.status = 'Closed'";
+                break;
+
+            case JOBORDERS_STATUS_ALL:
+            default:
+                $statusCriterion = '';
+                break;
+        }
+        $objProjectsJoborderFrom=new ClsAuieoSQLFrom();
+        $objSQL=new ClsAuieoSQL();
+        $objJoborderFrom=$objSQL->addFrom("joborder");
+        $joinJoborder=$objJoborderFrom->addJoinField("joborder_id");
+        $objProjectsJoborderFrom=$objSQL->addFrom("auieo_projects_joborder");
+        $joinProjectJoborder=$objProjectsJoborderFrom->addJoinField("joborderid");
+        $objProjectsJoborderFrom->setJoinWith($objJoborderFrom, $joinJoborder, $joinProjectJoborder);
+        $objSQL->addSelect($objJoborderFrom, "joborder_id", "id");
+        $objSQL->addSelect($objJoborderFrom, "title", "joborder");
+        $objSQL->addSelect($objProjectsJoborderFrom, "startdate");
+        $objSQL->addSelect($objProjectsJoborderFrom, "targetenddate");
+        $objSQL->addWhere($objProjectsJoborderFrom, "projectsid", $projectID);
+        $sql=$objSQL->render();
+
+        if (!eval(Hooks::get('JO_GET_ALL_SQL'))) return;
+
+        return $this->_db->getAllAssoc($sql);
     }
 
     /**
@@ -925,6 +1212,30 @@ class JobOrders extends Modules
 
         return (boolean) $this->_db->query($sql);
     }
+
+    public function renderTemplateVars($template)
+    {
+        include_once("lib/JoborderTemplate.php");
+        $joborderid=$this->record["joborder_id"];
+        $joborders=new JoborderTemplate($this->_siteID);
+        $joborders->load($joborderid);
+        $template=  html_entity_decode($template);
+        try
+        {
+        ob_start();
+        $render="";
+        eval('echo <<< EOT
+'.$template.'
+EOT;
+');
+        $render = ob_get_clean();
+    }
+        catch(Exception $e)
+        {
+            trace($e);
+        }
+        return $render;
+    }
 }
 
 
@@ -1122,7 +1433,7 @@ class JobOrdersDataGrid extends DataGrid
                                       'filterHaving'  => 'interviewingCount',
                                       'filterTypes'   => '===>=<'),
 
-            'Owner' =>         array('select'   => 'owner_user.first_name AS ownerFirstName,' .
+           /* 'Owner' =>         array('select'   => 'owner_user.first_name AS ownerFirstName,' .
                                                    'owner_user.last_name AS ownerLastName,' .
                                                    'CONCAT(owner_user.last_name, owner_user.first_name) AS ownerSort',
                                      'join'     => 'LEFT JOIN user AS owner_user ON joborder.owner = owner_user.user_id',
@@ -1131,7 +1442,7 @@ class JobOrdersDataGrid extends DataGrid
                                      'sortableColumn'     => 'ownerSort',
                                      'pagerWidth'    => 75,
                                      'alphaNavigation' => true,
-                                     'filter'         => 'CONCAT(owner_user.first_name, owner_user.last_name)'),
+                                     'filter'         => 'CONCAT(owner_user.first_name, owner_user.last_name)'),*/
 
             'Recruiter' =>     array('select'   => 'recruiter_user.first_name AS recruiterFirstName,' .
                                                    'recruiter_user.last_name AS recruiterLastName,' .

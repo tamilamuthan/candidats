@@ -120,9 +120,13 @@ class Mailer
     public function sendToOne($recipient, $subject, $body, $isHTML = false,
         $logMessage = true, $replyTo = array(), $wrapLinesAt = 78)
     {
+        if(!is_array($recipient))
+        {
+            $recipient=array($recipient);
+        }
         return $this->send(
             array($this->_settings['fromAddress'], ''),
-            array($recipient),
+            $recipient,
             $subject,
             $body,
             $isHTML,
@@ -190,15 +194,19 @@ class Mailer
      */
     public function send($from, $recipients, $subject, $body, $isHTML = false,
         $logMessage = true, $replyTo = array(), $wrapLinesAt = 78,
-        $signature = true)
+        $signature = true,$module=false)
     {
         if(MAIL_MAILER===0) 
         {
-            $this->_errorMessage ="Sending Email Disabled";                print_r($this->_errorMessage);exit;
+            $this->_errorMessage ="Sending Email Disabled"; 
             return false;
         }
+        //$idlist= json_decode(urldecode($_REQUEST["idlist"]),true);
         $this->_mailer->From     = $from[0];
-        $this->_mailer->FromName = $from[1];
+        if(isset($from[1]) && !empty($from[1]))
+        {
+            $this->_mailer->FromName = $from[1];
+        }
 
         $this->_mailer->WordWrap = $wrapLinesAt;
 
@@ -210,8 +218,7 @@ class Mailer
 
             if ($signature)
             {
-                $body .= "\n<br />\n<br /><span style=\"font-size: 10pt;\">Powered by <a href=\"http://www.catsone.com\" alt=\"CATS "
-                    . "Applicant Tracking System\">CATS</a> (Free ATS)</span>";
+                $body .= EMAIL_HTML_SIGNATURE;
             }
 
             $this->_mailer->Body = '<div style="font: normal normal 12px Arial, Tahoma, sans-serif">'
@@ -223,7 +230,7 @@ class Mailer
         {
             if ($signature)
             {
-                $body .= "\n\nPowered by CATS (http://www.catsone.com) Free ATS";
+                $body .= EMAIL_SIGNATURE;
             }
 
             $this->_mailer->isHTML(false);
@@ -231,10 +238,67 @@ class Mailer
         }
 
         $failedRecipients = array();
-        foreach ($recipients as $key => $value)
+        if(isset($recipients["id"]))
         {
-            $this->_mailer->AddAddress($recipients[$key][0], $recipients[$key][1]);
-
+            $id=$recipients["id"];
+            foreach($recipients["email"] as $ind2=>$data)
+            {
+                $this->_mailer->AddAddress($data["email"], $data["name"]);
+                if(!isset($from[1]) || empty($from[1]))
+                {
+                    if(isset($data["name"]) && !empty($data["name"]))
+                    {
+                        $this->_mailer->FromName = $data["name"];
+                    }
+                    else
+                    {
+                        if(defined("DEFAULT_FROM_EMAIL_NAME"))
+                        {
+                            $this->_mailer->FromName = DEFAULT_FROM_EMAIL_NAME;
+                        }
+                        else
+                        {
+                            $this->_mailer->FromName = "CandidATS";
+                        }
+                    }
+                }
+                if (!empty($replyTo))
+                {
+                    $this->_mailer->AddReplyTo($replyTo[0], $replyTo[1]);
+                }
+    
+                if (!$this->_mailer->Send())
+                {
+                    $failedRecipients[] = array(
+                        'recipient'    => array($data["email"],$data["name"]),
+                        'errorMessage' => $this->_mailer->ErrorInfo
+                    );
+                }
+                else if ($logMessage)
+                {
+    
+    
+                    $this->logMessage($from[0], $data["email"], $subject, $body,$id,$module);
+                }
+    
+                $this->_mailer->ClearAddresses();
+                $this->_mailer->ClearAttachments();
+            }
+        }
+        else
+        {
+            $this->_mailer->AddAddress($recipients[0], $recipients[0]);
+            if(!isset($from[1]) || empty($from[1]))
+            {
+                if(defined("DEFAULT_FROM_EMAIL_NAME"))
+                {
+                    $this->_mailer->FromName = DEFAULT_FROM_EMAIL_NAME;
+                }
+                else
+                {
+                    $this->_mailer->FromName = "CandidATS";
+                }
+            }
             if (!empty($replyTo))
             {
                 $this->_mailer->AddReplyTo($replyTo[0], $replyTo[1]);
@@ -243,21 +307,14 @@ class Mailer
             if (!$this->_mailer->Send())
             {
                 $failedRecipients[] = array(
-                    'recipient'    => $recipients[$key],
+                    'recipient'    => $recipients,
                     'errorMessage' => $this->_mailer->ErrorInfo
                 );
-            }
-            else if ($logMessage)
-            {
-                // FIXME: Log all recipients in one log entry?
-                // FIXME: Make sure all callers are passing an array of e-mails and not just a CSV string...
-                $this->logMessage($from[0], $recipients[$key][0], $subject, $body);
             }
 
             $this->_mailer->ClearAddresses();
             $this->_mailer->ClearAttachments();
         }
-
         /* Return false if we had any failures. getError() will return the
          * specific error message.
          */
@@ -358,7 +415,7 @@ class Mailer
      * @param string E-mail body.
      * @return void
      */
-    private function logMessage($from, $to, $subject, $body)
+    private function logMessage($from, $to, $subject, $body, $id, $module=false)
     {
         $messageText = sprintf("Subject: %s\n\nMessage:\n%s", $subject, $body);
 
@@ -369,6 +426,8 @@ class Mailer
                 text,
                 user_id,
                 site_id,
+                for_module,
+                for_id,
                 date
             )
             VALUES (
@@ -377,13 +436,17 @@ class Mailer
                 %s,
                 %s,
                 %s,
+                '%s',
+                %s,
                 NOW()
             )",
             $this->_db->makeQueryString($from),
             $this->_db->makeQueryString($to),
             $this->_db->makeQueryString($messageText),
             $this->_userID,
-            $this->_siteID
+            $this->_siteID,
+            $module===false?$_REQUEST["m"]:$module,
+            trim($id)
          );
          
          $this->_db->query($sql);

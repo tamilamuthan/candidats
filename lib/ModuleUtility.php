@@ -68,7 +68,15 @@ class ModuleUtility
         }
 
         $moduleClass = $modules[$moduleName][0];
-
+        if($_SESSION["CATS"]->getSiteID()>0)
+        {
+            $objPRGManagement=PRGManagement::getInstance();
+            $permit=$objPRGManagement->isModuleActionPermitted();
+            if($permit===false)
+            {
+                header("Location:index.php");exit;
+            }
+        }
         include_once(
             'modules/' . $moduleName . '/'
             . $moduleClass . '.php'
@@ -76,27 +84,145 @@ class ModuleUtility
 
         if (!eval(Hooks::get('LOAD_MODULE'))) return;
 
-        $module = new $moduleClass();
+        $objModuleController = new $moduleClass();
         $actionExist=false;
-        if (isset($_GET['a']) && !empty($_GET['a']))
+        $ret=null;
+        //$moduleModelClass="Cls".ucfirst($moduleName)."Model";
+        //$moduleViewClass="Cls".ucfirst($moduleName)."View";
+        $moduleActionModelClass="";
+        $moduleActionViewClass="";
+        if (isset($_REQUEST['a']) && !empty($_REQUEST['a']))
         {
-            $action=$_GET['a'];
-            if (isset($_POST['postback']) || isset($_GET['getback']))
+            $action=$_REQUEST['a'];
+        }
+        else if(isset($_REQUEST['p']) && $_REQUEST['p']!="onApplyToJobOrder")
+        {
+            $action=$_REQUEST['p'];
+        }
+        else
+        {
+            $action="listing";
+        }
+        
+        $moduleActionViewClass="Cls".ucfirst($moduleName).ucfirst($action)."View";
+        $moduleActionModelClass="Cls".ucfirst($moduleName).ucfirst($action)."Model";
+        $actionMethod=$action;
+        if (isset($_POST['postback']) || isset($_GET['getback']))
+        {
+            $actionMethod = "on" . ucfirst($action);
+        }
+        /**
+         * set model object if exist
+         */
+        if(!class_exists($moduleActionModelClass) && file_exists("modules/{$moduleName}/{$moduleActionModelClass}.php"))
+        {
+            include_once "modules/{$moduleName}/{$moduleActionModelClass}.php";
+        }
+        $objModel=null;
+        if(class_exists($moduleActionModelClass))
+        {
+            $objModel=new $moduleActionModelClass();
+        }
+        
+        /**
+         * set view object if exist
+         */
+        if(!class_exists($moduleActionViewClass) && file_exists("modules/{$moduleName}/{$moduleActionViewClass}.php"))
+        {
+            include_once "modules/{$moduleName}/{$moduleActionViewClass}.php";
+        }
+        $objView=null;
+        if(class_exists($moduleActionViewClass))
+        {
+            if(is_null($objModel))
+                $objView=new $moduleActionViewClass();
+            else
+                $objView=new $moduleActionViewClass($objModel);
+            if(method_exists($objModuleController, "setView"))
             {
-                $action = "on" . ucfirst($action);
-            }
-            if(method_exists($module, $action))
-            {
-                $actionExist=true;
-                $module->$action();
+                $objModuleController->setView($objView);
             }
         }
-        if($actionExist===false)
+        if(defined("AUIEO_API"))
         {
-            if(method_exists($module, "render"))
-                $module->render();
+            include_once("lib/api.php");
+            $api = new API();
+            $suceess=$api->processApi();
+            /**
+             * if request is proper process the request
+             */
+            if($suceess)
+            {
+                $webserviceMethod="webservice".  ucfirst($action);
+                if(method_exists($objModuleController, $webserviceMethod))
+                {
+                    $ret=$objModuleController->$webserviceMethod($api);
+                    exit;
+                }
+            }
             else
-                $module->handleRequest();
+            {
+                exit;
+            }
+        }
+        else if(method_exists($objModuleController, $actionMethod))
+        {
+            $ret=$objModuleController->$actionMethod();
+        }
+        else if(method_exists($objModuleController, $action))
+        {
+            $ret=$objModuleController->$action();
+        }
+        else
+        {
+            if(method_exists($objModuleController, "render"))
+                $ret=$objModuleController->render();
+            else
+                $ret=$objModuleController->handleRequest();
+        }
+        /**
+         * if it is werservice and if the method exist, the control should not come here.
+         * Since it came, it means the webservice method not exist
+         */
+        if(defined("AUIEO_API"))
+        {
+            $api->response('',404);
+            exit;
+        }
+        $objTemplate=$objModuleController->getTemplateObject();
+        if(!$objTemplate->isRendered())
+        {
+            if(isset($_REQUEST["file"]))
+            {
+                include_once("./modules/{$moduleName}/{$_REQUEST["file"]}.php");
+            }
+            if(isset($objTemplate->errMessage) && $objTemplate->errMessage && file_exists("./modules/{$moduleName}/ErrorMessage.php"))
+            {
+                $tplfile="./modules/{$moduleName}/ErrorMessage.php";
+            }
+            else if($action=="listing")
+            {
+                if(!isset($objTemplate->totalRecords) || $objTemplate->totalRecords>0 || !file_exists("./modules/{$moduleName}/{$action}.php"))
+                {
+                    $tplfile="./modules/{$moduleName}/{$action}.php";
+                }
+                else
+                {
+                    $tplfile="./modules/{$moduleName}/NoRecord.php";
+                }
+            }
+            else
+            {
+                $tplfile="./modules/{$moduleName}/{$action}.php";
+            }
+            if($objModuleController->isViewSet())
+            {
+                $objTemplate->display($tplfile,$objModuleController->getView());
+            }
+            else
+            {
+                $objTemplate->display($tplfile);
+            }
         }
     }
 

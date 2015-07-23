@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
-include_once(__DIR__."/utils.php");
+include_once(dirname(__FILE__)."/layer/L0/utils.php");
 class ClsLInputValidator
 {
     protected $module="home";
@@ -159,17 +159,24 @@ class ClsLInputValidator
         }
         if(isset($_SERVER["PATH_INFO"]) && !empty($_SERVER["PATH_INFO"]))
         {
+            $arrServerPathInfo=pathinfo($_SERVER["PATH_INFO"]);
             $arrPathInfo=explode("/",$_SERVER["PATH_INFO"]);
             array_shift($arrPathInfo);
             if(!empty($arrPathInfo))
             {
-                $_REQUEST["module"]=array_shift($arrPathInfo);
-                $_GET["module"]=$_REQUEST["module"];
+                $_REQUEST["page"]=array_shift($arrPathInfo);
+                $_GET["page"]=$_REQUEST["page"];
             }
             if(!empty($arrPathInfo))
             {
                 $_REQUEST["action"]=array_shift($arrPathInfo);
                 $_GET["action"]=$_REQUEST["action"];
+            }
+            if(isset($arrServerPathInfo["extension"]))
+            {
+                $arPth=  pathinfo($_SERVER["SCRIPT_NAME"]);//trace($arPth["dirname"]);
+                $pth=implode("/",$arrPathInfo);
+                header("Location:http://{$_SERVER["SERVER_NAME"]}{$arPth["dirname"]}/{$pth}");exit;
             }
             if(!empty($arrPathInfo))
             {
@@ -1027,6 +1034,7 @@ class ClsNaanalInputBase
     protected $isSubmit=false;
     protected $otherVar=array();
     protected $isWebservice=false;
+    protected $rand=false;
     
     protected function __construct(&$arrInput)
     {
@@ -1080,6 +1088,15 @@ class ClsNaanalInputBase
         }
         return $object;
     }
+    public function setRand($rand)
+    {
+        $this->rand=$rand;
+        $this->isSubmit=true;
+    }
+    public function setSubmit()
+    {
+        $this->isSubmit=true;
+    }
     public  function isSubmit()
     {
         return $this->isSubmit;
@@ -1131,7 +1148,7 @@ class ClsNaanalInputBase
         {
         }
         $urlActionParam=$this->urlActionParam;
-        $arrConfigVar=getModuleConfigVars($this->module);
+        $arrConfigVar=ClsNaanalApplication::getConfigVars($this->module);
         if(isset($arrConfigVar["url_action_param"]))
         {
             $urlActionParam=$arrConfigVar["url_action_param"];
@@ -1227,21 +1244,21 @@ class ClsNaanalInputBase
         /**
          * If framework or application not installed, the user hook will be overridden
          */
-        if(!isFrameworkInstalled() || !isApplicationInstalled())
+        if(!ClsNaanalApplication::isFrameworkInstalled() || !isApplicationInstalled())
         {
             $this->module="install";
         }
     }
     public function getPageVar()
     {
-        return isset(ClsConfig::$PAGINATION_VAR)?ClsConfig::$PAGINATION_VAR:"pv";
+        return "pv";
     }
     public function getPager()
     {
         static $pager=null;
         if(is_null($pager))
         {
-            $itemPerPage=isset(ClsConfig::$PAGINATION_ITEM_PER_PAGE)?ClsConfig::$PAGINATION_ITEM_PER_PAGE:10;
+            $itemPerPage=20;
             $pagevar=$this->getPageVar();
             $curpage=$this->getData($pagevar);
             $curpage=empty($curpage)?1:$curpage;

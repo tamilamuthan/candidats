@@ -28,7 +28,7 @@
  */
 
 /* License key. */
-define('LICENSE_KEY','3163GQ-54ISGW-14E4SHD-ES9ICL-X02DTG-GYRSQ6');
+//define('LICENSE_KEY','3163GQ-54ISGW-14E4SHD-ES9ICL-X02DTG-GYRSQ6');
 
 /* Database configuration. */
 define('DATABASE_USER', 'root');
@@ -48,7 +48,7 @@ define('SSL_ENABLED', false);
  * 'C:\\antiword\\antiword.exe'. Windows Antiword will have problems locating
  * mapping files if you install it anywhere but C:\antiword\.
  */
-define('ANTIWORD_PATH', "C:\\antiword\\antiword.exe");
+define('ANTIWORD_PATH', "");
 define('ANTIWORD_MAP', '8859-1.txt');
 
 /* XPDF / pdftotext settings. Remember to use double backslashes (\) to represent
@@ -136,7 +136,7 @@ define('CAREERS_CANDIDATEAPPLY_SUBJECT', 'Thank You for Your Application');
 /* Subject line of e-mails sent to job order owners via the career portal when
  * they apply for a job order.
  */
-define('CAREERS_OWNERAPPLY_SUBJECT', 'CATS - A Candidate Has Applied to Your Job Order');
+define('CAREERS_OWNERAPPLY_SUBJECT', 'AATS - A Candidate Has Applied to Your Job Order');
 
 /* Subject line of e-mails sent to candidates when their status changes for a
  * job order.
@@ -147,32 +147,32 @@ define('CANDIDATE_STATUSCHANGE_SUBJECT', 'Job Application Status Change');
  *
  * In FORGOT_PASSWORD_FROM, %s is the placeholder for the password.
  */
-define('FORGOT_PASSWORD_FROM_NAME', 'CATS');
-define('FORGOT_PASSWORD_SUBJECT',   'CATS - Password Retrieval Request');
-define('FORGOT_PASSWORD_BODY',      'You recently requested that your CATS: Applicant Tracking System password be sent to you. Your current password is %s.');
+define('FORGOT_PASSWORD_FROM_NAME', 'AATS');
+define('FORGOT_PASSWORD_SUBJECT',   'AATS - Password Retrieval Request');
+define('FORGOT_PASSWORD_BODY',      'You recently requested that your CandidATS: Applicant Tracking System password be sent to you. Your current password is %s.');
 
 /* Is this a demo site? */
 define('ENABLE_DEMO_MODE', false);
 
 /* Offset to GMT Time. */
-define('OFFSET_GMT', 5);
+define('OFFSET_GMT', 5.5);
 
 /* Should we enforce only one session per user (excluding demo)? */
-define('ENABLE_SINGLE_SESSION', false);
+define('ENABLE_SINGLE_SESSION', true);
 
 /* Automated testing. This is only useful for the CATS core team at the moment;
  * don't worry about this yet.
  */
-define('TESTER_LOGIN',     'john@mycompany.net');
-define('TESTER_PASSWORD',  'john99');
-define('TESTER_FIRSTNAME', 'John');
-define('TESTER_LASTNAME',  'Anderson');
-define('TESTER_FULLNAME',  'John Anderson');
-define('TESTER_USER_ID',   4);
+define('TESTER_LOGIN',     'admin');
+define('TESTER_PASSWORD',  'tamil');
+define('TESTER_FIRSTNAME', 'CATS');
+define('TESTER_LASTNAME',  'Administrator');
+define('TESTER_FULLNAME',  'CATS Administrator');
+define('TESTER_USER_ID',   1);
 
 /* Demo login. */
-define('DEMO_LOGIN',     'john@mycompany.net');
-define('DEMO_PASSWORD',  'john99');
+define('DEMO_LOGIN',     'admin');
+define('DEMO_PASSWORD',  'admin');
 
 /* This setting configures the method used to send e-mail from CATS. CATS
  * can send e-mail via SMTP, PHP's built-in mail support, or via Sendmail.
@@ -194,11 +194,11 @@ define('MAIL_SENDMAIL_PATH', "/usr/sbin/sendmail");
  * set to 3. If your server requires authentication, set MAIL_SMTP_AUTH to
  * true and configure MAIL_SMTP_USER and MAIL_SMTP_PASS.
  */
-define('MAIL_SMTP_HOST', "mail.unicomtech.in");
-define('MAIL_SMTP_PORT', 26);
+define('MAIL_SMTP_HOST', "mail.auieo.in");
+define('MAIL_SMTP_PORT', 25);
 define('MAIL_SMTP_AUTH', true);
-define('MAIL_SMTP_USER', "info@unicomtech.in");
-define('MAIL_SMTP_PASS', "xxxxxxxxxxxxxxxxxxxxxx");
+define('MAIL_SMTP_USER', "info@auieo.in");
+define('MAIL_SMTP_PASS', "xxxxxxxxxxxxx");
 
 /* Event reminder E-Mail Template. */
 $GLOBALS['eventReminderEmail'] = <<<EOF
@@ -236,5 +236,16 @@ define('CACHE_MODULES', false);
  */
 
 define('US_ZIPS_ENABLED', true);
+
+define('EMAIL_SIGNATURE', "\n\nPowered by CATS (http://www.catsone.com) Free ATS");
+
+define('EMAIL_HTML_SIGNATURE', "\n<br />\n<br /><span style=\"font-size: 10pt;\">Powered by <a href=\"http://www.catsone.com\" alt=\"CATS "
+                    . "Applicant Tracking System\">CATS</a> (Free ATS)</span>");
+
+define('DEFAULT_FROM_EMAIL',"info@auieo.in");
+
+define('DEFAULT_FROM_EMAIL_NAME',"CandidATS");
+
+define('DEVELOPER_MODE"',true);
 
 ?>

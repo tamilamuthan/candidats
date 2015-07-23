@@ -30,6 +30,7 @@
 include_once('./config.php');
 include_once('./lib/InstallationTests.php');
 include_once('./lib/CATSUtility.php');
+include_once(dirname(__DIR__).'/utils.php');
 
 set_time_limit(300);
 @ini_set('memory_limit', '192M');
@@ -150,7 +151,6 @@ switch ($action)
         break;
 
     case 'mailSettings':
-        MySQLConnect();
 
         if (MAIL_MAILER == 3 && MAIL_SMTP_AUTH == 1)
             $mailOption = '4';
@@ -449,7 +449,6 @@ switch ($action)
         break;
 
     case 'optionalComponents':
-        MySQLConnect();
         initializeOptionalComponents();
 
         echo '<script type="text/javascript">';
@@ -505,7 +504,6 @@ switch ($action)
         break;
 
     case 'setupOptional':
-        MySQLConnect();
         initializeOptionalComponents();
 
         @session_name(CATS_SESSION_NAME);
@@ -553,11 +551,17 @@ switch ($action)
         break;
 
     case 'detectRevision':
-        MySQLConnect();
 
         echo '<script type="text/javascript">setActiveStep(3);</script>';
 
-        if (count($tables) == 0)
+        $tables = array();
+        $objDB=  DatabaseConnection::getInstance();
+        $result = $objDB->getAllRow(sprintf("SHOW TABLES FROM %s", DATABASE_NAME));
+        foreach ($result as $row)
+        {
+            $tables[$row[0]] = true;
+        }
+        if (empty($tables))
         {
             echo '<script type="text/javascript">
                       showTextBlock(\'emptyDatabase\');
@@ -565,17 +569,28 @@ switch ($action)
                   </script>';
             die();
         }
-
-        $rs = MySQLQuery('SELECT * FROM candidate', true);
+        $objDB=  DatabaseConnection::getInstance();
+        $arrMeta = $objDB->getColumnsMeta('SELECT * FROM candidate');
+        
         $fields = array();
-        while ($meta = @mysql_fetch_field($rs))
+        foreach ($arrMeta as $meta)
         {
             if ($meta)
             {
-                $fields[$meta->name] = true;
+                $fields[$meta["name"]] = true;
             }
         }
-
+        
+        $arrEmailMeta=$objDB->getColumnsMeta("SELECT * FROM     email_history");
+        $fieldsEmail = array();
+        foreach ($arrEmailMeta as $meta)
+        {
+            if ($meta)
+            {
+                $fieldsEmail[$meta["name"]] = true;
+            }
+        }
+        
         $catsVersion = '';
 
         /* Look for more versions here. */
@@ -595,7 +610,19 @@ switch ($action)
         {
             $catsVersion = 'CATS 0.6.x.';
         }
-        else if (isset($tables['history']))
+        else if(!isset($fieldsEmail["for_module"]))
+        {
+            $catsVersion = 'CATS 0.9.x.';
+        }
+        else if(!isset($tables["auieo_fields"]))
+        {
+            $catsVersion = 'CATS 1.3.x.';
+        }
+        else if(!isset($tables["auieo_uitype"]))
+        {
+            $catsVersion = 'CATS 1.4.x.';
+        }
+        else if (isset($tables['auieo_uitype']))
         {
             echo '
                 <script type="text/javascript">
@@ -635,7 +662,6 @@ switch ($action)
         break;
 
     case 'resetDatabase':
-        MySQLConnect();
 
         foreach ($tables as $table => $data)
         {
@@ -682,7 +708,6 @@ switch ($action)
 
     case 'restoreFromBackup':
         include_once('lib/FileCompressor.php');
-        MySQLConnect();
         $extractor = new ZipFileExtractor('./restore/catsbackup.bak');
         
         CATSUtility::changeConfigSetting('ENABLE_DEMO_MODE', 'false');
@@ -745,7 +770,6 @@ switch ($action)
         break;
 
     case 'doInstallEmptyDatabase':
-        MySQLConnect();
 
         CATSUtility::changeConfigSetting('ENABLE_DEMO_MODE', 'false');
 
@@ -754,8 +778,9 @@ switch ($action)
 
         //Check if we need to update from 0.6.0 to 0.7.0
         $tables = array();
-        $result = MySQLQuery(sprintf("SHOW TABLES FROM %s", DATABASE_NAME));
-        while ($row = mysql_fetch_array($result, MYSQL_NUM))
+        $objDB=  DatabaseConnection::getInstance();
+        $result = $objDB->getAllRow(sprintf("SHOW TABLES FROM %s", DATABASE_NAME));
+        foreach ($result as $row)
         {
             $tables[$row[0]] = true;
         }
@@ -763,7 +788,27 @@ switch ($action)
         if (!isset($tables['history']))
         {
             // FIXME: File exists?!
+            //$schema = file_get_contents('db/upgrade-0.5.5-0.6.x.sql');
+            //MySQLQueryMultiple($schema);
             $schema = file_get_contents('db/upgrade-0.6.x-0.7.0.sql');
+            MySQLQueryMultiple($schema);
+        }
+        
+        $schema = file_get_contents('db/upgrade-0.7.0-1.3.2.sql');
+        MySQLQueryMultiple($schema);
+        
+        $schema = file_get_contents('db/upgrade-1.3.2-1.4.0.sql');
+        MySQLQueryMultiple($schema);
+        
+        $schema = file_get_contents('db/auieo_fields.sql');
+        MySQLQueryMultiple($schema);
+        
+        $schema = file_get_contents('db/upgrade_1.4.0-2.1.0.sql');
+        MySQLQueryMultiple($schema);
+        
+        if(file_exists("db/customization/customize_1.4.0-2.1.0.sql"))
+        {
+            $schema = file_get_contents('db/customization/customize_1.4.0-2.1.0.sql');
             MySQLQueryMultiple($schema);
         }
 
@@ -774,7 +819,6 @@ switch ($action)
         CATSUtility::changeConfigSetting('ENABLE_DEMO_MODE', 'true');
 
         include_once('lib/FileCompressor.php');
-        MySQLConnect();
         $extractor = new ZipFileExtractor('./db/cats_testdata.bak');
         
         /* Extract the file.  This command also executes all sql commands in the file. */
@@ -835,8 +879,14 @@ switch ($action)
         break;
 
     case 'upgradeCats':
-        MySQLConnect();
 
+        $tables = array();
+        $objDB=  DatabaseConnection::getInstance();
+        $result = $objDB->getAllRow(sprintf("SHOW TABLES FROM %s", DATABASE_NAME));
+        foreach ($result as $row)
+        {
+            $tables[$row[0]] = true;
+        }
         /* This shouldn't be possible - there is no option to upgrade CATS if no tables are in the database. */
         if (count($tables) == 0)
         {
@@ -844,66 +894,77 @@ switch ($action)
             echo '<input type="button" class="button" value="Retry Installation" onclick="Installpage_populate(\'a=detectConnectivity\', \'subFormBlock\', \'Checking database connectivity...\');">&nbsp;&nbsp;&nbsp;';
             die();
         }
-
-        $revision = 0;
-        $rs = MySQLQuery('SELECT * FROM candidate', true);
+        
+        $objDB=  DatabaseConnection::getInstance();
+        $arrMeta = $objDB->getColumnsMeta('SELECT * FROM candidate');
+        
         $fields = array();
-        while ($meta = mysql_fetch_field($rs))
+        foreach ($arrMeta as $meta)
         {
-            $fields[$meta->name] = true;
+            if ($meta)
+            {
+                $fields[$meta["name"]] = true;
+            }
         }
+        
+        $arrEmailMeta=$objDB->getColumnsMeta("SELECT * FROM     email_history");
+        $fieldsEmail = array();
+        foreach ($arrEmailMeta as $meta)
+        {
+            if ($meta)
+            {
+                $fieldsEmail[$meta["name"]] = true;
+            }
+        }
+        
+        $catsVersion = '';
 
         /* Look for more versions here. */
-        if (!isset($fields['date_available']))
+        if (!isset($fields['date_available']) && isset($tables['client']))
         {
-            /* 0.5.0 */
-            $revision = 50;
-        }
-        else if (!isset($tables['candidate_joborder_status']))
-        {
-            /* 0.5.2 */
-            $revision = 52;
-        }
-        else if (!isset($tables['candidate_foreign']) && !isset($tables['extra_field']))
-        {
-            /* 0.5.5 */
-            $revision = 55;
-        }
-        else if (!isset($tables['history']))
-        {
-            /* 0.6.0 */
-            $revision = 60;
-        }
-        else if (isset($tables['history']))
-        {
-            /* 0.7.0 */
-            $revision = 70;
-        }
-
-        if ($revision <= 50)
-        {
-            // FIXME: File exists?!
             $schema = file_get_contents('db/upgrade-0.5.0-0.5.1.sql');
             MySQLQueryMultiple($schema);
         }
-        if ($revision <= 52)
+        if (!isset($tables['candidate_joborder_status']) && isset($tables['client']))
         {
-            // FIXME: File exists?!
             $schema = file_get_contents('db/upgrade-0.5.2-0.5.5.sql');
             MySQLQueryMultiple($schema);
         }
-        if ($revision <= 55)
+        if (!isset($tables['candidate_foreign']) && isset($tables['client']))
         {
-            // FIXME: File exists?!
             $schema = file_get_contents('db/upgrade-0.5.5-0.6.x.sql');
             MySQLQueryMultiple($schema);
         }
-        if ($revision <= 60)
+        if (!isset($tables['history']) && isset($tables['client']))
         {
-            // FIXME: File exists?!
             $schema = file_get_contents('db/upgrade-0.6.x-0.7.0.sql');
             MySQLQueryMultiple($schema);
         }
+        if(!isset($fieldsEmail["for_module"]))
+        {
+            $schema = file_get_contents('db/upgrade_0.7.0-1.3.2.sql');
+            MySQLQueryMultiple($schema);
+        }
+        if (!isset($tables['auieo_fields']))
+        {
+            $schema = file_get_contents('db/upgrade-1.3.2-1.4.0.sql');
+            MySQLQueryMultiple($schema);
+            $schema = file_get_contents('db/auieo_fields.sql');
+            MySQLQueryMultiple($schema);
+        }
+        if(!isset($tables["auieo_uitype"]))
+        {
+            $schema = file_get_contents('db/upgrade_1.4.0-2.1.0.sql');
+            MySQLQueryMultiple($schema);
+        }
+        if(file_exists("db/customization/customize_1.4.0-2.1.0.sql"))
+        {
+            $schema = file_get_contents('db/customization/customize_1.4.0-2.1.0.sql');
+            MySQLQueryMultiple($schema);
+        }
+        
+        
+        //if(!isset($fieldsJoborder[""]))
 
         // FIXME: File exists?!
         $schema = @file_get_contents('db/upgrade-zipcodes.sql');
@@ -949,7 +1010,6 @@ switch ($action)
         break;
 
     case 'maintComplete':
-        MySQLConnect();
 
         // FIXME: Make sure we have permissions to create INSTALL_BLOCK.
         file_put_contents(
@@ -962,11 +1022,11 @@ switch ($action)
 
 
         $fromAddress = $_SESSION['fromAddressInstaller'];
-
+        $rowAffected=0;
         // If this is an existing database, just set all the fromAddress settings to new
-        MySQLQuery(sprintf('UPDATE settings SET value = "%s" WHERE setting = "fromAddress"', $fromAddress));
+        MySQLQuery(sprintf('UPDATE settings SET value = "%s" WHERE setting = "fromAddress"', $fromAddress),false,$rowAffected);
         // This is a new install, insert a settings value for each site in the database
-        if(mysql_affected_rows() == 0)
+        if($rowAffected== 0)
         {
             // Insert a "fromAddress" = $fromAddress for each site
             MySQLQuery(sprintf(
@@ -1023,7 +1083,6 @@ switch ($action)
         break;
 
     case 'loginCATS':
-        MySQLConnect();
 
         /* Determine if a default user is set. */
         $rs = MySQLQuery("SELECT * FROM user WHERE user_name = 'admin' AND password = 'cats'");
@@ -1043,7 +1102,7 @@ switch ($action)
         break;
 }
 
-function MySQLConnect()
+/*function MySQLConnect()
 {
     global $tables, $mySQLConnection;
 
@@ -1062,7 +1121,7 @@ function MySQLConnect()
     }
 
 
-    /* Create an array of all tables in the database. */
+    // Create an array of all tables in the database. 
     $tables = array();
     $result = MySQLQuery(sprintf("SHOW TABLES FROM %s", DATABASE_NAME));
     while ($row = mysql_fetch_row($result))
@@ -1070,7 +1129,7 @@ function MySQLConnect()
         $tables[$row[0]] = true;
     }
 
-    /* Select CATS database. */
+    // Select CATS database.
     $isDBSelected = @mysql_select_db(DATABASE_NAME, $mySQLConnection);
     if (!$isDBSelected)
     {
@@ -1083,27 +1142,21 @@ function MySQLConnect()
         );
         return false;
     }
-}
+}*/
 
-function MySQLQuery($query, $ignoreErrors = false)
+function MySQLQuery($query, $ignoreErrors = false,&$rowAffected="")
 {
     global $mySQLConnection;
-
-    $queryResult = mysql_query($query, $mySQLConnection);
+    $objDB=  DatabaseConnection::getInstance();
+    $queryResult = $objDB->query($query);
+    $rowAffected=$objDB->getAffectedRows();
     if (!$queryResult && !$ignoreErrors)
     {
-        $error = mysql_error($mySQLConnection);
-
-        if ($error == 'Query was empty')
-        {
-            return $queryResult;
-        }
-
         die (
             '<p style="background: #ec3737; padding: 4px; margin-top: 0; font:'
             . ' normal normal bold 12px/130% Arial, Tahoma, sans-serif;">Query'
             . " Error -- Please Report This Bug!</p><pre>\n\nMySQL Query "
-            . "Failed: " . $error . "\n\n" . $query . "</pre>\n\n"
+            . "Failed: Query Error:\n\n" . $query . "</pre>\n\n"
         );
     }
 

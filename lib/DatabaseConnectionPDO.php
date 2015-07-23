@@ -95,8 +95,28 @@ class DatabaseConnection
      */
     public function connect()
     {
-        $this->_connection=ClsNaanalPDO::getNamedInstance("cats",DATABASE_NAME,DATABASE_USER,DATABASE_PASS);
+        $this->_connection=ClsNaanalPDO::getNamedInstance("cats",DATABASE_NAME,DATABASE_USER,DATABASE_PASS,"mysql",DATABASE_HOST);
         return true;
+    }
+    
+    function isFieldExist($tablename,$fieldname,$database=null)
+    {
+        return $this->_connection->isFieldExist($tablename,$fieldname,$database);
+    }
+    
+    function isTableExist($tablename,$database=null)
+    {
+        return $this->_connection->isTableExist($tablename,$database);
+    }
+
+    function addField($tablename,$fieldname,$fieldtype,$size=null,$defaultvalue=null,$after=null,$database=null) 
+    {
+        return $this->_connection->addField($tablename,$fieldname,$fieldtype,$size,$defaultvalue,$after,$database);
+    }
+    
+    function createTable($tablename,$database=null)
+    {
+        return $this->_connection->createTable($tablename,$database);
     }
 
     /**
@@ -153,8 +173,12 @@ class DatabaseConnection
         return $this->_queryResult;
     }
     
-    public function getAllRow()
+    public function getAllRow($query=null)
     {
+        if (!is_null($query))
+        {
+            $this->query($query);
+        }
         return $this->_connection->getAllRow();
     }
 
@@ -236,33 +260,24 @@ class DatabaseConnection
         return $arrColumn;
     }
 
-    /**
-     * Returns one row from a query's result set in an associative array,
-     * starting at the current row pointer. After the call, the row pointer
-     * will be incemented by 1 (this is how the mysql_fetch_*() functions
-     * work). If a query is not specified, this method will operate on the
-     * last executed query for this instance. Specifing a query always resets
-     * the row pointer to 0.
-     *
-     * Example (first call):
-     * array(
-     *     'firstName'   => 'Will',
-     *     'lastName'    => 'Buckner',
-     *     'dateCreated' => '05/05/07 4:32 PM'
-     * );
-     *
-     * Example (second call):
-     * array(
-     *     'firstName'   => 'Asim',
-     *     'lastName'    => 'Baig',
-     *     'dateCreated' => '05/06/07 3:30 PM'
-     * );
-     *
-     * @param string MySQL query or null to operate on the last executed query
-     *               for this instance.
-     * @return array Associative result set array, or array() if no records
-     *               were returned.
-     */
+    public function getColumnsMeta($query=null)
+    {
+        if ($query != null)
+        {
+            $pdo_stmt=$this->_connection->query($query." limit 0,1");
+            foreach(range(0, $pdo_stmt->columnCount() - 1) as $column_index)
+            {
+              $meta[] = $pdo_stmt->getColumnMeta($column_index);
+            }
+        }
+        return $meta;
+    }
+    
+    public function getTablesMeta()
+    {
+        
+    }
+    
     public function getAssoc($query = null)
     {
         if ($query != null)
@@ -524,7 +539,7 @@ class DatabaseConnection
 
         if ($precision !== false)
         {
-            return (string) round($value, $precision);
+            return (string) number_format(round($value, $precision),$precision,".","");
         }
 
         return (string) $value;

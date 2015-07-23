@@ -3,6 +3,12 @@ ob_start();
 TemplateUtility::printHeader('Settings', 'js/sorttable.js');
 $AUIEO_HEADER=  ob_get_clean();
 $AUIEO_EEO="";
+$AUIEO_SITES="";
+$AUIEO_SITES=$AUIEO_SITES."<option vlaue=''>- New Site -</option>";
+foreach($this->sites as $site)
+{
+    $AUIEO_SITES=$AUIEO_SITES."<option value='{$site['siteID']}'>{$site['name']}</option>";
+}
 ob_start();
 if($this->EEOSettingsRS['enabled'] == 1)
 {

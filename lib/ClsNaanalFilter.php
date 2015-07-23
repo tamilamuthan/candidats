@@ -20,7 +20,7 @@ class ClsNaanalFilter
         $arr["candidate"]["main"]=array("can_relocate","zip","city","state","source");
         $arr["candidate"]["extra"]=array("Visa Status","Security Clearance","Availability","Payment Type");
         $module=$_REQUEST["m"];
-        $action=$_REQUEST["a"];
+        $action=isset($_REQUEST["a"])?$_REQUEST["a"]:"";
         $objDatabase = DatabaseConnection::getInstance();
         $sql="SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '".DATABASE_NAME."' AND TABLE_NAME = '$table'";
         $arrRow=$objDatabase->getAllAssoc($sql);
@@ -602,8 +602,8 @@ function onFldfilterChange(obj)
 <input type="hidden" name="advancedSearchParser" value="" />
 <input type="hidden" name="advancedSearchOn" value="0" />
 
-<input type="hidden" id="filterMode" name="mode" value="'.$_REQUEST["mode"].'" />
-<input type="hidden" id="filterText" name="wildCardString" value="'.$_REQUEST["wildCardString"].'" />
+<input type="hidden" id="filterMode" name="mode" value="'.(isset($_REQUEST["mode"])?$_REQUEST["mode"]:"").'" />
+<input type="hidden" id="filterText" name="wildCardString" value="'.(isset($_REQUEST["wildCardString"])?$_REQUEST["wildCardString"]:"").'" />
 '.$formEnd.$dynamicRow;
         return $filterUI;
     }

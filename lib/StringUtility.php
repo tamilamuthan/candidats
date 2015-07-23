@@ -563,12 +563,24 @@ class StringUtility
         /* Use the callback (e modifier) feature of PHP PCRE to do the
          * transformation.
          */
-        $string = preg_replace(
+        /*$string = preg_replace(
             '/[^\x21-\x3C\x3E-\x7E\x09\x20]/e',
             'sprintf("=%02X", ord("$0"));',
             $string
+        );*/
+        
+        $string = preg_replace(
+            '/[^\x21-\x3C\x3E-\x7E\x09\x20]/',
+            'StringUtility_quotedPrintableEncode_closure',
+            $string
         );
-
+        if(!function_exists("StringUtility_quotedPrintableEncode_closure"))
+        {
+            function StringUtility_quotedPrintableEncode_closure($g)
+            {
+                return sprintf("=%02X", ord("{$g[0]}"));
+            }
+        }
        /* Prevent the splitting of lines from interfering with escaped
         * characters.
         */

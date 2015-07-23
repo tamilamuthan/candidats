@@ -32,7 +32,7 @@
 
 /* 
  * CandidATS
- * Document to Text Conversion Library
+ * Candidates
  *
  * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
  * 
@@ -57,6 +57,8 @@ class Candidates extends Modules
 {
 
     public $extraFields;
+    private $record=array();
+    private $extraRecord;
     protected $module="candidates";
     protected $module_table="candidate";
     protected $module_id="candidate_id";
@@ -68,6 +70,43 @@ class Candidates extends Modules
         $this->_siteID = $siteID;
         $this->_db = DatabaseConnection::getInstance();
         $this->extraFields = new ExtraFields($siteID, DATA_ITEM_CANDIDATE);
+    }
+    
+    public static function actionMapping($action=false)
+    {
+        $arrAction =  array(
+            "listByView"=>4,
+            "add"=>0,
+            "edit"=>1,
+            "show"=>2,
+            "delete"=>3,
+            "default"=>"listByView"
+        );
+        if($action===false) return $arrAction;
+        if(isset($arrAction[$action])) return $arrAction[$action];
+        return false;
+    }
+    
+    public function __get($var)
+    {
+        if(strpos($var, "EXTRA_")===0)
+        {
+            $arrVar=explode("EXTRA_",$var);
+            $var=$arrVar[1];
+            return isset($this->extraRecord[$var])?$this->extraRecord[$var]:"";
+        }
+        else if(isset($this->$var))
+        {
+            return $this->$var;
+        }
+        else if (isset($this->record[$var]))
+        {
+            return $this->record[$var];
+        }
+        else
+        {
+            return null; 
+        }
     }
 
     /**
@@ -110,6 +149,12 @@ class Candidates extends Modules
         $gender = '', $race = '', $veteran = '', $disability = '',
         $skipHistory = false)
     {
+        $record=  get_defined_vars();
+        $hook=_AuieoHook("candidates_insert_before");
+        if($hook)
+        {
+            $hook($record);
+        }
         $sql = sprintf(
             "INSERT INTO candidate (
                 first_name,
@@ -217,6 +262,13 @@ class Candidates extends Modules
 
         $candidateID = $this->_db->getLastInsertID();
 
+        $hook=_AuieoHook("candidates_insert_after");
+        if($hook)
+        {
+            $record["id"]=$candidateID;
+            $hook($record);
+        }
+        
         if (!$skipHistory)
         {
             $history = new History($this->_siteID);
@@ -327,109 +379,78 @@ class Candidates extends Modules
      * @param string EEO disability status, or '' to not specify.
      * @return boolean True if successful; false otherwise.
      */
-    public function update($candidateID, $isActive, $firstName, $middleName, $lastName,
-        $email1, $email2, $phoneHome, $phoneCell, $phoneWork, $address,
-        $city, $state, $zip, $source, $keySkills, $dateAvailable,
-        $currentEmployer, $canRelocate, $currentPay, $desiredPay,
-        $notes, $webSite, $bestTimeToCall, $owner, $isHot, $email, $emailAddress,
-        $gender = '', $race = '', $veteran = '', $disability = '')
+    public function update($candidate_id, $is_active, $first_name, $middle_name, $last_name,
+        $email1, $email2, $phone_home, $phone_cell, $phone_work, $address,
+        $city, $state, $zip, $source, $key_skills, $date_available,
+        $current_employer, $can_relocate, $current_pay, $desired_pay,
+        $notes, $web_site, $best_time_to_call, $owner, $is_hot, $email, $email_address,
+        $eeo_gender = false, $eeo_ethnic_type_id = false, $eeo_veteran_type_id = false, $eeo_disability_status = false,$ownertype=0)
     {
-        $sql = sprintf(
-            "UPDATE
-                candidate
-            SET
-                is_active             = %s,
-                first_name            = %s,
-                middle_name           = %s,
-                last_name             = %s,
-                email1                = %s,
-                email2                = %s,
-                phone_home            = %s,
-                phone_work            = %s,
-                phone_cell            = %s,
-                address               = %s,
-                city                  = %s,
-                state                 = %s,
-                zip                   = %s,
-                source                = %s,
-                key_skills            = %s,
-                date_available        = %s,
-                current_employer      = %s,
-                current_pay           = %s,
-                desired_pay           = %s,
-                can_relocate          = %s,
-                is_hot                = %s,
-                notes                 = %s,
-                web_site              = %s,
-                best_time_to_call     = %s,
-                owner                 = %s,
-                date_modified         = NOW(),
-                eeo_ethnic_type_id    = %s,
-                eeo_veteran_type_id   = %s,
-                eeo_disability_status = %s,
-                eeo_gender            = %s
-            WHERE
-                candidate_id = %s
-            AND
-                site_id = %s",
-            ($isActive ? '1' : '0'),
-            $this->_db->makeQueryString($firstName),
-            $this->_db->makeQueryString($middleName),
-            $this->_db->makeQueryString($lastName),
-            $this->_db->makeQueryString($email1),
-            $this->_db->makeQueryString($email2),
-            $this->_db->makeQueryString($phoneHome),
-            $this->_db->makeQueryString($phoneWork),
-            $this->_db->makeQueryString($phoneCell),
-            $this->_db->makeQueryString($address),
-            $this->_db->makeQueryString($city),
-            $this->_db->makeQueryString($state),
-            $this->_db->makeQueryString($zip),
-            $this->_db->makeQueryString($source),
-            $this->_db->makeQueryString($keySkills),
-            $this->_db->makeQueryStringOrNULL($dateAvailable),
-            $this->_db->makeQueryString($currentEmployer),
-            $this->_db->makeQueryString($currentPay),
-            $this->_db->makeQueryString($desiredPay),
-            ($canRelocate ? '1' : '0'),
-            ($isHot ? '1' : '0'),
-            $this->_db->makeQueryString($notes),
-            $this->_db->makeQueryString($webSite),
-            $this->_db->makeQueryString($bestTimeToCall),
-            $this->_db->makeQueryInteger($owner),
-            $this->_db->makeQueryInteger($race),
-            $this->_db->makeQueryInteger($veteran),
-            $this->_db->makeQueryString($disability),
-            $this->_db->makeQueryString($gender),
-            $this->_db->makeQueryInteger($candidateID),
-            $this->_siteID
-        );
-
-        $preHistory = $this->get($candidateID);
+        $this->load($candidate_id);
+        $arrDefinedVar=get_defined_vars();
+        $record=$arrDefinedVar;
+        $hook=_AuieoHook("candidates_update_before");
+        if($hook)
+        {
+            $hook($record);
+        }
+        foreach($this->record as $key=>$var)
+        {
+            if($key=="candidate_id") continue;
+            if(!isset($arrDefinedVar[$key]) || $arrDefinedVar[$key]===false) continue;
+            $this->record[$key]=$arrDefinedVar[$key];
+        }
+        $objSQL=new ClsNaanalSQL("UPDATE");
+        $objSQL->addTable($this->module_table);
+        foreach($this->record as $key=>$var)
+        {
+            if($key=="candidate_id") continue;
+            if(!isset($arrDefinedVar[$key]) || $arrDefinedVar[$key]===false) continue;
+            if($key=="can_relocate" || $key=="is_hot" || $key=="is_active")
+            {
+                $objSQL->addValue($key, $var?1:0);
+            }
+            else
+            {
+                $objSQL->addValue($key, $var);
+            }
+        }
+        $objSQL->addValue("date_modified","NOW()");
+        $objSQL->addValue("site_id",$this->_siteID);
+        $objSQL->addValue("ownertype", $ownertype);
+        $objSQL->addWhere("candidate_id", $candidate_id);
+        $sql=$objSQL->render();
+        $preHistory = $this->get($candidate_id);
         $queryResult = $this->_db->query($sql);
-        $postHistory = $this->get($candidateID);
+        $postHistory = $this->get($candidate_id);
 
         $history = new History($this->_siteID);
         $history->storeHistoryChanges(
-            DATA_ITEM_CANDIDATE, $candidateID, $preHistory, $postHistory
+            DATA_ITEM_CANDIDATE, $candidate_id, $preHistory, $postHistory
         );
-
+        $hook=_AuieoHook("candidates_update_after");
+        if($hook)
+        {
+            $record["id"]=$candidate_id;
+            $hook($record);
+        }
         if (!$queryResult)
         {
             return false;
         }
-
+        
         if (!empty($emailAddress))
         {
             /* Send e-mail notification. */
             //FIXME: Make subject configurable.
-            $mailer = new Mailer($this->_siteID);
+            $this->sendEMail(-1, $emailAddress, 'CATS Notification: Candidate Ownership Change', $email, true);
+            /*$mailer = new Mailer($this->_siteID);
             $mailerStatus = $mailer->sendToOne(
                 array($emailAddress, ''),
                 'CATS Notification: Candidate Ownership Change',
                 $email,
                 true
-            );
+            );*/
         }
 
         return true;
@@ -516,6 +537,63 @@ class Candidates extends Modules
         $this->extraFields->deleteValueByDataItemID($candidateID);
     }
 
+    public function load($candidateID)
+    {
+        $sql = sprintf(
+            "SELECT
+                candidate.candidate_id,
+                candidate.is_active,
+                candidate.first_name,
+                candidate.middle_name,
+                candidate.last_name,
+                candidate.email1,
+                candidate.email2,
+                candidate.phone_home,
+                candidate.phone_work,
+                candidate.phone_cell,
+                candidate.address,
+                candidate.city,
+                candidate.state,
+                candidate.zip,
+                candidate.source,
+                candidate.key_skills,
+                candidate.current_employer,
+                candidate.current_pay,
+                candidate.desired_pay,
+                candidate.notes,
+                candidate.owner,
+                candidate.can_relocate,
+                candidate.web_site,
+                candidate.best_time_to_call,
+                candidate.is_hot,
+                candidate.is_admin_hidden,
+                candidate.date_created,
+                candidate.date_modified,
+                eeo_ethnic_type_id,
+                eeo_veteran_type_id,
+                eeo_disability_status,
+                eeo_gender
+            FROM
+                candidate
+            WHERE
+                candidate.candidate_id = %s
+            AND
+                candidate.site_id = %s
+            ",
+            $this->_db->makeQueryInteger($candidateID),
+            $this->_siteID
+        );
+
+        $this->record = $this->_db->getAssoc($sql);
+        $sql="select * from extra_field where data_item_type=100 and data_item_id='{$candidateID}'";
+        $arrAssoc = $this->_db->getAllAssoc($sql);
+        $this->extraRecord=array();
+        foreach($arrAssoc as $ind=>$row)
+        {
+            $this->extraRecord[$row["field_name"]]=$row["value"];
+        }
+    }
+    
     /**
      * Returns all relevent candidate information for a given candidate ID.
      *
@@ -525,34 +603,140 @@ class Candidates extends Modules
      */
     public function get($candidateID)
     {
+        $objSQL=new ClsAuieoSQL();
+        $objFromCandidate=$objSQL->addFrom("auieo_fields");
+        $objSQL->addWhere($objFromCandidate, "data_item_type", 100);
+        $objSQL->addWhere($objFromCandidate, "site_id", $this->_siteID);
+        $objSQL->addOrderBy("sequence", false);
+        $sql=$objSQL->render();
+        $arrField=$this->_db->getAllAssoc($sql);
+        
+        $objSQL=new ClsAuieoSQL();
+        $objFromCandidate=$objSQL->addFrom("candidate");
+        $joinIDCandidateID=$objFromCandidate->addJoinField("candidate_id");
+        $joinIDCandidateEnteredBy=$objFromCandidate->addJoinField("entered_by");
+        $joinIDCandidateOwner=$objFromCandidate->addJoinField("owner");
+        $joinIDCandidateEEO=$objFromCandidate->addJoinField("eeo_ethnic_type_id");
+        $joinIDCandidateEEOVeteran=$objFromCandidate->addJoinField("eeo_veteran_type_id");
+        
+        $objFromUserAssigned=$objSQL->addFrom("user","entered_by_user");
+        $joinIDEnteredUser=$objFromUserAssigned->addJoinField("user_id");
+        
+        $objFromUserOwner=$objSQL->addFrom("user","owner_user");
+        $joinIDOwnerUser=$objFromUserOwner->addJoinField("user_id");
+        
+        $objFromCandidateJoborder=$objSQL->addFrom("candidate_joborder");
+        $joinIDCandidateJoborderCandidateID=$objFromCandidateJoborder->addJoinField("candidate_id");
+        
+        $objFromEEO=$objSQL->addFrom("eeo_ethnic_type");
+        $joinIDEEOID=$objFromEEO->addJoinField("eeo_ethnic_type_id");
+        
+        $objFromEEOVeteran=$objSQL->addFrom("eeo_veteran_type");
+        $joinIDEEOVeteranID=$objFromEEOVeteran->addJoinField("eeo_veteran_type_id");
+        
+        $objFromUserAssigned->setJoinWith($objFromCandidate, $joinIDCandidateEnteredBy, $joinIDEnteredUser);
+        $objFromUserOwner->setJoinWith($objFromCandidate, $joinIDCandidateOwner, $joinIDOwnerUser);
+        $objFromCandidateJoborder->setJoinWith($objFromCandidate, $joinIDCandidateID, $joinIDCandidateJoborderCandidateID);
+        $objFromEEO->setJoinWith($objFromCandidate, $joinIDCandidateEEO, $joinIDEEOID);
+        $objFromEEOVeteran->setJoinWith($objFromCandidate, $joinIDCandidateEEOVeteran, $joinIDEEOVeteranID);
+        $objSQL->addWhere($objFromCandidate, "candidate_id", $this->_db->makeQueryInteger($candidateID));
+        $objSQL->addWhere($objFromCandidate, "site_id", $this->_siteID);
+        $objSQL->addGroupBy($objFromCandidate, "candidate_id");
+        $objSQL->addSelect($objFromCandidate, "candidate_id");
+        $objSQL->addSelect($objFromCandidate, "ownertype");
+        foreach($arrField as $ind=>$field)
+        {
+            //$alias=getAliasNameFromField($field["fieldname"]);
+            $objSQL->addSelect($objFromCandidate, $field["fieldname"]);
+        }//trace($objSQL->render());
+        /*$objSQL->addSelect($objFromCandidate, "candidate_id", "candidateID");
+        $objSQL->addSelect($objFromCandidate, "is_active", "isActive");
+        $objSQL->addSelect($objFromCandidate, "first_name", "firstName");
+        $objSQL->addSelect($objFromCandidate, "middle_name", "middleName");
+        $objSQL->addSelect($objFromCandidate, "last_name", "lastName");
+        $objSQL->addSelect($objFromCandidate, "email1", "email1");
+        $objSQL->addSelect($objFromCandidate, "email2", "email2");
+        $objSQL->addSelect($objFromCandidate, "phone_home", "phoneHome");
+        $objSQL->addSelect($objFromCandidate, "phone_work", "phoneWork");
+        $objSQL->addSelect($objFromCandidate, "phone_cell", "phoneCell");
+        $objSQL->addSelect($objFromCandidate, "address", "address");
+        $objSQL->addSelect($objFromCandidate, "city", "city");
+        $objSQL->addSelect($objFromCandidate, "state", "state");
+        $objSQL->addSelect($objFromCandidate, "zip", "zip");
+        $objSQL->addSelect($objFromCandidate, "source", "source");
+        $objSQL->addSelect($objFromCandidate, "key_skills", "keySkills");
+        $objSQL->addSelect($objFromCandidate, "current_employer", "currentEmployer");
+        $objSQL->addSelect($objFromCandidate, "current_pay", "currentPay");
+        $objSQL->addSelect($objFromCandidate, "desired_pay", "desiredPay");
+        $objSQL->addSelect($objFromCandidate, "notes", "notes");
+        $objSQL->addSelect($objFromCandidate, "owner", "owner");
+        $objSQL->addSelect($objFromCandidate, "can_relocate", "canRelocate");
+        $objSQL->addSelect($objFromCandidate, "web_site", "webSite");
+        $objSQL->addSelect($objFromCandidate, "best_time_to_call", "bestTimeToCall");
+        $objSQL->addSelect($objFromCandidate, "is_hot", "isHot");
+        $objSQL->addSelect($objFromCandidate, "is_admin_hidden", "isAdminHidden");*/
+        $objSQL->addSelectCustom("DATE_FORMAT(
+                    candidate.date_created, '%m-%d-%y (%h:%i %p)'
+                )", "dateCreated");
+        $objSQL->addSelectCustom("DATE_FORMAT(
+                    candidate.date_modified, '%m-%d-%y (%h:%i %p)'
+                )", "dateModified");
+        $objSQL->addSelectCustom("COUNT(
+                    candidate_joborder.joborder_id
+                )", "pipeline");
+        $objSQL->addSelectCustom("(
+                    SELECT
+                        COUNT(*)
+                    FROM
+                        candidate_joborder_status_history
+                    WHERE
+                        candidate_id = ".($this->_db->makeQueryInteger($candidateID))."
+                    AND
+                        status_to = ".PIPELINE_STATUS_SUBMITTED."
+                    AND
+                        site_id = {$this->_siteID}
+                )", "submitted");
+        $objSQL->addSelectCustom("CONCAT(
+                    candidate.first_name, ' ', candidate.last_name
+                )", "candidateFullName");
+        $objSQL->addSelectCustom("CONCAT(
+                    entered_by_user.first_name, ' ', entered_by_user.last_name
+                )", "enteredByFullName");
+        $objSQL->addSelectCustom("CONCAT(
+                    owner_user.first_name, ' ', owner_user.last_name
+                )", "ownerFullName");
+        $objSQL->addSelect($objFromUserOwner, "email", "owner_email");
+        $objSQL->addSelectCustom("DATE_FORMAT(
+                    candidate.date_available, '%m-%d-%y'
+                )", "dateAvailable");
+        $objSQL->addSelect($objFromEEO, "type", "eeoEthnicType");
+        $objSQL->addSelect($objFromEEOVeteran, "type", "eeoVeteranType");
+        $objSQL->addSelect($objFromCandidate, "eeo_disability_status", "eeoDisabilityStatus");
+        $objSQL->addSelect($objFromCandidate, "eeo_gender", "eeoGender");
+        $objSQL->addSelectCustom("IF (candidate.eeo_gender = 'm',
+                    'Male',
+                    IF (candidate.eeo_gender = 'f',
+                        'Female',
+                        ''))", "eeoGenderText");
+        $sql=$objSQL->render();
+        /**
+         * 
+         */
+/*trace();
         $sql = sprintf(
-            "SELECT
-                candidate.candidate_id AS candidateID,
-                candidate.is_active AS isActive,
-                candidate.first_name AS firstName,
-                candidate.middle_name AS middleName,
-                candidate.last_name AS lastName,
-                candidate.email1 AS email1,
-                candidate.email2 AS email2,
-                candidate.phone_home AS phoneHome,
-                candidate.phone_work AS phoneWork,
-                candidate.phone_cell AS phoneCell,
-                candidate.address AS address,
-                candidate.city AS city,
-                candidate.state AS state,
-                candidate.zip AS zip,
-                candidate.source AS source,
-                candidate.key_skills AS keySkills,
-                candidate.current_employer AS currentEmployer,
-                candidate.current_pay AS currentPay,
-                candidate.desired_pay AS desiredPay,
-                candidate.notes AS notes,
-                candidate.owner AS owner,
-                candidate.can_relocate AS canRelocate,
-                candidate.web_site AS webSite,
-                candidate.best_time_to_call AS bestTimeToCall,
-                candidate.is_hot AS isHot,
-                candidate.is_admin_hidden AS isAdminHidden,
+            "SELECT candidate.candidate_id AS candidateID,candidate.is_active AS isActive,
+                candidate.first_name AS firstName,candidate.middle_name AS middleName,
+                candidate.last_name AS lastName,candidate.email1 AS email1,
+                candidate.email2 AS email2,candidate.phone_home AS phoneHome,
+                candidate.phone_work AS phoneWork,candidate.phone_cell AS phoneCell,
+                candidate.address AS address,candidate.city AS city,
+                candidate.state AS state,candidate.zip AS zip,
+                candidate.source AS source,candidate.key_skills AS keySkills,
+                candidate.current_employer AS currentEmployer,candidate.current_pay AS currentPay,
+                candidate.desired_pay AS desiredPay,candidate.notes AS notes,
+                candidate.owner AS owner,candidate.can_relocate AS canRelocate,
+                candidate.web_site AS webSite,candidate.best_time_to_call AS bestTimeToCall,
+                candidate.is_hot AS isHot,candidate.is_admin_hidden AS isAdminHidden,
                 DATE_FORMAT(
                     candidate.date_created, '%%m-%%d-%%y (%%h:%%i %%p)'
                 ) AS dateCreated,
@@ -620,7 +804,7 @@ class Candidates extends Modules
             $this->_siteID,
             $this->_db->makeQueryInteger($candidateID),
             $this->_siteID
-        );
+        );*/
 
         return $this->_db->getAssoc($sql);
     }
@@ -637,42 +821,43 @@ class Candidates extends Modules
     {
         $sql = sprintf(
             "SELECT
-                candidate.candidate_id AS candidateID,
-                candidate.is_active AS isActive,
-                candidate.first_name AS firstName,
-                candidate.middle_name AS middleName,
-                candidate.last_name AS lastName,
-                candidate.email1 AS email1,
-                candidate.email2 AS email2,
-                candidate.phone_home AS phoneHome,
-                candidate.phone_work AS phoneWork,
-                candidate.phone_cell AS phoneCell,
-                candidate.address AS address,
-                candidate.city AS city,
-                candidate.state AS state,
-                candidate.zip AS zip,
-                candidate.source AS source,
-                candidate.key_skills AS keySkills,
-                candidate.current_employer AS currentEmployer,
-                candidate.current_pay AS currentPay,
-                candidate.desired_pay AS desiredPay,
-                candidate.notes AS notes,
-                candidate.owner AS owner,
-                candidate.can_relocate AS canRelocate,
-                candidate.web_site AS webSite,
-                candidate.best_time_to_call AS bestTimeToCall,
-                candidate.is_hot AS isHot,
-                candidate.eeo_ethnic_type_id AS eeoEthnicTypeID,
-                candidate.eeo_veteran_type_id AS eeoVeteranTypeID,
-                candidate.eeo_disability_status AS eeoDisabilityStatus,
-                candidate.eeo_gender AS eeoGender,
-                candidate.is_admin_hidden AS isAdminHidden,
+                candidate.candidate_id,
+                candidate.is_active,
+                candidate.first_name,
+                candidate.middle_name,
+                candidate.last_name,
+                candidate.email1,
+                candidate.email2,
+                candidate.phone_home,
+                candidate.phone_work,
+                candidate.phone_cell,
+                candidate.address,
+                candidate.city,
+                candidate.state,
+                candidate.zip,
+                candidate.source,
+                candidate.key_skills,
+                candidate.current_employer,
+                candidate.current_pay,
+                candidate.desired_pay,
+                candidate.notes,
+                candidate.owner,
+                candidate.can_relocate,
+                candidate.web_site,
+                candidate.best_time_to_call,
+                candidate.is_hot,
+                candidate.eeo_ethnic_type_id,
+                candidate.eeo_veteran_type_id,
+                candidate.eeo_disability_status,
+                candidate.eeo_gender,
+                candidate.is_admin_hidden,
+				candidate.ownertype,
                 DATE_FORMAT(
                     candidate.date_available, '%%m-%%d-%%y'
                 ) AS dateAvailable
             FROM
                 candidate
-            WHERE
+            WHERE 
                 candidate.candidate_id = %s
             AND
                 candidate.site_id = %s",
@@ -1487,7 +1672,7 @@ class CandidatesDataGrid extends DataGrid
                                      'pagerWidth'   => 80,
                                      'filter'         => 'candidate.can_relocate'),
 
-            'Owner' =>         array('select'   => 'owner_user.first_name AS ownerFirstName,' .
+            /*'Owner' =>         array('select'   => 'owner_user.first_name AS ownerFirstName,' .
                                                    'owner_user.last_name AS ownerLastName,' .
                                                    'CONCAT(owner_user.last_name, owner_user.first_name) AS ownerSort',
                                      'join'     => 'LEFT JOIN user AS owner_user ON candidate.owner = owner_user.user_id',
@@ -1496,7 +1681,7 @@ class CandidatesDataGrid extends DataGrid
                                      'sortableColumn'     => 'ownerSort',
                                      'pagerWidth'    => 75,
                                      'alphaNavigation' => true,
-                                     'filter'         => 'CONCAT(owner_user.first_name, owner_user.last_name)'),
+                                     'filter'         => 'CONCAT(owner_user.first_name, owner_user.last_name)'),*/
 
             'Created' =>       array('select'   => 'DATE_FORMAT(candidate.date_created, \'%m-%d-%y\') AS dateCreated',
                                      'pagerRender'      => 'return $rsData[\'dateCreated\'];',

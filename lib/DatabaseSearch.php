@@ -343,6 +343,7 @@ class DatabaseSearch
         }
 
         /* Dispatch symbols. */
+        $string = str_replace(' ',  ' AND ', $string);
         $string = str_replace(':',  ' AND ', $string);
         $string = str_replace(',',  ' OR ', $string);
         $string = str_replace(';', ' NOT ', $string);

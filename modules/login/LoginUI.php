@@ -170,7 +170,7 @@ class LoginUI extends UserInterface
         if (ModuleUtility::moduleExists("asp"))
                 $this->_template->display('./modules/asp/AspLogin.tpl');
             else
-                $this->_template->display('./modules/login/Login.tpl');
+                $this->_template->display('./modules/login/login.php');
     }
 
     public function noCookiesModal()
@@ -315,10 +315,10 @@ class LoginUI extends UserInterface
         $wizard = new Wizard(CATSUtility::getIndexName() . '?m=home', './js/wizardIntro.js');
         if ($_SESSION['CATS']->isFirstTimeSetup())
         {
-            $wizard->addPage('Welcome!', './modules/login/wizard/Intro.tpl', '', false, true);
+            $wizard->addPage('Welcome!', './modules/login/wizard/Intro.php', '', false, true);
         }
 
-        if (!$_SESSION['CATS']->isAgreedToLicense())
+        /*if (!$_SESSION['CATS']->isAgreedToLicense())
         {
             $phpeval = '';
             if (!eval(Hooks::get('LICENSE_TERMS'))) return;
@@ -342,24 +342,24 @@ class LoginUI extends UserInterface
                 }
                 $wizard->addPage($templateName, './modules/login/wizard/' . $template, '', false, true);
             }
-        }
+        }*/
 
         // if logged in for the first time, change password
         if (strtolower($username) == 'admin' && $password === DEFAULT_ADMIN_PASSWORD)
         {
-            $wizard->addPage('Password', './modules/login/wizard/Password.tpl', '', false, true);
+            $wizard->addPage('Password', './modules/login/wizard/Password.php', '', false, true);
         }
 
         // make user set an e-mail address
         if (trim($_SESSION['CATS']->getEmail()) == '')
         {
-            $wizard->addPage('E-mail', './modules/login/wizard/Email.tpl', '', false, true);
+            $wizard->addPage('E-mail', './modules/login/wizard/Email.php', '', false, true);
         }
 
         // if no site name set, make user set site name
         if ($accessLevel >= ACCESS_LEVEL_SA && $_SESSION['CATS']->getSiteName() === 'default_site')
         {
-            $wizard->addPage('Site', './modules/login/wizard/SiteName.tpl', '', false, true);
+            $wizard->addPage('Site', './modules/login/wizard/SiteName.php', '', false, true);
         }
 
         // CATS Hosted Wizard Pages
@@ -367,7 +367,7 @@ class LoginUI extends UserInterface
 
         if ($_SESSION['CATS']->isFirstTimeSetup())
         {
-            $wizard->addPage('Setup Users', './modules/login/wizard/Users.tpl', '
+            $wizard->addPage('Setup Users', './modules/login/wizard/Users.php', '
                 $users = new Users($siteID);
                 $mp = $users->getAll();
                 $data = $users->getLicenseData();

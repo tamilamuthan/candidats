@@ -57,6 +57,18 @@ h2
     margin-top: 0px;
 }
 
+.cprofileshow
+{
+    width:390px;
+    height:100%;
+}
+
+.cshow
+{
+    width:50%;
+    height:100%;
+}
+
 .h2BreadCrumb:link,
 .h2BreadCrumb:visited
 {
@@ -153,7 +165,6 @@ a:hover
     padding: 0px;
     position: absolute;
     bottom: -1px;
-    width: 80em;
     font: normal normal normal 12px Arial, Tahoma, sans-serif;
 }
 
@@ -270,6 +281,7 @@ a:hover
     background-image: url('images/mru_background.gif');
     background-repeat: repeat-x;
     text-align: right;
+    height: 1.8em;
 }
 
 #quickSearchBlock span.quickSearchLabel
@@ -668,6 +680,19 @@ img.abstop
     vertical-align: top;
 }
 
+div.detailsOutside
+{
+    border: 1px solid #ccc;
+    margin-bottom: 5px;
+    width:100%;
+}
+div.detailsOutside div
+{
+    margin: 0px;
+    padding:0px;
+    height: 100%;
+}
+
 table.detailsOutside
 {
     border-collapse: collapse;
@@ -685,6 +710,7 @@ table.detailsInside
 {
     padding: 2px 0px 5px 0px;
     border-collapse: collapse;
+    height:100%;
 }
 
 table.detailsInside td

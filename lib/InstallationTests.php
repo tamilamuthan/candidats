@@ -334,7 +334,10 @@ class InstallationTests
     /* Run a series of tests against the MySQL database. */
     public static function checkMySQL($host, $user, $pass, $name)
     {
-        /* Check MySQL connection. */
+        $objPDO=DatabaseConnection::getInstance();
+       /*
+       // Check MySQL connection. 
+        
         if (self::DEBUG_FAIL || !@mysql_connect($host, $user, $pass))
         {
             echo sprintf(
@@ -346,13 +349,13 @@ class InstallationTests
 
         echo '<tr class="pass"><td>MySQL connection was successful.</td></tr>';
 
-        /* Check MySQL version number. */
+        // Check MySQL version number. 
         if (!self::_checkMySQLVersion())
         {
             return false;
         }
 
-        /* Try to switch to the CATS database. */
+        // Try to switch to the CATS database.
         if (!@mysql_select_db($name))
         {
             echo sprintf(
@@ -366,14 +369,14 @@ class InstallationTests
         echo sprintf(
             '<tr class="pass"><td>Database \'%s\' selected.</td></tr>',
             $name
-        );
+        );*/
 
         /* Check CREATE TABLE permissions. */
-        $queryResult = @mysql_query('CREATE TABLE `testtable` (`id` int(11) NOT NULL default \'0\') ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;');
+        $queryResult = $objPDO->query('CREATE TABLE `testtable` (`id` int(11) NOT NULL default \'0\') ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;');
         if (!$queryResult)
         {
-            mysql_query('DROP TABLE testtable');
-            $queryResult = @mysql_query('CREATE TABLE `testtable` (`id` int(11) NOT NULL default \'0\') ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;');
+             $objPDO->query('DROP TABLE testtable');
+            $queryResult =  $objPDO->query('CREATE TABLE `testtable` (`id` int(11) NOT NULL default \'0\') ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;');
         }
         if (!$queryResult)
         {
@@ -392,7 +395,7 @@ class InstallationTests
         );
 
         /* Check INSERT permissions. */
-        if (!@mysql_query('INSERT INTO testtable (id) VALUES (1)'))
+        if (! $objPDO->query('INSERT INTO testtable (id) VALUES (1)'))
         {
             echo sprintf(
                 '<tr class="fail"><td>Cannot insert into \'testtable\' table. Please verify that '
@@ -407,7 +410,7 @@ class InstallationTests
         echo '<tr class="pass"><td>Can insert into \'testtable\' table.</td></tr>';
 
         /* Check UPDATE permissions. */
-        if (!@mysql_query('UPDATE testtable SET id = 5 WHERE id = 1'))
+        if (! $objPDO->query('UPDATE testtable SET id = 5 WHERE id = 1'))
         {
             echo sprintf(
                 '<tr class="fail"><td>Cannot update \'testtable\' table. Please verify that '
@@ -422,7 +425,7 @@ class InstallationTests
         echo '<tr class="pass"><td>Can update \'testtable\' table.</td></tr>';
 
         /* Check DELETE permissions. */
-        if (!@mysql_query('DELETE FROM testtable WHERE id = 5'))
+        if (! $objPDO->query('DELETE FROM testtable WHERE id = 5'))
         {
             echo sprintf(
                 '<tr class="fail"><td>Cannot delete from \'testtable\' table. Please verify that '
@@ -437,7 +440,7 @@ class InstallationTests
         echo '<tr class="pass"><td>Can delete from \'testtable\' table.</td></tr>';
 
         /* Check DROP TABLES permissions. */
-        if (!@mysql_query('DROP TABLE testtable'))
+        if (! $objPDO->query('DROP TABLE testtable'))
         {
             echo sprintf(
                 '<tr class="fail"><td>Cannot drop table \'testtable\'. Please verify that '

@@ -44,6 +44,10 @@ class ClsNaanalSQL
         $this->sqlType=$sqlType;
         //$this->objAuieoSQLFromClause=new ClsAuieoSQLFromClause();
     }
+    function setSQLType($sqlType)
+    {
+        $this->sqlType=$sqlType;
+    }
     function setLimit($from,$length)
     {
         $this->from=$from;
@@ -160,7 +164,7 @@ class ClsNaanalSQL
               $sql=$sql.")";
               return $sql;
           }
-          if(strtolower($this->sqlType)=="insert")
+          if(strtolower($this->sqlType)=="insert" || strtolower($this->sqlType)=="replace" || strtolower($this->sqlType)=="insert ignore")
           {
               $fields="";
               $values="";
@@ -172,7 +176,7 @@ class ClsNaanalSQL
               }
               $fields=trim($fields,",");
               $values=trim($values,",");
-              $sql="INSERT INTO {$this->arrTable[0]} ({$fields}) VALUES({$values})";
+              $sql="{$this->sqlType} INTO {$this->arrTable[0]} ({$fields}) VALUES({$values})";
               return $sql;
           }
         }
@@ -345,10 +349,17 @@ class ClsNaanalSQL
         if(strtolower($this->sqlType)=="update")
         {
             $fields="";
-            if(empty($this->arrValue)) trace("No Field added for insert");
+            if(empty($this->arrValue)) trace("No Field added for update");
             foreach($this->arrValue as $k=>$v)
             {
-                $fields=$fields."`{$k}`='".addslashes($v)."',";
+                if(strpos($v, "("))
+                {
+                    $fields=$fields."`{$k}`='".addslashes($v)."',";
+                }
+                else
+                {
+                    $fields=$fields."`{$k}`='".addslashes($v)."',";
+                }
             }
             $fields=trim($fields,",");
             if($where)

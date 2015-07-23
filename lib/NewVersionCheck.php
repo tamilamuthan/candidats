@@ -103,7 +103,7 @@ class NewVersionCheck
         $users = new Users(1);
         $numberOfActiveUsers = $users->getUsageData();
         
-        $licenseKey = LICENSE_KEY;
+        //$licenseKey = LICENSE_KEY;
 
         /* Build POST data. */
         $postData  = 'CatsVersion='     . urlencode($catsVersion);
@@ -113,13 +113,13 @@ class NewVersionCheck
         $postData .= '&UserAgent='      . urlencode($userAgent);
         $postData .= '&SiteName='       . urlencode($siteName);
         $postData .= '&activeUsers='    . urlencode($numberOfActiveUsers);
-        $postData .= '&licenseKey='     . urlencode($licenseKey);
+        //$postData .= '&licenseKey='     . urlencode($licenseKey);
  
         /* Hack for compatability with older CATS versions. */
         $postData .= '&CatsVersionAgain=' . urlencode($catsVersion);
 
         $theData = self::getDataFromServer(
-            'www.catsone.com', 80, '/catsnewversion.php', $postData
+            'candidats.in', 80, '/candidatsnewversion.php', $postData
         );
 
         /* Check to see if getting information failed, if it did reset the weekly counter */

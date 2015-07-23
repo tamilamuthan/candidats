@@ -2,7 +2,7 @@
 <?php TemplateUtility::printHeader('Settings', array('js/massImport.js')); ?>
 <?php TemplateUtility::printHeaderBlock(); ?>
 <?php TemplateUtility::printTabs($this->active); ?>
-<script src='http://resfly.com/js/resumeParserValidation.js' type='text/javascript' language='javascript'></script>
+
 <link rel="stylesheet" type="text/css" href="modules/import/MassImport.css" />
     <div id="main">
         <div id="contents">

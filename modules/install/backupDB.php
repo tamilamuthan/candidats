@@ -129,7 +129,7 @@ function dumpDB($db, $file, $useStatus = false, $splitFiles = true, $siteID = -1
 
         $isSiteIdColumn = false;
         $sql = sprintf("SHOW COLUMNS FROM %s", $table);
-        $arrRecordSet = $objDB->getAssoc($sql);
+        $arrRecordSet = $objDB->getAllAssoc($sql);
         foreach ($arrRecordSet as $recordSet)    
         {
             if ($recordSet['Field'] == 'site_id')
@@ -147,7 +147,7 @@ function dumpDB($db, $file, $useStatus = false, $splitFiles = true, $siteID = -1
             $sql = 'SELECT * FROM ' . $table . '';
         }
 
-        $arrRecordSet = $objDB->getAssoc($sql);
+        $arrRecordSet = $objDB->getAllAssoc($sql);
         $index = 0;
         foreach ($arrRecordSet as $recordSet)
         {

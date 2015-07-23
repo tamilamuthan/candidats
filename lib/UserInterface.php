@@ -45,7 +45,7 @@
  *	@package    CATS
  *	@subpackage Library
  */
-class UserInterface
+class UserInterface extends ClsNaanalController
 {
     protected $_moduleName = '';
     protected $_moduleTabText = '';
@@ -61,10 +61,13 @@ class UserInterface
     protected $_authenticationRequired = true;
     protected $_hooks = array();
     protected $_schema = array();
-
+    private $objView=null;
+    protected $isViewCalled=false;
+    protected $isViewSet=false;
 
     public function __construct()
     {
+        $this->_db = DatabaseConnection::getInstance();
         $this->_template = new Template();
 
         if (isset($_SESSION['CATS']) && !empty($_SESSION['CATS']))
@@ -82,7 +85,56 @@ class UserInterface
             $this->_template->assign('accessLevel', $this->_accessLevel);
         }
     }
-
+    
+    public function setView(&$objView)
+    {
+        $this->isViewSet=true;
+        $this->objView=$objView;
+    }
+    
+    public function &getView($id=false)
+    {
+        if($this->isViewSet)
+        {
+            $this->isViewCalled=true;
+            if($id!==false)
+            {
+                $this->objView->setID($id);
+            }
+            return $this->objView;
+        }
+        return false;
+    }
+    
+    public function isViewSet()
+    {
+        return $this->isViewSet;
+    }
+    public function isViewCalled()
+    {
+        return $this->isViewCalled;
+    }
+    
+    public function updateField()
+    {
+        $moduleInfo=getTableInfoByModule($this->_moduleName);
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $sql="update auieo_fields set displaytype={$_REQUEST["checked"]} where data_item_type={$moduleInfo["data_item_type"]} and fieldname='{$_REQUEST["field_name"]}' and site_id={$_siteID}";
+        $db=DatabaseConnection::getInstance();
+        $db->query($sql);
+        exit;
+    }
+    
+    public function updateFieldReadonly()
+    {
+        $moduleInfo=getTableInfoByModule($this->_moduleName);
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $sql="update auieo_fields set readonly={$_REQUEST["checked"]} where data_item_type={$moduleInfo["data_item_type"]} and fieldname='{$_REQUEST["field_name"]}' and site_id={$_siteID}";
+        $db=DatabaseConnection::getInstance();
+        $db->query($sql);
+        exit;
+    }
+    
     /**
      * Returns this module's name.
      *
@@ -91,6 +143,16 @@ class UserInterface
     public function getModuleName()
     {
         return $this->_moduleName;
+    }
+    
+    public function &getTemplateObject()
+    {
+        return $this->_template;
+    }
+    
+    public function isRendered()
+    {
+        return $this->_template->isRendered();
     }
 
     /**
@@ -101,6 +163,32 @@ class UserInterface
     public function getModuleTabText()
     {
         return $this->_moduleTabText;
+    }
+    
+    public function getIcon()
+    {
+        if(isset($this->_moduleName))
+        {
+            if(file_exists("modules/{$this->_moduleName}/images/icon.gif"))
+            {
+                return "<img style='padding:0px;margin:0px;' src='modules/{$this->_moduleName}/images/icon.gif' width='24' height='24' alt='{$this->_moduleTabText}' style='border: none; margin-top: 3px;' />";
+            }
+            else if(file_exists("images/{$this->_moduleName}.gif"))
+            {
+                return "<img style='padding:0px;margin:0px;' src='images/{$this->_moduleName}.gif' width='24' height='24' alt='{$this->_moduleTabText}' style='border: none; margin-top: 3px;' />";
+            }
+        }
+        return "";
+    }
+    
+    /**
+     * Returns this module's tab text.
+     *
+     * @return string tab text of the module
+     */
+    public function getModuleIcon()
+    {
+        return $this->_icon;
     }
 
     /**
@@ -335,10 +423,33 @@ class UserInterface
     protected function isRequiredIDValid($key, $request, $allowZero = false)
     {
         if (isset($request[$key]) && (!empty($request[$key]) ||
-            ($allowZero && $request[$key] == '0')) &&
-            ctype_digit((string) $request[$key]))
+            ($allowZero && $request[$key] == '0')))
         {
-            return true;
+            if(ctype_digit((string) $request[$key]))
+                return true;
+            ///walk through the array and check whether it is valid id
+            else if(is_array($request[$key]))
+            {
+                foreach($request[$key] as $val)
+                {
+                    if(!ctype_digit((string) $val))
+                        return false;
+                }
+                return true;
+            }
+            ///if it is json, convert it and check for valid id
+            else if($arrCandidateID=json_decode($request[$key]))
+            {
+                if(isset($arrCandidateID) && !empty($arrCandidateID))
+                {
+                    foreach($request[$key] as $val)
+                    {
+                        if(!ctype_digit((string) $val))
+                            return false;
+                    }
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -424,6 +535,56 @@ class UserInterface
         }
 
         return $ret;
+    }
+    
+    public function editemail ()
+    {
+        $db = DatabaseConnection::getInstance();	
+        $email_history_id=trim($_REQUEST["email_history_id"]);
+        $rs = $db->getAllAssoc(sprintf(
+    'SELECT recipients, from_address, text '
+    . 'FROM email_history '
+    . 'WHERE  email_history_id=%s' ,
+$email_history_id
+        ));
+
+        if($rs)
+        {
+           /* $emailTemplates = new EmailTemplates($this->_siteID);
+            $emailTemplatesRS = $emailTemplates->getAll();
+            $arrTpl["emailTemplatesRS"]=$emailTemplatesRS;*/
+            $arrTmp=explode("Message:",$rs[0]["text"]);
+            $subject= $arrTmp[0];
+            $message=$arrTmp[1];
+            $arrSubj=explode("Subject:",$subject);
+            $this->_template->assign('active', $this);
+            $this->_template->assign('message', $message);
+            $this->_template->assign('subject', $arrSubj[1]);
+            $this->_template->assign('recipient', $rs[0]["recipients"]);
+            $this->_template->assign('from', $rs[0]["from_address"]);
+
+            //$this->_template->display("./modules/{$this->_moduleName}/editemail.php");
+            $this->_template->display($this->getModuleTemplate("editemail"));
+        }
+        else
+        {
+            die("Unknown EMail details requested");
+        }	
+    }
+    
+    public function getModuleTemplate($template)
+    {
+        $filename="./modules/{$this->_moduleName}/{$template}.php";
+        if(!file_exists($filename))
+        {
+            $filename="./auieo/common/template/{$template}.php";
+        }
+        return $filename;
+    }
+    
+    public function onEditemail()
+    {
+
     }
     
     public function transferto()

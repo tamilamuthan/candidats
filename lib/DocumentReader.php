@@ -100,7 +100,6 @@ class DocumentReader
 
     private function &read_pdf()
     {
-        include 'lib/vendor/autoload.php';
         $parser = new \Smalot\PdfParser\Parser();
         $pdf    = $parser->parseFile($this->filename);
 

@@ -35,39 +35,7 @@ You have <?php echo number_format(count($this->documents), 0); ?> document<?php 
             </td>
 
             <td align="left valign="top" width="50%">
-                <object id="FlashFilesUpload" codeBase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,0,0"
-            		width="450" height="350" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" VIEWASTEXT>
-            		<!-- Replace symbols " with the &quot; at all parameters values and
-            		symbols "&" with the "%26" at URL values or &amp; at other values!
-            		The same parameters values should be set for EMBED object below. -->
-               	    <param name="FlashVars" VALUE="uploadUrl=<?php echo(CATSUtility::getNonSSLDirectoryURL()); ?>modules/asp/lib/MultiPowUpload/upload.php?session_id=<?php echo(session_id()); ?>&amp;showLink=false&amp;labelUploadText=%20&amp;backgroundColor=#FFFFFF">
-                   	<param name="BGColor" VALUE="#FFFFFF">
-                   	<param name="Movie" VALUE="<?php echo(CATSUtility::getNonSSLDirectoryURL()); ?>modules/asp/lib/MultiPowUpload/ElementITMultiPowUpload1.7.swf">
-                   	<param name="Src" VALUE="<?php echo(CATSUtility::getNonSSLDirectoryURL()); ?>modules/asp/lib/MultiPowUpload/ElementITMultiPowUpload1.7.swf">
-                   	<param name="WMode" VALUE="Window">
-                   	<param name="Play" VALUE="-1">
-                   	<param name="Loop" VALUE="-1">
-                   	<param name="Quality" VALUE="High">
-                   	<param name="SAlign" VALUE="">
-                   	<param name="Menu" VALUE="-1">
-                   	<param name="Base" VALUE="">
-                   	<param name="AllowScriptAccess" VALUE="always">
-                   	<param name="Scale" VALUE="ShowAll">
-                   	<param name="DeviceFont" VALUE="0">
-                   	<param name="EmbedMovie" VALUE="0">
-                   	<param name="SWRemote" VALUE="">
-                   	<param name="MovieData" VALUE="">
-                   	<param name="SeamlessTabbing" VALUE="1">
-                   	<param name="Profile" VALUE="0">
-                   	<param name="ProfileAddress" VALUE="">
-                   	<param name="ProfilePort" VALUE="0">
-                	<!-- Embed for Netscape,Mozilla/FireFox browsers support. Flashvars parameters are the same.-->
-                    <!-- Replace symbols " with the &quot; at all parameters values and
-                    symbols "&" with the "%26" at URL values or &amp; at other values! -->
-                	<embed bgcolor="#FFFFFF" id="EmbedFlashFilesUpload" src="<?php echo(CATSUtility::getNonSSLDirectoryURL()); ?>modules/asp/lib/MultiPowUpload/ElementITMultiPowUpload1.7.swf" quality="high" pluginspage="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash" type="application/x-shockwave-flash" width="450" height="350"
-                    flashvars="uploadUrl=<?php echo(CATSUtility::getNonSSLDirectoryURL()); ?>modules/asp/lib/MultiPowUpload/upload.php?session_id=<?php echo(session_id()); ?>&amp;showLink=false&amp;labelUploadText=%20&amp;backgroundColor=#FFFFFF">
-                	</embed>
-                </object>
+                
             </td>
         </tr>
     </table>
@@ -133,9 +101,7 @@ You have <?php echo number_format(count($this->documents), 0); ?> document<?php 
     <table cellpadding="0" cellspacing="0" border="0">
         <tr>
             <td align="left" valign="top" style="padding-right: 20px;">
-                <a href="http://www.resfly.com" target="_blank">
-                    <img src="images/poweredByResfly.jpg" border="0" style="border: 1px solid #c0c0c0;" />
-                </a>
+
             </td>
             <td align="left" valign="top">
                 <span style="font-size: 16px;">

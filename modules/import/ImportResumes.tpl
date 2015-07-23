@@ -80,40 +80,7 @@
                                 <br />
                                 Step 1:<br />
                                 Upload resumes you wish to parse to the CATS server.  CATS can parse doc, pdf, txt, and <br />rtf format resumes, and can also accept zip format archives of resumes.
-                                <OBJECT id="FlashFilesUpload" codeBase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,0,0"
-                                		width="450" height="350" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" VIEWASTEXT>
-                                		<!-- Replace symbols " with the &quot; at all parameters values and
-                                		symbols "&" with the "%26" at URL values or &amp; at other values!
-                                		The same parameters values should be set for EMBED object below. -->
-                                	<PARAM NAME="FlashVars" VALUE="uploadUrl=<?php echo(CATSUtility::getNonSSLDirectoryURL()); ?>modules/asp/lib/MultiPowUpload/upload.php?session_id=<?php echo(session_id()); ?>&showLink=false&labelUploadText=%20 &backgroundColor=#FFFFFF">
-                                	<PARAM NAME="BGColor" VALUE="#FFFFFF">
-                                	<PARAM NAME="Movie" VALUE="modules/asp/lib/MultiPowUpload/ElementITMultiPowUpload1.7.swf">
-                                	<PARAM NAME="Src" VALUE="modules/asp/lib/MultiPowUpload/ElementITMultiPowUpload1.7.swf">
-                                	<PARAM NAME="WMode" VALUE="Window">
-                                	<PARAM NAME="Play" VALUE="-1">
-                                	<PARAM NAME="Loop" VALUE="-1">
-                                	<PARAM NAME="Quality" VALUE="High">
-                                	<PARAM NAME="SAlign" VALUE="">
-                                	<PARAM NAME="Menu" VALUE="-1">
-                                	<PARAM NAME="Base" VALUE="">
-                                	<PARAM NAME="AllowScriptAccess" VALUE="always">
-                                	<PARAM NAME="Scale" VALUE="ShowAll">
-                                	<PARAM NAME="DeviceFont" VALUE="0">
-                                	<PARAM NAME="EmbedMovie" VALUE="0">
-                                	<PARAM NAME="SWRemote" VALUE="">
-                                	<PARAM NAME="MovieData" VALUE="">
-                                	<PARAM NAME="SeamlessTabbing" VALUE="1">
-                                	<PARAM NAME="Profile" VALUE="0">
-                                	<PARAM NAME="ProfileAddress" VALUE="">
-                                	<PARAM NAME="ProfilePort" VALUE="0">
-
-                                	<!-- Embed for Netscape,Mozilla/FireFox browsers support. Flashvars parameters are the same.-->
-                                		<!-- Replace symbols " with the &quot; at all parameters values and
-                                		symbols "&" with the "%26" at URL values or &amp; at other values! -->
-                                	<embed bgcolor="#FFFFFF" id="EmbedFlashFilesUpload" src="<?php echo(CATSUtility::getNonSSLDirectoryURL()); ?>modules/asp/lib/MultiPowUpload/ElementITMultiPowUpload1.7.swf" quality="high" pluginspage="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash"	type="application/x-shockwave-flash" width="450" height="350"
-                                	flashvars="uploadUrl=<?php echo(CATSUtility::getNonSSLDirectoryURL()); ?>modules/asp/lib/MultiPowUpload/upload.php?session_id=<?php echo(session_id()); ?>&showLink=false&labelUploadText=%20 &backgroundColor=#FFFFFF">
-                                	</embed>
-                                  </OBJECT>
+                                
                                   <br />
                                   When you are finishing uploading your resumes, press the below button to continue.<br />
                                 <input type="button" class="button" value="Step 2: Parse Resumes" onclick="document.location.href='?m=import&a=showMassImport';" />

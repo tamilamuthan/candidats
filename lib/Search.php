@@ -377,6 +377,134 @@ class SearchCandidates extends SearchBase
         $this->_userID = $_SESSION['CATS']->getUserID();
     }
     
+    /**
+     * Returns all candidates criterial matching $matchingCriteria.
+     *
+     * @param string wildcard match string
+     * @return array candidates data
+     */
+    public function byJoborderMatching($matchingCriteria, $sortBy="lastName", $sortDirection="ASC")
+    {
+        $objSearchBase=new SearchBase("candidate");
+        $matchingExtraCriteria=array();
+        $matchingRegularCriteria=array();
+        $matchingExtraCriteriaData=array();
+        $matchingRegularCriteriaData=array();
+        $where="";
+        /**
+         * split extra field and regular field
+         * and build where condition
+         */
+        foreach($matchingCriteria as $field=>$data)
+        {
+            $realField=getRealFieldName(100,$field);
+            if(is_numeric($realField))
+            {
+                $matchingExtraCriteria[]=$field;
+                $matchingExtraCriteriaData[$field]=$data;
+            }
+            else
+            {
+                $matchingRegularCriteria[]=$field;
+                $matchingRegularCriteriaData[$field]=$data;
+            }
+        }
+        $arrExtra=$objSearchBase->getExtraFieldWhere($matchingExtraCriteria);
+        $arrTable=$arrExtra["table"];
+        foreach($matchingExtraCriteriaData as $fieldName=>$data)
+        {
+            $table=$arrTable[$fieldName];
+            $data=trim($data);
+            if($data[0]=="<" || $data[0]==">" || $data[0]=="!" || $data[0]=="=") 
+            {
+                if(empty($where))
+                {
+                    $where="`{$table}`.`{$fieldName}` {$data}";
+                }
+                else
+                {
+                    $where="{$where} AND `{$table}`.`{$fieldName}` {$data}";
+                }
+            }
+            else if($data[0]=="%")
+            {
+                if(empty($where))
+                {
+                    $where="`{$table}`.`{$fieldName}` like '{$data}'";
+                }
+                else
+                {
+                    $where="{$where} AND `{$table}`.`{$fieldName}` like '{$data}'";
+                }
+            }
+            else
+            {
+                if(empty($where))
+                {
+                    $where="`{$table}`.`{$fieldName}` = '{$data}'";
+                }
+                else
+                {
+                    $where="{$where} AND `{$table}`.`{$fieldName}` = '{$data}'";
+                }
+            }
+        }
+        foreach($matchingRegularCriteriaData as $fieldName=>$data)
+        {
+            //$table=$arrTable[$fieldName];
+            $data=trim($data);
+            
+            if(empty($where))
+            {
+                $where="`candidate`.`{$fieldName}` = '{$data}'";
+            }
+            else
+            {
+                $where="{$where} AND `candidate`.`{$fieldName}` = '{$data}'";
+            }
+        }
+        if(!empty($where)) $where="AND {$where}";
+        $customSqlColum=implode(",", $arrExtra["column"]);
+        $customSqlJoin=implode(" ", $arrExtra["join"]);
+        
+        $sql = sprintf(
+            "SELECT
+                candidate.candidate_id AS candidateID,
+                candidate.first_name AS firstName,
+                candidate.last_name AS lastName,
+                candidate.city AS city,
+                candidate.state AS state,
+                candidate.phone_home AS phoneHome,
+                candidate.phone_cell AS phoneCell,
+                candidate.key_skills AS keySkills,
+                candidate.email1 AS email1,
+                owner_user.first_name AS ownerFirstName,
+                owner_user.last_name AS ownerLastName,
+                DATE_FORMAT(
+                    candidate.date_created, '%%m-%%d-%%y'
+                ) AS dateCreated,
+                DATE_FORMAT(
+                    candidate.date_modified, '%%m-%%d-%%y'
+                ) AS dateModified
+                %s
+            FROM
+                candidate
+            LEFT JOIN user AS owner_user
+                ON candidate.owner = owner_user.user_id
+                %s
+            WHERE
+                candidate.site_id = %s
+                {$where}
+            ORDER BY
+                %s %s",
+            empty($customSqlColum)?"":",{$customSqlColum}",
+            $customSqlJoin,
+                $this->_siteID,
+            $sortBy,
+            $sortDirection
+        );
+        return $this->_db->getAllAssoc($sql);
+    }    
     
     /**
      * Returns all candidates with full names matching $wildCardString.

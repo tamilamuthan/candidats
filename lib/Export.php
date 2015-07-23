@@ -67,27 +67,75 @@ class ExportUtility
             $indexName,
             $dataItemType
         );
-
+        if($_REQUEST["m"]=="candidates")
+        {
+            $objSearchDS=new SearchDataStructure($_REQUEST["m"]);
+            $objSearchDS->loadFromURL();
+            $_SESSION["AUIEO"]["CANDIDATS"]["SearchDS"]=$objSearchDS;
+            $allRecordsJoborderURL = sprintf(
+                '%s?m=candidates&a=considerForJobSearch&candidateID=SearchDS',
+                $indexName
+            );
+        }
         $currentPageURL = sprintf(
             '%s?m=export&amp;a=export&amp;dataItemType=%s&amp;ids=%s',
             $indexName,
             $dataItemType,
             $IDs
         );
-
+        if($_REQUEST["m"]=="candidates")
+        {
+            $arrID=explode(",",$IDs);
+            foreach($arrID as $ind=>$id)
+            {
+                $arrID[$ind]="candidateID[]=".trim($id);
+            }
+            $candidateIDs=implode("&",$arrID);
+            $currentPageJoborderURL = sprintf(
+                '%s?m=candidates&a=considerForJobSearch&%s',
+                $indexName,
+                $candidateIDs
+            );
+        }
+        $arrList=Projects::getActiveList();
+        $link="";
+        if($arrList)
+        {
+            $link=' | ';
+            $link .= "<select name='projectid' id='projectid'>";
+            $link .= "<option value=''>- Add New -</option>";
+            foreach($arrList as $id=>$projectName)
+            {
+                $link .= "<option value='{$id}'>{$projectName}</option>";
+            }
+            $link .= "</select>".' <a href="#" id="addToProjectBoxLink" onclick="addToProject(); return false;">Add To Project</a>';
+        }
         $menu =
               '<div style="float: left; margin-left: 4px; margin-right: ' . $linkOffset . 'px;">'
             . '<form name="selectAll" action="#">'
             . '<input type="checkbox" name="allBox" title="Select All" onclick="toggleChecksAll();" />'
             . '</form>'
             . '</div>'
-            . '<a href="#" id="exportBoxLink" onclick="showBox(\'ExportBox\'); return false;">Export</a> | <a href="javascript:sendEmail();">Send Email</a> | <a href="#" id="deleteBoxLink" onclick="deleteSelected(); return false;">Delete</a><br />'
+            . '<a href="#" id="exportBoxLink" onclick="showBox(\'ExportBox\'); return false;">Export</a> | <a href="#" id="deleteBoxLink" onclick="deleteSelected(); return false;">Delete</a>'.$link;
+        if($_REQUEST["m"]=="candidates")
+        {
+            $menu = $menu . ' | <a href="#" id="addToJoborderBoxLink" onclick="showBox(\'JoborderBox\'); return false;">Add to joborder</a>';
+        }
+        $menu = $menu . '<br />'
             . '<div class="exportPopup" id="ExportBox" align="left" onmouseover="showBox(\'ExportBox\');" onmouseout="hideBox(\'ExportBox\');">'
             . '<a href="' . $allRecordsURL . '">Export All Records</a><br />'
             . '<a href="' . $currentPageURL . '">Export Current Page</a><br />'
             . '<a href="#" onclick="checkSelected(); return false;">Export Selected Records</a>'
             . '</div>';
-
+        if($_REQUEST["m"]=="candidates")
+        {
+            $menu=$menu.'
+                    <div class="exportPopup" id="JoborderBox" align="left" onmouseover="showBox(\'JoborderBox\');" onmouseout="hideBox(\'JoborderBox\');">'
+                . '<a href="javascript:void(0);" onclick="showPopWin(\''.$allRecordsJoborderURL.'\', 750, 390, null); return false;">All Records</a><br />'
+                . '<a href="javascript:void(0);" onclick="showPopWin(\''.$allRecordsJoborderURL.'\', 750, 390, null); return false;">Current Page</a><br />'
+                . '<a href="#" onclick="checkSelected(); return false;">Selected Records</a>'
+                . '</div>';
+        }
         $footer = '</form>';
 
         return array(
@@ -133,6 +181,10 @@ class Export
         {
             case DATA_ITEM_CANDIDATE:
                 $dataItem = new Candidates($this->_siteID);
+                break;
+            
+            case DATA_ITEM_JOBORDER:
+                $dataItem = new JobOrders($this->_siteID);
                 break;
                 
             default:

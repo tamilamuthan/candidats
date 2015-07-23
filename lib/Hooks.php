@@ -70,6 +70,11 @@ class Hooks
 
         return $hookCommands . ' return true;';
     }
+    
+    public static function processFileHook($hookName)
+    {
+        include("hooks.php");
+    }
 }
 
 ?>

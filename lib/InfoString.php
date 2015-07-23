@@ -218,15 +218,15 @@ class InfoString
 
         $infoString = sprintf(
             '<span class="bold">Candidate:</span>&nbsp;%s %s',
-            htmlspecialchars($infoRS['firstName']),
-            htmlspecialchars($infoRS['lastName'])
+            htmlspecialchars($infoRS['first_name']),
+            htmlspecialchars($infoRS['last_name'])
         );
 
-        if (!empty($infoRS['currentEmployer']))
+        if (!empty($infoRS['current_employer']))
         {
             $infoString .= sprintf(
                 '<br /><span class="bold">Current Employer:</span>&nbsp;%s',
-                htmlspecialchars($infoRS['currentEmployer'])
+                htmlspecialchars($infoRS['current_employer'])
             );
         }
 
@@ -246,11 +246,11 @@ class InfoString
             );
         }
 
-        if (!empty($infoRS['phoneHome']))
+        if (!empty($infoRS['phone_home']))
         {
             $infoString .= sprintf(
                 '<br /><span class="bold">Home Phone:</span>&nbsp;%s',
-                htmlspecialchars($infoRS['phoneHome'])
+                htmlspecialchars($infoRS['phone_home'])
             );
         }
 
@@ -258,7 +258,7 @@ class InfoString
         {
             $infoString .= sprintf(
                 '<br /><span class="bold">Work Phone:</span>&nbsp;%s',
-                htmlspecialchars($infoRS['phoneWork'])
+                htmlspecialchars($infoRS['phone_work'])
             );
         }
 
@@ -266,7 +266,7 @@ class InfoString
         {
             $infoString .= sprintf(
                 '<br /><span class="bold">Cell Phone:</span>&nbsp;%s',
-                htmlspecialchars($infoRS['phoneCell'])
+                htmlspecialchars($infoRS['phone_cell'])
             );
         }
 

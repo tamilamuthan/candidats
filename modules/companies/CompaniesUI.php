@@ -29,7 +29,7 @@
 
 /* 
  * CandidATS
- * Document to Text Conversion Library
+ * Companies Module
  *
  * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
  * 
@@ -198,10 +198,11 @@ class CompaniesUI extends UserInterface
         $this->_template->assign('dataGrid', $dataGrid);
         $this->_template->assign('userID', $_SESSION['CATS']->getUserID());
         $this->_template->assign('errMessage', $errMessage);
-
+		//$companies = new companies($this->_siteID);//trace($companies);
+		//$this->_template->assign('totalCompanies', $companies->getCount());
         if (!eval(Hooks::get('CLIENTS_LIST_BY_VIEW'))) return;
 
-        $this->_template->display('./modules/companies/Companies.tpl');
+        $this->_template->display('./modules/companies/Companies.php');
     }
 
     /*
@@ -256,9 +257,23 @@ class CompaniesUI extends UserInterface
             $data['shortNotes'] = $data['notes'];
             $isShortNotes = false;
         }
+        
+        /**
+         * if ownertype is group, override the user full name
+         */
+        if($data['ownertype']>0)
+        {
+            $sql="select * from auieo_groups where id={$data['owner']}";
+            $objDB=DatabaseConnection::getInstance();
+            $row=$objDB->getAssoc($sql);
+            if($row)
+            {
+                $data["ownerFullName"]=$row["groupname"];
+            }
+        }
 
         /* Hot companies [can] have different title styles than normal companies. */
-        if ($data['isHot'] == 1)
+        if ($data['is_hot'] == 1)
         {
             $data['titleClass'] = 'jobTitleHot';
         }
@@ -429,7 +444,7 @@ class CompaniesUI extends UserInterface
 
         if (!eval(Hooks::get('CLIENTS_SHOW'))) return;
 
-        $this->_template->display('./modules/companies/Show.php');
+        $this->_template->display('./modules/companies/show.php');
     }
 
     /*
@@ -460,7 +475,7 @@ class CompaniesUI extends UserInterface
         $this->_template->assign('extraFieldRS', $extraFieldRS);
         $this->_template->assign('active', $this);
         $this->_template->assign('subActive', 'Add Company');
-        $this->_template->display('./modules/companies/Add.tpl');
+        $this->_template->display('./modules/companies/Add.php');
     }
 
     /*
@@ -603,7 +618,7 @@ class CompaniesUI extends UserInterface
 
         $users = new Users($this->_siteID);
         $usersRS = $users->getSelectList();
-
+        $groupRS = $users->getSelectGroupList();
         /* Add an MRU entry. */
         $_SESSION['CATS']->getMRU()->addEntry(
             DATA_ITEM_COMPANY, $companyID, $data['name']
@@ -645,13 +660,14 @@ class CompaniesUI extends UserInterface
         $this->_template->assign('active', $this);
         $this->_template->assign('data', $data);
         $this->_template->assign('usersRS', $usersRS);
+        $this->_template->assign('groupRS', $groupRS);
         $this->_template->assign('extraFieldRS', $extraFieldRS);
         $this->_template->assign('contactsRS', $contactsRS);
         $this->_template->assign('departmentsRS', $departmentsRS);
         $this->_template->assign('departmentsString', $departmentsString);
         $this->_template->assign('emailTemplateDisabled', $emailTemplateDisabled);
         $this->_template->assign('companyID', $companyID);
-        $this->_template->display('./modules/companies/Edit.tpl');
+        $this->_template->display('./modules/companies/Edit.php');
     }
 
     /*
@@ -671,13 +687,6 @@ class CompaniesUI extends UserInterface
         if (!$this->isRequiredIDValid('companyID', $_POST))
         {
             $this->listByView('Invalid company ID.');
-            return;
-        }
-
-        /* Bail out if we don't have a valid owner user ID. */
-        if (!$this->isOptionalIDValid('owner', $_POST))
-        {
-            $this->listByView('Invalid owner user ID.');
             return;
         }
 
@@ -723,7 +732,7 @@ class CompaniesUI extends UserInterface
         {
             $faxNumber = $this->getTrimmedInput('faxNumber', $_POST);
         }
-
+        
         $url = $this->getTrimmedInput('url', $_POST);
         if (!empty($url))
         {
@@ -741,9 +750,13 @@ class CompaniesUI extends UserInterface
         $companyID       = $_POST['companyID'];
         $owner           = $_POST['owner'];
         $billingContact  = $_POST['billingContact'];
+        
+        $arrOwner=explode(":",$_POST['owner']);
+        $owner       = isset($arrOwner[1])?trim($arrOwner[1]):0;
+        $ownertype   = trim($arrOwner[0]);
 
         /* Change ownership email? */
-        if ($this->isChecked('ownershipChange', $_POST) && $owner > 0)
+        if ($this->isChecked('ownershipChange', $_POST)  && $owner > 0 && $ownertype<=0)
         {
             $companyDetails = $companies->get($companyID);
 
@@ -778,8 +791,8 @@ class CompaniesUI extends UserInterface
                 $replacementStrings = array(
                     $ownerDetails['fullName'],
                     $companyDetails['name'],
-                    '<a href="http://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '?')) . '?m=companies&amp;a=show&amp;companyID=' . $companyID . '">'.
-                        'http://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '?')) . '?m=companies&amp;a=show&amp;companyID=' . $companyID . '</a>'
+                    '<a href="http://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '?')) . '?m=companies&a=show&companyID=' . $companyID . '">'.
+                        'http://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '?')) . '?m=companies&a=show&companyID=' . $companyID . '</a>'
                 );
                 $statusChangeTemplate = str_replace(
                     $stringsToFind,
@@ -829,7 +842,8 @@ class CompaniesUI extends UserInterface
 
         if (!$companies->update($companyID, $name, $address, $city, $state,
             $zip, $phone1, $phone2, $faxNumber, $url, $keyTechnologies,
-            $isHot, $notes, $owner, $billingContact, $email, $emailAddress))
+            $isHot, $notes, $owner, $billingContact, $email, $emailAddress,
+            $ownertype))
         {
             CommonErrors::fatal(COMMONERROR_RECORDERROR, $this, 'Failed to update company.');
         }
@@ -899,7 +913,7 @@ class CompaniesUI extends UserInterface
             return;
         }
 
-        if ($rs['defaultCompany'] == 1)
+        if (isset($rs['defaultCompany']) && $rs['defaultCompany'] == 1)
         {
             $this->listByView('Cannot delete internal postings company.');
             return;
@@ -937,7 +951,7 @@ class CompaniesUI extends UserInterface
         $this->_template->assign('wildCardCompanyName' , '');
         $this->_template->assign('wildCardKeyTechnologies', '');
         $this->_template->assign('mode', '');
-        $this->_template->display('./modules/companies/Search.tpl');
+        $this->_template->display('./modules/companies/Search.php');
     }
 
     /*
@@ -1077,7 +1091,7 @@ class CompaniesUI extends UserInterface
         $this->_template->assign('wildCardString', $query);
         $this->_template->assign('wildCardKeyTechnologies', $wildCardKeyTechnologies);
         $this->_template->assign('mode', $mode);
-        $this->_template->display('./modules/companies/Search.tpl');
+        $this->_template->display('./modules/companies/Search.php');
     }
 
     /*
@@ -1099,7 +1113,7 @@ class CompaniesUI extends UserInterface
         $this->_template->assign('isFinishedMode', false);
         $this->_template->assign('companyID', $companyID);
         $this->_template->display(
-            './modules/companies/CreateAttachmentModal.tpl'
+            './modules/companies/CreateAttachmentModal.php'
         );
     }
 
@@ -1139,7 +1153,7 @@ class CompaniesUI extends UserInterface
         $this->_template->assign('isFinishedMode', true);
         $this->_template->assign('companyID', $companyID);
         $this->_template->display(
-            './modules/companies/CreateAttachmentModal.tpl'
+            './modules/companies/CreateAttachmentModal.php'
         );
     }
 

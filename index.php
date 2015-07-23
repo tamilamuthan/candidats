@@ -36,6 +36,74 @@
  *
  * $Id: index.php 3807 2007-12-05 01:47:41Z will $
  */
+
+/* 
+ * CandidATS
+ * Document to Text Conversion Library
+ *
+ * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+ * 
+ * This Modified Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+define("DEVELOPER_IP","");
+if(!isset($_GET['m']) && isset($_GET['module']))
+{
+    $_GET['m']=$_GET['module'];
+    $_REQUEST['m']=$_REQUEST['module'];
+}
+if(!isset($_GET['a']) && isset($_GET['action']))
+{
+    $_GET['a']=$_GET['action'];
+    $_REQUEST['a']=$_REQUEST['action'];
+}
+if(isset($_GET['m']) && $_GET['m']=="MailManager")
+{
+    $_GET['module']="mailclient";
+    $_GET['m']="mailclient";
+    $_REQUEST['module']="mailclient";
+    $_REQUEST['m']="mailclient";
+}
+//function trace($message){die($message);}
+include_once("debug.php");
+spl_autoload_register(function ($class) { 
+
+
+    $pathClass = 'lib/' . $class . '.php';
+
+    if (file_exists($pathClass)) 
+    {
+        require_once $pathClass;
+    } 
+    else
+    {
+        return null;
+    }
+});
+define("AUIEO_FRAMEWORK_PATH", "");
+define("AUIEO_APP_PATH", "");
+//require_once("E:\\auieo\\project\\naanal\\testing.php");
+include_once("lib/ClsNaanalController.php");
+include_once("lib/ClsNaanalApplication.php");
+include_once("lib/ClsLInputValidator.php");
+include_once("lib/ClsAuieoModule.php");
+include_once("lib/ModuleEmailTemplate.php");
+include_once("lib/SearchDataStructure.php");
+include_once("lib/Pagination.php");
+include_once("lib/PaginationUI.php");
+include_once("lib/ClsNaanalLibrary.php");
+include_once("lib/ClsAuieoDataStructure.php");
+include_once("lib/ClsAuieoData.php");
+include_once("lib/ClsAuieoFluidArray.php");
+include_once("lib/ClsAuieoArray.php");
+include_once("lib/ClsAuieoSQL.php");
+include_once("lib/ClsAuieoModuleViewer.php");
+include_once("lib/ClsAuieoViewerBase.php");
+include_once("lib/PRGManagement.php");
+include_once("lib/PRGGroup.php");
+include_once("mvc/viewers/ClsAuieoView.php");
+//ClsAuieoTestGen::render("http://127.0.0.1/candidats/");
 /* Do we need to run the installer? */
 if (!file_exists('INSTALL_BLOCK') && !isset($_POST['performMaintenence']))
 {
@@ -52,26 +120,14 @@ if (function_exists('date_default_timezone_set'))
     @date_default_timezone_set(date_default_timezone_get());
 }
 
-/* Start error handler if ASP error handler exists and this isn't a localhost
- * connection.
- */
-if (file_exists('modules/asp/lib/ErrorHandler.php') &&
-    @$_SERVER['REMOTE_ADDR'] !== '127.0.0.1' &&
-    @$_SERVER['REMOTE_ADDR'] !== '::1' &&
-    substr(@$_SERVER['REMOTE_ADDR'], 0, 3) !== '10.')
-{
-    include_once('modules/asp/lib/ErrorHandler.php');
-    $errorHandler = new ErrorHandler();
-}
-define("DEVELOPER_IP","127.0.0.1");
-
-function phptrace_ignore_code()
-{
-    return array(2048);
-}
-//include_once("debug.php");
+if(!class_exists("ClsNaanalPDO"))include_once("./lib/ClsNaanalPDO.php");
 include_once('./config.php');
 include_once('./constants.php');
+include_once('./lib/vendor/autoload.php');
+Logger::configure('logger.xml');
+Logger::getLogger("AuieoATS")->info("Start....");
+include_once("utils.php");
+include_once("./lib/Modules.php");
 include_once('./lib/CommonErrors.php');
 include_once('./lib/CATSUtility.php');
 include_once('./lib/DatabaseConnection.php');
@@ -84,10 +140,20 @@ include_once('./lib/UserInterface.php'); /* Depends: Template, Session. */
 include_once('./lib/ModuleUtility.php'); /* Depends: UserInterface */
 include_once('./lib/TemplateUtility.php'); /* Depends: ModuleUtility, Hooks */
 include_once("./lib/ClsNaanalFilter.php");
-
+include_once("./modules/install/extra.php");
 /* Give the session a unique name to avoid conflicts and start the session. */
 @session_name(CATS_SESSION_NAME);
 session_start();
+function cleanToVariableName($string) {
+   $string = str_replace(' ', '_', $string); // Replaces all spaces with hyphens.
+   $string = preg_replace('/[^A-Za-z0-9\_]/', '', $string); // Removes special chars.
+
+   return preg_replace('/_+/', '_', $string); // Replaces multiple hyphens with single one.
+}
+
+
+//$arrSQL=loadAuieoExtraField();
+//echo implode(";<br />",$arrSQL);exit;
 
 /* Try to prevent caching. */
 header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
@@ -116,7 +182,7 @@ if (ini_get('session.auto_start') !== '0' &&
 {
     die('CATS Error: session.auto_start must be set to 0 in php.ini.');
 }
-
+define("URL_BASE_FILE_NAME",  CATSUtility::getIndexName());
 /* Proper extensions loaded?! */
 if (!function_exists('mysql_connect') || !function_exists('session_start'))
 {
@@ -136,27 +202,6 @@ $_SESSION['CATS']->startTimer();
  * was active.
  */
 $_SESSION['CATS']->checkForcedUpdate();
-
-
-/* We would hook this, but the hooks aren't loaded by the time this code executes.
- * if ASP module exists (code is running on catsone.com), load the website by default
- * rather than the login page.
- */
-if (ModuleUtility::moduleExists("asp") && ModuleUtility::moduleExists("website"))
-{
-    // FIXME: Can we optimize this a bit...?
-    include_once('modules/asp/lib/General.php');
-
-    if (!(isset($careerPage) && $careerPage) &&
-        !(isset($rssPage) && $rssPage) &&
-        !(isset($xmlPage) && $xmlPage) &&
-        (!isset($_GET['m']) || empty($_GET['m'])) &&
-        (Asp::getSubDomain() == '' || isset($_GET['a'])))
-    {
-        ModuleUtility::loadModule('website');
-        exit(1);
-    }
-}
 
 
 /* Check to see if the user level suddenly changed. If the user was changed to disabled,
@@ -198,11 +243,15 @@ if ($_SESSION['CATS']->isLoggedIn())
 
 /* Check to see if we are supposed to display the career page. */
 if (((isset($careerPage) && $careerPage) ||
-    (isset($_GET['showCareerPortal']) && $_GET['showCareerPortal'] == '1')))
+    (isset($_REQUEST['showCareerPortal']) && $_REQUEST['showCareerPortal'] == '1')))
 {
     ModuleUtility::loadModule('careers');
 }
-
+else if (((isset($jobboard) && $jobboard) ||
+    (isset($_REQUEST['jobboard']) && $_REQUEST['jobboard'] == '1')))
+{
+    ModuleUtility::loadModule('jobboard');
+}
 /* Check to see if we are supposed to display an rss page. */
 else if (isset($rssPage) && $rssPage)
 {
@@ -216,15 +265,16 @@ else if (isset($xmlPage) && $xmlPage)
 
 /* Check to see if the user was forcibly logged out (logged in from another browser). */
 else if ($_SESSION['CATS']->isLoggedIn() &&
-    (!isset($_GET['m']) || ModuleUtility::moduleRequiresAuthentication($_GET['m'])) &&
+    (!isset($_REQUEST['m']) || ModuleUtility::moduleRequiresAuthentication($_REQUEST['m'])) &&
     $_SESSION['CATS']->checkForceLogout())
 {
     // FIXME: Unset session / etc.?
+    $_SESSION['CATS']->logout();
     ModuleUtility::loadModule('login');
 }
 
 /* If user specified a module, load it; otherwise, load the home module. */
-else if (!isset($_GET['m']) || empty($_GET['m']))
+else if (!isset($_REQUEST['m']) || empty($_REQUEST['m']))
 {
     if ($_SESSION['CATS']->isLoggedIn())
     {
@@ -236,12 +286,13 @@ else if (!isset($_GET['m']) || empty($_GET['m']))
     }
     else
     {
+        $_SESSION['CATS']->logout();
         ModuleUtility::loadModule('login');
     }
 }
 else
 {
-    if ($_GET['m'] == 'logout')
+    if ($_REQUEST['m'] == 'logout')
     {
         /* There isn't really a logout module. It's just a few lines. */
         $unixName = $_SESSION['CATS']->getUnixName();
@@ -257,14 +308,14 @@ else
             $URI .= '&s=' . $unixName;
         }
 
-        if (isset($_GET['message']))
+        if (isset($_REQUEST['message']))
         {
-            $URI .= '&message=' . urlencode($_GET['message']);
+            $URI .= '&message=' . urlencode($_REQUEST['message']);
         }
 
-        if (isset($_GET['messageSuccess']))
+        if (isset($_REQUEST['messageSuccess']))
         {
-            $URI .= '&messageSuccess=' . urlencode($_GET['messageSuccess']);
+            $URI .= '&messageSuccess=' . urlencode($_REQUEST['messageSuccess']);
         }
 
         /* catsone.com demo domain doesn't relogin. */
@@ -277,10 +328,10 @@ else
             CATSUtility::transferRelativeURI($URI);
         }
     }
-    else if (!ModuleUtility::moduleRequiresAuthentication($_GET['m']))
+    else if (!ModuleUtility::moduleRequiresAuthentication($_REQUEST['m']))
     {
         /* No authentication required; load the module. */
-        ModuleUtility::loadModule($_GET['m']);
+        ModuleUtility::loadModule($_REQUEST['m']);
     }
     else if (!$_SESSION['CATS']->isLoggedIn())
     {
@@ -293,7 +344,7 @@ else
     {
         /* Everything's good; load the requested module. */
         $_SESSION['CATS']->logPageView();
-        ModuleUtility::loadModule($_GET['m']);
+        ModuleUtility::loadModule($_REQUEST['m']);
     }
 }
 
@@ -301,5 +352,5 @@ if (isset($errorHandler))
 {
     $errorHandler->reportErrors();
 }
-
+Logger::getLogger("AuieoATS")->info("End....");
 ?>

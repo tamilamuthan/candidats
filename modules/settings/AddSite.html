@@ -10,10 +10,10 @@
 
             <p class="note">
                 <span style="float: left;">Add Site</span>
-                <span style="float: right;"><a href='{$_AUIEO_INDEX}?m=settings&a=manageUsers'>Back to User Management</a></span>&nbsp;
+                <span style="float: right;"><a href='index.php?m=settings&a=manageUsers'>Back to User Management</a></span>&nbsp;
             </p>
 
-            <form name="addSiteForm" id="addSiteForm" action="{$_AUIEO_INDEX}?m=settings&a=addSite" method="post" onsubmit="return checkAddSiteForm(document.addSiteForm);" autocomplete="off">
+            <form name="addSiteForm" id="addSiteForm" action="index.php?m=settings&a=addSite" method="post" onsubmit="return checkAddSiteForm(document.addSiteForm);" autocomplete="off">
                 <input type="hidden" name="postback" id="postback" value="postback" />
 
                 <table width="930">
@@ -37,7 +37,16 @@
                                         <input type="text" class="inputbox" id="unixName" name="unixName" style="width: 150px;" />&nbsp;*
                                     </td>
                                 </tr>
-
+                                <tr>
+                                    <td class="tdVertical">
+                                        <label id="model_site" for="modelsite">Model Site:</label>
+                                    </td>
+                                    <td class="tdData">
+                                        <select class='inputbox' id='modelsite' name='modelsite' style='width: 150px;' />
+                                        {$AUIEO_SITES}
+                                        </select>
+                                    </td>
+                                </tr>
                                 <tr>
                                     <td class="tdVertical">
                                         <label id="emailLabel" for="isDemo">Is Demo:</label>
@@ -57,5 +66,5 @@
 
                 <input type="submit" class="button" name="submit" id="submit" value="Add Site" />&nbsp;
                 <input type="reset"  class="button" name="reset"  id="reset"  value="Reset" />&nbsp;
-                <input type="button" class="button" name="back"   id="back"   value="Cancel" onclick="javascript:goToURL('{$_AUIEO_INDEX}?m=settings&a=manageSites');" />
+                <input type="button" class="button" name="back"   id="back"   value="Cancel" onclick="javascript:goToURL('index.php?m=settings&a=manageSites');" />
             </form>

@@ -1,1 +1,1 @@
-{"require": {"smalot/pdfparser": "*"}}
+{"require": {"smalot/pdfparser": "*", "sybio/image-workshop": "2.0.*", "wobeto/easychart": "dev-master", "apache/log4php": "2.3.0", "phpunit/phpunit": "4.5.*"}}

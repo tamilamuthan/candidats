@@ -63,6 +63,27 @@ class Contacts extends Modules
         $this->extraFields = new ExtraFields($siteID, DATA_ITEM_CONTACT);
     }
 
+    public function __get($var)
+    {
+        if(strpos($var, "EXTRA_")===0)
+        {
+            $arrVar=explode("EXTRA_",$var);
+            $var=$arrVar[1];
+            return isset($this->extraRecord[$var])?$this->extraRecord[$var]:"";
+        }
+        else if(isset($this->$var))
+        {
+            return $this->$var;
+        }
+        else if (isset($this->record[$var]))
+        {
+            return $this->record[$var];
+        }
+        else
+        {
+            return null; 
+        }
+    }
 
     /**
      * Adds a contact to the database and returns its contact ID.
@@ -91,11 +112,16 @@ class Contacts extends Modules
         $reportsTo, $email1, $email2, $phoneWork, $phoneCell, $phoneOther, $address,
         $city, $state, $zip, $isHot, $notes, $enteredBy, $owner)
     {
+        $record=  get_defined_vars();
         /* Get the department ID of the selected department. */
         $departmentID = $this->getDepartmentIDByName(
             $department, $companyID, $this->_db
         );
-
+        $hook=_AuieoHook("contacts_insert_before");
+        if($hook)
+        {
+            $hook($record);
+        }
         $sql = sprintf(
             "INSERT INTO contact (
                 company_id,
@@ -176,7 +202,12 @@ class Contacts extends Modules
         }
 
         $contactID = $this->_db->getLastInsertID();
-
+        $hook=_AuieoHook("contacts_insert_after");
+        if($hook)
+        {
+            $record["id"]=$contactID;
+            $hook($record);
+        }
         $history = new History($this->_siteID);
         $history->storeHistoryNew(DATA_ITEM_CONTACT, $contactID);
 
@@ -213,13 +244,19 @@ class Contacts extends Modules
     public function update($contactID, $companyID, $firstName, $lastName,
         $title, $department, $reportsTo, $email1, $email2, $phoneWork, $phoneCell,
         $phoneOther, $address, $city, $state, $zip, $isHot,
-        $leftCompany, $notes, $owner, $email, $emailAddress)
+        $leftCompany, $notes, $owner, $email, $emailAddress,
+            $ownertype=0)
     {
+        $record=get_defined_vars();
         /* Get the department ID of the selected department. */
         $departmentID = $this->getDepartmentIDByName(
             $department, $companyID, $this->_db
         );
-
+        $hook=_AuieoHook("candidates_update_before");
+        if($hook)
+        {
+            $hook($record);
+        }
         $sql = sprintf(
             "UPDATE
                 contact
@@ -243,6 +280,7 @@ class Contacts extends Modules
                 contact.left_company  = %s,
                 contact.notes         = %s,
                 contact.owner         = %s,
+                contact.ownertype     = %s,
                 contact.date_modified = NOW()
             WHERE
                 contact.contact_id = %s
@@ -267,6 +305,7 @@ class Contacts extends Modules
             ($leftCompany ? '1' : '0'),
             $this->_db->makeQueryString($notes),
             $this->_db->makeQueryInteger($owner),
+                $this->_db->makeQueryInteger($ownertype),
             $this->_db->makeQueryInteger($contactID),
             $this->_siteID
         );
@@ -279,7 +318,12 @@ class Contacts extends Modules
         {
             return false;
         }
-
+        $hook=_AuieoHook("contacts_update_after");
+        if($hook)
+        {
+            $record["id"]=$contactID;
+            $hook($record);
+        }
         $history = new History($this->_siteID);
         $history->storeHistoryChanges(
             DATA_ITEM_CONTACT, $contactID, $preHistory, $postHistory
@@ -289,13 +333,16 @@ class Contacts extends Modules
         {
             /* Send e-mail notification. */
             //FIXME: Make subject configurable.
-            $mailer = new Mailer($this->_siteID);
+            $objUser=new Users($this->_siteID);
+            $objUser->load($owner);
+            $objUser->sendEMail('CandidATS Notification: Contact Ownership Change', $email);
+            /*$mailer = new Mailer($this->_siteID);
             $mailerStatus = $mailer->sendToOne(
                 array($emailAddress, ''),
                 'CATS Notification: Contact Ownership Change',
                 $email,
                 true
-            );
+            );*/
         }
 
         return true;
@@ -423,6 +470,73 @@ class Contacts extends Modules
 
         return $this->_db->getColumn($sql, 0, 0);
     }
+    
+    public function load($contactID)
+    {
+        $sql = sprintf(
+            "SELECT
+                contact.contact_id,
+                contact.company_id,
+                contact.owner,
+                contact.last_name,
+                contact.first_name,
+                contact.title,
+                contact.email1,
+                contact.email2,
+                contact.phone_work,
+                contact.phone_cell,
+                contact.phone_other,
+                contact.address,
+                contact.city,
+                contact.state,
+                contact.zip,
+                contact.notes,
+                contact.is_hot,
+                contact.left_company,
+                contact.reports_to,
+                reportsToContact.first_name as reports_to_firstName,
+                reportsToContact.last_name as reports_to_lastName,
+                reportsToContact.title as reports_to_title,
+                company_department.name AS department,
+                DATE_FORMAT(
+                    contact.date_created, '%%m-%%d-%%y (%%h:%%i %%p)'
+                ) AS dateCreated,
+                DATE_FORMAT(
+                    contact.date_modified, '%%m-%%d-%%y (%%h:%%i %%p)'
+                ) AS dateModified,
+                owner_user.email AS owner_email
+            FROM
+                contact
+            LEFT JOIN company
+                ON contact.company_id = company.company_id
+            LEFT JOIN user AS entered_by_user
+                ON contact.entered_by = entered_by_user.user_id
+            LEFT JOIN user AS owner_user
+                ON contact.owner = owner_user.user_id
+            LEFT JOIN company_department
+                ON contact.company_department_id = company_department.company_department_id
+            LEFT JOIN contact as reportsToContact
+                ON contact.reports_to  = reportsToContact.contact_id
+            WHERE
+                contact.contact_id = %s
+            AND
+                contact.site_id = %s
+            AND
+                company.site_id = %s",
+            $this->_db->makeQueryInteger($contactID),
+            $this->_siteID,
+            $this->_siteID
+        );
+
+        $this->record = $this->_db->getAssoc($sql);
+        $sql="select * from extra_field where data_item_type=300 and data_item_id='{$contactID}'";
+        $arrAssoc = $this->_db->getAllAssoc($sql);
+        $this->extraRecord=array();
+        foreach($arrAssoc as $ind=>$row)
+        {
+            $this->extraRecord[$row["field_name"]]=$row["value"];
+        }
+    }
 
     /**
      * Returns all relevent contact information for a given contact ID.
@@ -434,25 +548,32 @@ class Contacts extends Modules
     {
         $sql = sprintf(
             "SELECT
-                contact.contact_id AS contactID,
-                contact.company_id AS companyID,
-                contact.owner AS owner,
-                contact.last_name AS lastName,
-                contact.first_name AS firstName,
-                contact.title AS title,
-                contact.email1 AS email1,
-                contact.email2 AS email2,
-                contact.phone_work AS phoneWork,
-                contact.phone_cell AS phoneCell,
-                contact.phone_other AS phoneOther,
-                contact.address AS address,
-                contact.city AS city,
-                contact.state AS state,
-                contact.zip AS zip,
-                contact.notes AS notes,
-                contact.is_hot AS isHotContact,
-                contact.left_company AS leftCompany,
-                contact.reports_to AS reportsTo,
+                contact.contact_id,
+                contact.company_id,
+                contact.owner,
+                contact.ownertype,
+                contact.last_name,
+                contact.first_name,
+                contact.title,
+                contact.email1,
+                contact.email2,
+                contact.phone_work,
+                contact.phone_cell,
+                contact.phone_other,
+                contact.address,
+                contact.city,
+                contact.state,
+                contact.zip,
+                contact.notes,
+                contact.is_hot,
+                contact.left_company,
+                contact.reports_to,
+                contact.entered_by,
+                contact.date_created,
+                contact.date_modified,
+                contact.import_id,
+                contact.company_department_id,
+                
                 reportsToContact.first_name as reportsToFirstName,
                 reportsToContact.last_name as reportsToLastName,
                 reportsToContact.title as reportsToTitle,
@@ -509,26 +630,32 @@ class Contacts extends Modules
     {
         $sql = sprintf(
             "SELECT
-                contact.contact_id AS contactID,
-                contact.company_id AS companyID,
-                contact.owner AS owner,
-                contact.last_name AS lastName,
-                contact.first_name AS firstName,
-                contact.title AS title,
-                contact.email1 AS email1,
-                contact.email2 AS email2,
-                contact.phone_work AS phoneWork,
-                contact.phone_cell AS phoneCell,
-                contact.phone_other AS phoneOther,
-                contact.address AS address,
-                contact.city AS city,
-                contact.state AS state,
-                contact.zip AS zip,
-                contact.notes AS notes,
-                contact.is_hot AS isHotContact,
-                contact.left_company AS leftCompany,
-                contact.company_department_id AS departmentID,
-                contact.reports_to AS reportsTo,
+                contact.contact_id,
+                contact.company_id,
+                contact.owner,
+                contact.ownertype,
+                contact.last_name,
+                contact.first_name,
+                contact.title,
+                contact.email1,
+                contact.email2,
+                contact.phone_work,
+                contact.phone_cell,
+                contact.phone_other,
+                contact.address,
+                contact.city,
+                contact.state,
+                contact.zip,
+                contact.notes,
+                contact.is_hot,
+               
+                contact.date_created,
+                contact.date_modified,
+                contact.import_id,
+                
+                contact.left_company,
+                contact.company_department_id,
+                contact.reports_to,
                 company.name AS companyName,
                 company_department.name AS department
             FROM
@@ -925,13 +1052,13 @@ class ContactsDataGrid extends DataGrid
                                      'pagerWidth'   => 300,
                                      'filter'         => 'contact.notes'),
 
-            'Owner' =>         array('pagerRender'      => 'return StringUtility::makeInitialName($rsData[\'ownerFirstName\'], $rsData[\'ownerLastName\'], false, LAST_NAME_MAXLEN);',
+            /*'Owner' =>         array('pagerRender'      => 'return StringUtility::makeInitialName($rsData[\'ownerFirstName\'], $rsData[\'ownerLastName\'], false, LAST_NAME_MAXLEN);',
                                      'exportRender'     => 'return $rsData[\'ownerFirstName\'] . " " .$rsData[\'ownerLastName\'];',
                                      'sortableColumn'     => 'ownerSort',
                                      'pagerWidth'    => 75,
                                      'alphaNavigation' => true,
                                      'pagerOptional'  => true,
-                                     'filter'         => 'CONCAT(owner_user.first_name, owner_user.last_name)'),
+                                     'filter'         => 'CONCAT(owner_user.first_name, owner_user.last_name)'),*/
 
             'Created' =>       array('select'   => 'DATE_FORMAT(contact.date_created, \'%m-%d-%y\') AS dateCreated',
                                      'pagerRender'      => 'return $rsData[\'dateCreated\'];',

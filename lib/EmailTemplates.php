@@ -50,18 +50,19 @@ class EmailTemplates
         $this->_db = DatabaseConnection::getInstance();
     }
 
-    public function insert($title,$text, $disabled)
+    public function insert($title,$text, $baseModule, $disabled)
     {
         $sql = sprintf(
             "INSERT INTO
                 email_template
-            (`text`,`disabled`,`title`,`site_id`)
-            VALUES('%s','%s','%s','%s')
+            (`text`,`disabled`,`title`,`site_id`,`basemodule`)
+            VALUES('%s','%s','%s','%s','%s')
             ",
             trim($text),
             $disabled,
                 $title,
-            $this->_siteID
+            $this->_siteID,
+            $baseModule
         );
 
         $queryResult = $this->_db->query($sql);
@@ -160,6 +161,7 @@ class EmailTemplates
                 email_template.text AS text,
                 email_template.possible_variables AS possibleVariables,
                 email_template.allow_substitution AS allowSubstitution,
+                email_template.basemodule AS baseModule,
                 email_template.disabled AS disabled
             FROM
                 email_template
@@ -264,6 +266,56 @@ class EmailTemplates
 
         return str_replace($stringsToFind, $replacementStrings, $text);
     }
+    
+    /**
+     * Returns all relevent template data for a given e-mail template title.
+     *
+     * @param string e-mail template Title
+     * @return array e-mail template data
+     */
+    public function getByTitle($emailTitle)
+    {
+        $sql = sprintf(
+            "SELECT
+                email_template.email_template_id AS emailTemplateID,
+                email_template.title AS emailTemplateTitle,
+                email_template.tag AS emailTemplateTag,
+                email_template.text AS text,
+                email_template.possible_variables AS possibleVariables,
+                email_template.allow_substitution AS allowSubstitution,
+                email_template.disabled AS disabled
+            FROM
+                email_template
+            WHERE
+                email_template.title = %s
+            AND
+                email_template.site_id = %s",
+            $this->_db->makeQueryStringOrNULL($emailTitle),
+            $this->_siteID
+        );
+        $rs = $this->_db->getAssoc($sql);
+
+        if (!empty($rs))
+        {
+            $mailerSettings = new MailerSettings($this->_siteID);
+            $mailerSettingsRS = $mailerSettings->getAll();
+
+            if ($mailerSettingsRS['configured'] == '0' || 
+                MAIL_MAILER == 0 || (
+                    isset($rs['disabled']) && $rs['disabled'] == '1'))
+            {
+                $rs['disabled'] = '1';
+            }
+            else
+            {
+                $rs['disabled'] = '0';
+            }
+
+            $rs['textReplaced'] = $this->replaceVariables($rs['text']);
+        }
+
+        return $rs;
+    }
 
     /**
      * Returns all relevent template data for a given e-mail template title.
@@ -322,6 +374,11 @@ class EmailTemplates
      */
     public function getAll()
     {
+        $moduleSql="";
+        if(isset($_REQUEST["m"]) && $_REQUEST["m"]!="settings")
+        {
+            $moduleSql=" and basemodule='{$_REQUEST["m"]}'";
+        }
         $sql = sprintf(
             "SELECT
                 email_template.email_template_id AS emailTemplateID,
@@ -334,7 +391,9 @@ class EmailTemplates
             FROM
                 email_template
             WHERE
-                email_template.site_id = %s",
+                email_template.site_id = %s
+                {$moduleSql}
+",
             $this->_siteID
         );
 

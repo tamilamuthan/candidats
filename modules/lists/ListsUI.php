@@ -129,7 +129,7 @@ class ListsUI extends UserInterface
 
         if (!eval(Hooks::get('LISTS_LIST_BY_VIEW'))) return;
 
-        $this->_template->display('./modules/lists/Lists.tpl');
+        $this->_template->display('./modules/lists/Lists.php');
     }
 
     /*
@@ -202,7 +202,7 @@ class ListsUI extends UserInterface
         $this->_template->assign('listRS', $listRS);
         $this->_template->assign('userID', $_SESSION['CATS']->getUserID());
 
-        $this->_template->display('./modules/lists/List.tpl');
+        $this->_template->display('./modules/lists/List.php');
 
     }
 
@@ -241,7 +241,7 @@ class ListsUI extends UserInterface
         $this->_template->assign('dataItemIDArray', $dataItemIDArray);
         $this->_template->assign('sessionCookie', $_SESSION['CATS']->getCookie());
 
-        $this->_template->display('./modules/lists/QuickActionAddToListModal.tpl');
+        $this->_template->display('./modules/lists/QuickActionAddToListModal.php');
     }
 
     /*
@@ -249,6 +249,8 @@ class ListsUI extends UserInterface
      */
     public function addToListFromDatagridModal()
     {
+        $_REQUEST["template"]="no";
+        $_GET["template"]="no";
         /* Bail out if we don't have a valid type. */
         if (!$this->isRequiredIDValid('dataItemType', $_GET))
         {
@@ -284,7 +286,7 @@ class ListsUI extends UserInterface
         $this->_template->assign('dataItemIDArray', $dataItemIDArray);
         $this->_template->assign('sessionCookie', $_SESSION['CATS']->getCookie());
 
-        $this->_template->display('./modules/lists/QuickActionAddToListModal.tpl');
+        $this->_template->display('./modules/lists/QuickActionAddToListModal.php');
     }
 
     /*

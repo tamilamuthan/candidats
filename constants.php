@@ -41,10 +41,11 @@ $coreModules = array(
 );
 
 /* CATS Version */
-define('CATS_VERSION', '1.1.0 (Beta)');
+define('CATS_VERSION', '2.0.0 Beta');
+define('CANDIDATS_VERSION', '2.0.0 Beta');
 
 /* Copyright information at bottom of pages. */
-define('COPYRIGHT_HTML', '&copy; 2005 - 2007 Cognizo Technologies, Inc.');
+define('COPYRIGHT_HTML', '&copy; 2014 - 2015 Auieo Software Private Limited.');
 
 /* HTTP response codes. */
 define('HTTP_OK',             200);
@@ -214,7 +215,7 @@ $timeZones = array(
     array(-4,   'GMT-04:00 Caracas, La Paz'),
     array(-4,   'GMT-04:00 Manaus'),
     array(-4,   'GMT-04:00 Santiago'),
-  //array(-3.5, 'GMT-03:30 Newfoundland'),
+    array(-3.5, 'GMT-03:30 Newfoundland'),
     array(-3,   'GMT-03:00 Greenland'),
     array(-3,   'GMT-03:00 Brasilia'),
     array(-3,   'GMT-03:00 Buenos Aires, Georgetown'),
@@ -243,19 +244,19 @@ $timeZones = array(
     array(3,    'GMT+03:00 Moscow, St. Petersburg, Volgograd'),
     array(3,    'GMT+03:00 Nairobi'),
     array(3,    'GMT+03:00 Tbilisi'),
-  //array(3.5,  'GMT+03:30 Tehran'),
+    array(3.5,  'GMT+03:30 Tehran'),
     array(4,    'GMT+04:00 Abu Dhabi, Muscat'),
     array(4,    'GMT+04:00 Baku'),
     array(4,    'GMT+04:00 Yerevan'),
-  //array(4.5,  'GMT+04:30 Kabul'),
+    array(4.5,  'GMT+04:30 Kabul'),
     array(5,    'GMT+05:00 Ekaterinburg'),
     array(5,    'GMT+05:00 Islamabad, Karachi, Tashkent'),
-  //array(5.5,  'GMT+05:30 Chennai, Kolkata, Mumbai, New Delhi'),
-  //array(5.5,  'GMT+05:30 Sri Jayawardenepura'),
-  //array(5.75, 'GMT+05:45 Kathmandu'),
+    array(5.5,  'GMT+05:30 Chennai, Kolkata, Mumbai, New Delhi'),
+    array(5.5,  'GMT+05:30 Sri Jayawardenepura'),
+    array(5.75, 'GMT+05:45 Kathmandu'),
     array(6,    'GMT+06:00 Almaty, Novosibirsk'),
     array(6,    'GMT+06:00 Astana, Dhaka'),
-  //array(6.5,  'GMT+06:30 Yangon (Rangoon)'),
+    array(6.5,  'GMT+06:30 Yangon (Rangoon)'),
     array(7,    'GMT+07:00 Bangkok, Hanoi, Jakarta'),
     array(7,    'GMT+07:00 Krasnoyarsk'),
     array(8,    'GMT+08:00 Beijing, Chongqing, Hong Kong, Urumqi'),
@@ -266,8 +267,8 @@ $timeZones = array(
     array(9,    'GMT+09:00 Osaka, Sapporo, Tokyo'),
     array(9,    'GMT+09:00 Seoul'),
     array(9,    'GMT+09:00 Yakutsk'),
-  //array(9.5,  'GMT+09:30 Adelaide'),
-  //array(9.5,  'GMT+09:30 Darwin'),
+    array(9.5,  'GMT+09:30 Adelaide'),
+    array(9.5,  'GMT+09:30 Darwin'),
     array(10,   'GMT+10:00 Brisbane'),
     array(10,   'GMT+10:00 Canberra, Melbourne, Sydney'),
     array(10,   'GMT+10:00 Guam, Port Moresby'),

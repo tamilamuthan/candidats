@@ -45,10 +45,11 @@ include_once('./lib/DocumentToText.php');
 include_once('./lib/DatabaseSearch.php');
 include_once('./lib/CommonErrors.php');
 include_once('./lib/License.php');
-include_once('./lib/ParseUtility.php');
+//include_once('./lib/ParseUtility.php');
 include_once('./lib/Questionnaire.php');
 include_once('./lib/Search.php');
 include_once('./lib/DocumentToText.php');
+include_once('./lib/CandidateTemplate.php');
 
 class CandidatesUI extends UserInterface
 {
@@ -233,6 +234,8 @@ class CandidatesUI extends UserInterface
                 break;
         }
     }
+    
+    
 
     /*
      * Called by external modules for adding candidates.
@@ -306,7 +309,20 @@ class CandidatesUI extends UserInterface
 
         if (!eval(Hooks::get('CANDIDATE_LIST_BY_VIEW'))) return;
 
-        $this->_template->display('./modules/candidates/Candidates.tpl');
+        //$this->_template->display('./modules/candidates/Candidates.tpl');
+        if($errMessage != '')
+        {
+            $this->_template->display('./modules/candidates/ErrorMessage.php');
+        }
+        else if($candidates->getCount()>0)
+        {
+            $this->_template->display('./modules/candidates/listview.php');
+        }
+        else
+        {
+            $this->_template->display('./modules/candidates/NoRecord.php');
+        }
+        
     }
 
     /*
@@ -342,7 +358,11 @@ class CandidatesUI extends UserInterface
         }
 
         $data = $candidates->get($candidateID);
-
+        
+        $emailList=array();
+        $sql="select * from email_history where for_id={$candidateID} and for_module='candidates'";
+        $db = DatabaseConnection::getInstance();
+        $emailList=$db->getAllAssoc($sql);
         /* Bail out if we got an empty result set. */
         if (empty($data))
         {
@@ -350,7 +370,7 @@ class CandidatesUI extends UserInterface
             return;
         }
 
-        if ($data['isAdminHidden'] == 1 && $this->_accessLevel < ACCESS_LEVEL_MULTI_SA)
+        if ($data['is_admin_hidden'] == 1 && $this->_accessLevel < ACCESS_LEVEL_MULTI_SA)
         {
             $this->listByView('This candidate is hidden - only a CATS Administrator can unlock the candidate.');
             return;
@@ -385,17 +405,31 @@ class CandidatesUI extends UserInterface
             $isShortNotes = false;
         }
 
-        /* Format "can relocate" status. */
-        if ($data['canRelocate'] == 1)
+        /**
+         * if ownertype is group, override the user full name
+         */
+        if($data['ownertype']>0)
         {
-            $data['canRelocate'] = 'Yes';
+            $sql="select * from auieo_groups where id={$data['owner']}";
+            $objDB=DatabaseConnection::getInstance();
+            $row=$objDB->getAssoc($sql);
+            if($row)
+            {
+                $data["ownerFullName"]=$row["groupname"];
+            }
+        }
+        
+        /* Format "can relocate" status. */
+        if ($data['can_relocate'] == 1)
+        {
+            $data['can_relocate'] = 'Yes';
         }
         else
         {
-            $data['canRelocate'] = 'No';
+            $data['can_relocate'] = 'No';
         }
 
-        if ($data['isHot'] == 1)
+        if ($data['is_hot'] == 1)
         {
             $data['titleClass'] = 'jobTitleHot';
         }
@@ -527,7 +561,7 @@ class CandidatesUI extends UserInterface
 
         /* Add an MRU entry. */
         $_SESSION['CATS']->getMRU()->addEntry(
-            DATA_ITEM_CANDIDATE, $candidateID, $data['firstName'] . ' ' . $data['lastName']
+            DATA_ITEM_CANDIDATE, $candidateID, $data['first_name'] . ' ' . $data['last_name']
         );
 
         /* Is the user an admin - can user see history? */
@@ -569,10 +603,55 @@ class CandidatesUI extends UserInterface
         $questionnaire = new Questionnaire($this->_siteID);
         $questionnaires = $questionnaire->getCandidateQuestionnaires($candidateID);
 
+        $indexName=CATSUtility::getIndexName();
+        $adminHidden="";
+        if ($data['is_admin_hidden'] == 1)
+        {
+            $adminHidden = "<p class='warning'>This Candidate is hidden.  Only CATS Administrators can view it or search for it.  To make it visible by the site users, click <a href='{$indexName}?m=candidates&a=administrativeHideShow&candidateID={$candidateID}&state=0' style='font-weight:bold;'>Here.</a></p>";
+        }
+        
+        $profileImage = false;
+        foreach ($attachmentsRS as $rowNumber => $attachmentsData)
+        {
+            if ($attachmentsData['isProfileImage'] == '1')
+            {
+                 $profileImage = true;
+            }
+        }
+        $candidateShowClass="cprofileshow";
+        if ($profileImage)
+        {
+            $candidateShowClass="cshow";
+            //echo "<td width='390' height='100%'>";
+        }
+        else
+        {
+            //echo "</td><td width='50%' height='100%'>";
+        }
+        $recordInActive="";
+        if ($data['is_active'] != 1){
+            $recordInActive = "
+            &nbsp;<span style='color:orange;'>(INACTIVE)</span>
+        ";
+         }
+        $accessLevelEdit="";
+        if ($this->_accessLevel >= ACCESS_LEVEL_EDIT)
+        {
+            $accessLevelEdit= "<a href='#' id='addActivityLink' onclick=\"showPopWin('{$indexName}?m=candidates&a=addActivityChangeStatus&candidateID={$candidateID}&jobOrderID=-1', 600, 480, null); return false;\">
+                <img src='images/new_activity_inline.gif' width='16' height='16' class='absmiddle' title='Log an Activity / Change Status' alt='Log an Activity / Change Status' border='0' />&nbsp;Log an Activity
+            </a>";
+        }
+        
         $this->_template->assign('active', $this);
+        $this->_template->assign('email_list', $emailList);
+        $this->_template->assign('candidateID', $candidateID);
         $this->_template->assign('questionnaires', $questionnaires);
+        $this->_template->assign('accessLevelEdit', $accessLevelEdit);
         $this->_template->assign('data', $data);
+        $this->_template->assign('candidateShowClass', $candidateShowClass);
+        $this->_template->assign('recordInActive', $recordInActive);
         $this->_template->assign('isShortNotes', $isShortNotes);
+        $this->_template->assign('adminHidden',$adminHidden);
         $this->_template->assign('attachmentsRS', $attachmentsRS);
         $this->_template->assign('pipelinesRS', $pipelinesRS);
         $this->_template->assign('activityRS', $activityRS);
@@ -587,7 +666,18 @@ class CandidatesUI extends UserInterface
 
         if (!eval(Hooks::get('CANDIDATE_SHOW'))) return;
 
-        $this->_template->display('./modules/candidates/Show.php');
+        //$this->_template->display('./modules/candidates/show.php');
+        //return true;
+        if (isset($_GET['display']) && $_GET['display'] == 'popup')
+        {
+            $this->_template->display('./modules/candidates/show_popup.php');
+            $isPopup = true;
+        }
+        else
+        {
+            $this->_template->display('./modules/candidates/show.php');
+            $isPopup = false;
+        }
     }
 
     /*
@@ -736,7 +826,7 @@ class CandidatesUI extends UserInterface
         /* REMEMBER TO ALSO UPDATE JobOrdersUI::addCandidateModal() IF
          * APPLICABLE.
          */
-        $this->_template->display('./modules/candidates/Add.tpl');
+        $this->_template->display('./modules/candidates/Add.php');
     }
 
     public function checkParsingFunctions()
@@ -851,7 +941,7 @@ class CandidatesUI extends UserInterface
             /**
              * User is parsing the contents of the textarea field on the add candidate page.
              */
-            if (isset($_POST['parseDocument']) && $_POST['parseDocument'] == 'true' && $contents != '')
+            /*if (isset($_POST['parseDocument']) && $_POST['parseDocument'] == 'true' && $contents != '')
             {
                 $pu = new ParseUtility();
                 if ($res = $pu->documentParse('untitled', strlen($contents), '', $contents))
@@ -871,7 +961,7 @@ class CandidatesUI extends UserInterface
                 }
 
                 return array($contents, $fields);
-            }
+            }*/
         }
 
         return false;
@@ -926,7 +1016,7 @@ class CandidatesUI extends UserInterface
             CommonErrors::fatal(COMMONERROR_BADINDEX, $this, 'The specified candidate ID could not be found.');
         }
 
-        if ($data['isAdminHidden'] == 1 && $this->_accessLevel < ACCESS_LEVEL_MULTI_SA)
+        if ($data['is_admin_hidden'] == 1 && $this->_accessLevel < ACCESS_LEVEL_MULTI_SA)
         {
             $this->listByView('This candidate is hidden - only a CATS Administrator can unlock the candidate.');
             return;
@@ -934,10 +1024,10 @@ class CandidatesUI extends UserInterface
 
         $users = new Users($this->_siteID);
         $usersRS = $users->getSelectList();
-
+        $groupRS = $users->getSelectGroupList();
         /* Add an MRU entry. */
         $_SESSION['CATS']->getMRU()->addEntry(
-            DATA_ITEM_CANDIDATE, $candidateID, $data['firstName'] . ' ' . $data['lastName']
+            DATA_ITEM_CANDIDATE, $candidateID, $data['first_name'] . ' ' . $data['last_name']
         );
 
         /* Get extra fields. */
@@ -1000,6 +1090,7 @@ class CandidatesUI extends UserInterface
         $this->_template->assign('active', $this);
         $this->_template->assign('data', $data);
         $this->_template->assign('usersRS', $usersRS);
+        $this->_template->assign('groupRS', $groupRS);
         $this->_template->assign('extraFieldRS', $extraFieldRS);
         $this->_template->assign('sourcesRS', $sourcesRS);
         $this->_template->assign('sourcesString', $sourcesString);
@@ -1008,7 +1099,7 @@ class CandidatesUI extends UserInterface
         $this->_template->assign('canEmail', $canEmail);
         $this->_template->assign('EEOSettingsRS', $EEOSettingsRS);
         $this->_template->assign('emailTemplateDisabled', $emailTemplateDisabled);
-        $this->_template->display('./modules/candidates/Edit.tpl');
+        $this->_template->display('./modules/candidates/Edit.php');
     }
     
     public function merge()
@@ -1087,7 +1178,7 @@ class CandidatesUI extends UserInterface
         }
 
         $candidateID = $_REQUEST['candidateID'];
-        $owner       = $_REQUEST['owner'];
+        $owner       = isset($_REQUEST['owner'])?$_REQUEST['owner']:null;
 
         /* Can Relocate */
         $canRelocate = $this->isChecked('canRelocate', $_REQUEST);
@@ -1447,10 +1538,10 @@ class CandidatesUI extends UserInterface
         }
 
         /* Bail out if we don't have a valid owner user ID. */
-        if (!$this->isOptionalIDValid('owner', $_POST))
+        /*if (!$this->isOptionalIDValid('owner', $_POST))
         {
             CommonErrors::fatal(COMMONERROR_BADINDEX, $this, 'Invalid owner user ID.');
-        }
+        }*/
 
         /* Bail out if we received an invalid availability date; if not, go
          * ahead and convert the date to MySQL format.
@@ -1506,7 +1597,9 @@ class CandidatesUI extends UserInterface
         }
 
         $candidateID = $_POST['candidateID'];
-        $owner       = $_POST['owner'];
+        $arrOwner=explode(":",$_POST['owner']);
+        $owner       = isset($arrOwner[1])?trim($arrOwner[1]):0;
+        $ownertype   = trim($arrOwner[0]);
 
         /* Can Relocate */
         $canRelocate = $this->isChecked('canRelocate', $_POST);
@@ -1514,7 +1607,7 @@ class CandidatesUI extends UserInterface
         $isHot = $this->isChecked('isHot', $_POST);
 
         /* Change ownership email? */
-        if ($this->isChecked('ownershipChange', $_POST) && $owner > 0)
+        if ($this->isChecked('ownershipChange', $_POST) && $owner > 0 && $ownertype<=0)
         {
             $candidateDetails = $candidates->get($candidateID);
 
@@ -1547,7 +1640,7 @@ class CandidatesUI extends UserInterface
                     '%CANDFULLNAME%',
                     '%CANDCATSURL%'
                 );
-                $replacementStrings = array(
+                /*$replacementStrings = array(
                     $ownerDetails['fullName'],
                     $candidateDetails['firstName'],
                     $candidateDetails['firstName'] . ' ' . $candidateDetails['lastName'],
@@ -1559,7 +1652,7 @@ class CandidatesUI extends UserInterface
                     $replacementStrings,
                     $statusChangeTemplate
                 );
-
+*/
                 $email = $statusChangeTemplate;
             }
             else
@@ -1641,7 +1734,8 @@ class CandidatesUI extends UserInterface
             $gender,
             $race,
             $veteran,
-            $disability
+            $disability,
+            $ownertype
         );
         if (!$updateSuccess)
         {
@@ -1748,9 +1842,21 @@ class CandidatesUI extends UserInterface
         {
             $candidateIDArray = $_SESSION['CATS']->retrieveData($_REQUEST['candidateIDArrayStored']);
         }
+        else if(isset($_REQUEST["candidateID"]) && isset($_SESSION["AUIEO"]["CANDIDATS"][$_REQUEST["candidateID"]]))
+        {
+            $searchDS=$_SESSION["AUIEO"]["CANDIDATS"][$_REQUEST["candidateID"]];
+            $candidateIDArray=$this->onSearch($searchDS);
+        }
         else if($this->isRequiredIDValid('candidateID', $_REQUEST))
         {
-            $candidateIDArray = array($_REQUEST['candidateID']);
+            if(is_array($_REQUEST['candidateID']))
+            {
+                $candidateIDArray = $_REQUEST['candidateID'];
+            }
+            else
+            {
+                $candidateIDArray = array($_REQUEST['candidateID']);
+            }
         }
         else if ($candidateIDArray === array())
         {
@@ -1859,7 +1965,7 @@ class CandidatesUI extends UserInterface
         $this->_template->assign('isResultsMode', $resultsMode);
         $this->_template->assign('candidateIDArray', $candidateIDArray);
         $this->_template->assign('candidateIDArrayStored', $_SESSION['CATS']->storeData($candidateIDArray));
-        $this->_template->display('./modules/candidates/ConsiderSearchModal.tpl');
+        $this->_template->display('./modules/candidates/ConsiderSearchModal.php');
     }
 
     /*
@@ -1964,7 +2070,7 @@ class CandidatesUI extends UserInterface
         $this->_template->assign('jobOrderID', $jobOrderID);
         $this->_template->assign('candidateIDArray', $candidateIDArray);
         $this->_template->display(
-            './modules/candidates/ConsiderSearchModal.tpl'
+            './modules/candidates/ConsiderSearchModal.php'
         );
     }
 
@@ -2041,10 +2147,10 @@ class CandidatesUI extends UserInterface
         );
         $replacementStrings = array(
             $candidateData['ownerFullName'],
-            $candidateData['firstName'],
-            $candidateData['firstName'] . ' ' . $candidateData['lastName'],
-            $candidateData['firstName'],
-            $candidateData['firstName']
+            $candidateData['first_name'],
+            $candidateData['first_name'] . ' ' . $candidateData['last_name'],
+            $candidateData['first_name'],
+            $candidateData['first_name']
         );
         $statusChangeTemplate = str_replace(
             $stringsToFind,
@@ -2083,7 +2189,7 @@ class CandidatesUI extends UserInterface
         $this->_template->assign('isFinishedMode', false);
         $this->_template->assign('isJobOrdersMode', false);
         $this->_template->display(
-            './modules/candidates/AddActivityChangeStatusModal.tpl'
+            './modules/candidates/AddActivityChangeStatusModal.php'
         );
     }
 
@@ -2164,24 +2270,29 @@ class CandidatesUI extends UserInterface
         $this->_template->assign('fullNameWildCardString', '');
         $this->_template->assign('phoneNumberWildCardString', '');
         $this->_template->assign('mode', '');
-        $this->_template->display('./modules/candidates/Search.tpl');
+        $this->_template->display('./modules/candidates/Search.php');
     }
 
     /*
      * Called by render() to process displaying the search results.
      */
-    public function onSearch()
+    public function onSearch($objSearchDS=null)
     {
         /* Bail out to prevent an error if the GET string doesn't even contain
          * a field named 'wildCardString' at all.
          */
-        if (!isset($_GET['wildCardString']))
+        $arrInput=$_GET;
+        if(!is_null($objSearchDS))
+        {
+            $arrInput=$objSearchDS->getAsArray();
+        }
+        if (!isset($arrInput['wildCardString']))
         {
             $this->listByView('No wild card string specified.');
             return;
         }
 
-        $query = trim($_GET['wildCardString']);
+        $query = trim($arrInput['wildCardString']);
 
         /* Initialize stored wildcard strings to safe default values. */
         $resumeWildCardString      = '';
@@ -2190,9 +2301,9 @@ class CandidatesUI extends UserInterface
         $fullNameWildCardString    = '';
 
         /* Set up sorting. */
-        if ($this->isRequiredIDValid('page', $_GET))
+        if ($this->isRequiredIDValid('page', $arrInput))
         {
-            $currentPage = $_GET['page'];
+            $currentPage = $arrInput['page'];
         }
         else
         {
@@ -2203,18 +2314,18 @@ class CandidatesUI extends UserInterface
             CANDIDATES_PER_PAGE, $currentPage, $this->_siteID
         );
 
-        if ($searchPager->isSortByValid('sortBy', $_GET))
+        if ($searchPager->isSortByValid('sortBy', $arrInput))
         {
-            $sortBy = $_GET['sortBy'];
+            $sortBy = $arrInput['sortBy'];
         }
         else
         {
             $sortBy = 'lastName';
         }
 
-        if ($searchPager->isSortDirectionValid('sortDirection', $_GET))
+        if ($searchPager->isSortDirectionValid('sortDirection', $arrInput))
         {
-            $sortDirection = $_GET['sortDirection'];
+            $sortDirection = $arrInput['sortDirection'];
         }
         else
         {
@@ -2239,7 +2350,7 @@ class CandidatesUI extends UserInterface
         $candidates = new Candidates($this->_siteID);
 
         /* Get our current searching mode. */
-        $mode = $this->getTrimmedInput('mode', $_GET);
+        $mode = $this->getTrimmedInput('mode', $arrInput);
 
         /* Execute the search. */
         $search = new SearchCandidates($this->_siteID);
@@ -2375,7 +2486,7 @@ class CandidatesUI extends UserInterface
                         $rs[$rowIndex]['ownerAbbrName'] = 'None';
                     }
                 }
-
+                
                 $isResumeMode = true;
                 
                 $this->_template->assign('active', $this);
@@ -2424,8 +2535,15 @@ class CandidatesUI extends UserInterface
                 return;
                 break;
         }
-
+        /**
+         * if request comes from program return the id else process display
+         */
+        if(!is_null($objSearchDS))
+        {
+            return ResultSetUtility::getColumnValues($rs, 'candidateID');
+        }
         $candidateIDs = implode(',', ResultSetUtility::getColumnValues($rs, 'candidateID'));
+        
         $exportForm = ExportUtility::getForm(
             DATA_ITEM_CANDIDATE, $candidateIDs, 32, 9
         );
@@ -2455,7 +2573,7 @@ class CandidatesUI extends UserInterface
         $this->_template->assign('fullNameWildCardString', $fullNameWildCardString);
         $this->_template->assign('phoneNumberWildCardString', $phoneNumberWildCardString);
         $this->_template->assign('mode', $mode);
-        $this->_template->display('./modules/candidates/Search.tpl');
+        $this->_template->display('./modules/candidates/Search.php');
     }
 
     /*
@@ -2576,7 +2694,7 @@ class CandidatesUI extends UserInterface
         $this->_template->assign('isFinishedMode', false);
         $this->_template->assign('candidateID', $candidateID);
         $this->_template->display(
-            './modules/candidates/CreateAttachmentModal.tpl'
+            './modules/candidates/CreateAttachmentModal.php'
         );
     }
 
@@ -2645,7 +2763,7 @@ class CandidatesUI extends UserInterface
         $this->_template->assign('isFinishedMode', true);
         $this->_template->assign('candidateID', $candidateID);
         $this->_template->display(
-            './modules/candidates/CreateAttachmentModal.tpl'
+            './modules/candidates/CreateAttachmentModal.php'
         );
     }
 
@@ -3540,7 +3658,166 @@ class CandidatesUI extends UserInterface
             './modules/candidates/AddActivityChangeStatusModal.tpl'
         );
     }
+    
+    public function emailCandidates()
+    {
+        Logger::getLogger("AuieoATS")->info("emailCandidates:start");
+        if ($this->_accessLevel == ACCESS_LEVEL_DEMO)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this, 'Sorry, but demo accounts are not allowed to send e-mails.');
+        }
+        
+        if(isset($_REQUEST["idlist"]))
+        {
+            $db = DatabaseConnection::getInstance();
+            $idlist=trim($_REQUEST["idlist"]);
+            $rs = $db->getAllAssoc(sprintf(
+                'SELECT candidate_id, email1, email2, last_name, first_name '
+                . 'FROM candidate '
+                . 'WHERE candidate_id IN (%s)',
+                $idlist
+            ));
+            $emailTemplates = new EmailTemplates($this->_siteID);
+            $emailTemplatesRS = $emailTemplates->getAll();
+            $this->_template->assign('emailTemplatesRS', $emailTemplatesRS);
+            $this->_template->assign('active', $this);
+            $this->_template->assign('success', false);
+            $this->_template->assign('recipients', $rs);
+            $this->_template->display('./modules/candidates/emailCandidates.php');
+        }
+        else
+        {
+            $dataGrid = DataGrid::getFromRequest();
 
+            $candidateIDs = $dataGrid->getExportIDs();
+
+            /* Validate each ID */
+            foreach ($candidateIDs as $index => $candidateID)
+            {
+                if (!$this->isRequiredIDValid($index, $candidateIDs))
+                {
+                    Logger::getLogger("AuieoATS")->error("Invalid candidate ID.");
+                    CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this, 'Invalid candidate ID.');
+                    return;
+                }
+            }
+
+            $db_str = implode(", ", $candidateIDs);
+
+            $db = DatabaseConnection::getInstance();
+
+            $rs = $db->getAllAssoc(sprintf(
+                'SELECT candidate_id, email1, email2, first_name, last_name '
+                . 'FROM candidate '
+                . 'WHERE candidate_id IN (%s)',
+                $db_str
+            ));
+
+            //$this->_template->assign('privledgedUser', $privledgedUser);
+            $emailTemplates = new EmailTemplates($this->_siteID);
+            $emailTemplatesRS = $emailTemplates->getAll();
+            $this->_template->assign('emailTemplatesRS', $emailTemplatesRS);
+            $this->_template->assign('active', $this);
+            $this->_template->assign('success', false);
+            $this->_template->assign('recipients', $rs);
+            $this->_template->display('./modules/candidates/emailCandidates.php');
+        }
+        Logger::getLogger("AuieoATS")->info("emailCandidates:end");
+    }
+    
+    private function renderTemplateVars($template,$candidateid,$joborderid=false)
+    {
+        $candidates=new CandidateTemplate($this->_siteID);
+        $candidates->load($candidateid,$joborderid);
+        $template=  html_entity_decode($template);
+        try
+        {
+        ob_start();
+        $render="";
+        eval('echo <<< EOT
+'.$template.'
+EOT;
+');
+        $render = ob_get_clean();
+    }
+        catch(Exception $e)
+        {
+            trace($e);
+        }
+        return $render;
+    }
+    
+    public function onEmailCandidateJoborder()
+    {
+        $templateid = $_POST['titleSelect'];
+            
+        $emailTo = $_POST['emailTo'];
+        $emailSubject = $_POST['emailSubject'];
+        $joborderid=isset($_REQUEST["joborderid"])?$_REQUEST["joborderid"]:false;
+        $idlist=$_POST["idlist"];
+        $obj=json_decode(urldecode($idlist),true);
+        foreach($obj as $candid=>$details)
+        {
+            $emailBody = $_POST['emailBody'];
+            $emailData=array();
+            $emailData["id"]=$candid;
+            $emailData["email"]=array();
+            foreach($details["email"] as $emailind=>$data)
+            {
+                //$objTemplate=new EmailTemplates($this->_siteID); 
+                //$rowTemplate=$objTemplate->get($templateid);
+                $emailBody=$this->renderTemplateVars($emailBody, $candid, $joborderid);
+
+                $tmpDestination = $data["email"];
+                $emailData["email"][]=array("email"=>$tmpDestination,"name"=>$tmpDestination);
+                $mailer = new Mailer($this->_siteID);
+                // FIXME: Use sendToOne()?
+                $mailerStatus = $mailer->send(
+                    array($_SESSION['CATS']->getEmail(), $_SESSION['CATS']->getEmail()),
+                    $emailData,
+                    $emailSubject,
+                    $emailBody,
+                    true,
+                    true
+                );
+            }
+        }
+        $this->_template->assign('active', $this);
+        $this->_template->assign('success', true);
+        $this->_template->assign('success_to', $emailTo);
+        $this->_template->display(
+            './modules/candidates/onEmailCandidateJoborder.php'
+        );
+    }
+    
+    public function emailCandidateJoborder()
+    {
+        $db = DatabaseConnection::getInstance();
+        $idlist=trim($_REQUEST["idlist"]);
+        $joborderid = ClsNaanalRequest::getInstance()->getData("jobOrderID");
+        $arrJoborder=$db->getAllAssoc("select * from joborder where joborder_id={$joborderid}");
+        $title=$arrJoborder[0]["title"];
+
+        $rs = $db->getAllAssoc(sprintf(
+            'SELECT candidate_id, email1, email2 '
+            . 'FROM candidate '
+            . 'WHERE candidate_id IN (%s)',
+            $idlist
+        ));
+
+        $emailTemplates = new EmailTemplates($this->_siteID);
+        $emailTemplatesRS = $emailTemplates->getAll();
+        
+        $this->_template->assign('emailTemplatesRS', $emailTemplatesRS);
+        $this->_template->assign('active', $this);
+        $this->_template->assign('recipients', $rs);
+        $this->_template->assign('joborder_title', $title);
+        $this->_template->assign('joborderid', $joborderid);
+        $this->_template->display(
+            './modules/candidates/emailCandidateJoborder.php'
+        );
+    }
+    
     /*
      * Sends mass emails from the datagrid
      */
@@ -3550,38 +3827,56 @@ class CandidatesUI extends UserInterface
         {
             CommonErrors::fatal(COMMONERROR_PERMISSION, $this, 'Sorry, but demo accounts are not allowed to send e-mails.');
         }
-
+        Logger::getLogger("AuieoATS")->info("inside onEmailCandidates");
         if (isset($_POST['postback']))
         {
+            $templateid = $_POST['titleSelect'];
+            
             $emailTo = $_POST['emailTo'];
             $emailSubject = $_POST['emailSubject'];
-            $emailBody = $_POST['emailBody'];
-            $emailBody=str_replace("<br />", "", $emailBody);
-            $tmpDestination = explode(', ', $emailTo);
-            $destination = array();
-            foreach($tmpDestination as $emailDest)
+            
+            $idlist=$_POST["idlist"];
+            $obj=json_decode(urldecode($idlist),true);
+            foreach($obj as $candid=>$details)
             {
-                $destination[] = array($emailDest, $emailDest);
+                $emailBody = $_POST['emailBody'];
+                $emailData=array();
+                $emailData["id"]=$candid;
+                $emailData["email"]=array();
+                foreach($details["email"] as $emailind=>$data)
+                {
+                    //$objTemplate=new EmailTemplates($this->_siteID); 
+                    //$rowTemplate=$objTemplate->get($templateid);
+                    $emailBody=$this->renderTemplateVars($emailBody, $candid);
+
+                    $tmpDestination = $data["email"];
+                    $emailData["email"][]=array("email"=>$tmpDestination,"name"=>$tmpDestination);
+                    $mailer = new Mailer($this->_siteID);
+                    // FIXME: Use sendToOne()?
+                    $mailerStatus = $mailer->send(
+                        array($_SESSION['CATS']->getEmail(), $_SESSION['CATS']->getEmail()),
+                        $emailData,
+                        $emailSubject,
+                        $emailBody,
+                        true,
+                        true
+                    );
+                }
             }
 
-            $mailer = new Mailer(CATS_ADMIN_SITE);
-            // FIXME: Use sendToOne()?
-            $mailerStatus = $mailer->send(
-                array($_SESSION['CATS']->getEmail(), $_SESSION['CATS']->getEmail()),
-                $destination,
-                $emailSubject,
-                $emailBody,
-                true,
-                true
-            );
-            if(!$mailerStatus)
-            {
-                CommonErrors::fatal(COMMONERROR_EMAILFAILED, NULL, $mailer->getError());
-            }
             $this->_template->assign('active', $this);
-            $this->_template->assign('success', true);
             $this->_template->assign('success_to', $emailTo);
-            $this->_template->display('./modules/candidates/SendEmail.tpl');
+            if($mailer->getError())
+            {
+                $this->_template->assign('error', $mailer->getError());
+                $this->_template->display('./modules/candidates/emailFail.php');
+            }
+            else
+            {
+                $this->_template->assign('success', true);
+                $this->_template->display('./modules/candidates/emailSuccess.php');
+            }
+            return;
         }
         else
         {
@@ -3590,18 +3885,20 @@ class CandidatesUI extends UserInterface
                 $db = DatabaseConnection::getInstance();
                 $idlist=trim($_REQUEST["idlist"]);
                 $rs = $db->getAllAssoc(sprintf(
-                    'SELECT candidate_id, email1, email2 '
+                    'SELECT candidate_id, email1, email2, last_name, first_name '
                     . 'FROM candidate '
                     . 'WHERE candidate_id IN (%s)',
                     $idlist
                 ));
+				
                 $emailTemplates = new EmailTemplates($this->_siteID);
                 $emailTemplatesRS = $emailTemplates->getAll();
                 $this->_template->assign('emailTemplatesRS', $emailTemplatesRS);
                 $this->_template->assign('active', $this);
-                $this->_template->assign('success', false);
+                $this->_template->assign('success', true);
                 $this->_template->assign('recipients', $rs);
-                $this->_template->display('./modules/candidates/SendEmail.tpl');
+                $this->_template->display('./modules/candidates/emailCandidates.php');
+                return;
             }
             else
             {
@@ -3624,23 +3921,111 @@ class CandidatesUI extends UserInterface
                 $db = DatabaseConnection::getInstance();
 
                 $rs = $db->getAllAssoc(sprintf(
-                    'SELECT candidate_id, email1, email2 '
+                    'SELECT candidate_id, email1, email2, last_name, first_name '
                     . 'FROM candidate '
                     . 'WHERE candidate_id IN (%s)',
                     $db_str
                 ));
 
-                //$this->_template->assign('privledgedUser', $privledgedUser);
-                $emailTemplates = new EmailTemplates($this->_siteID);
-                $emailTemplatesRS = $emailTemplates->getAll();
-                $this->_template->assign('emailTemplatesRS', $emailTemplatesRS);
+                if(!$mailerStatus)
+                {
+                    CommonErrors::fatal(COMMONERROR_EMAILFAILED, NULL, $mailer->getError());
+                }
                 $this->_template->assign('active', $this);
-                $this->_template->assign('success', false);
-                $this->_template->assign('recipients', $rs);
-                $this->_template->display('./modules/candidates/SendEmail.tpl');
+                $this->_template->assign('success', true);
+                $this->_template->assign('success_to', $emailTo);
+                $this->_template->display('./modules/candidates/emailSuccess.php');
+
+                //$arrTpl["privledgedUser"]=$privledgedUser;
+                /*$emailTemplates = new EmailTemplates($this->_siteID);
+                $emailTemplatesRS = $emailTemplates->getAll();
+                $arrTpl["emailTemplatesRS"]=$emailTemplatesRS;
+                $arrTpl["active"]=$this;
+                $arrTpl["success"]=false;
+                $arrTpl["recipients"]=$rs;
+                return $arrTpl;*/
             }
         }
     }
+
+    /*
+     * Sends mass emails from the datagrid
+     */
+    /*public function onEmailCandidates()
+    {
+        Logger::getLogger("AuieoATS")->info("inside onEmailCandidates");
+        if ($this->_accessLevel == ACCESS_LEVEL_DEMO)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this, 'Sorry, but demo accounts are not allowed to send e-mails.');
+        }
+        $emailTo = $_POST['emailTo'];
+        $emailSubject = $_POST['emailSubject'];
+        $emailBody = $_POST['emailBody'];
+        $emailBody=str_replace("<br />", "", $emailBody);
+        $tmpDestination = explode(', ', $emailTo);
+        $destination = array();
+        foreach($tmpDestination as $emailDest)
+        {
+            $destination[] = array($emailDest, $emailDest);
+        }
+
+        $mailer = new Mailer(CATS_ADMIN_SITE);
+        // FIXME: Use sendToOne()?
+        $mailerStatus = $mailer->send(
+            array($_SESSION['CATS']->getEmail(), $_SESSION['CATS']->getEmail()),
+            $destination,
+            $emailSubject,
+            $emailBody,
+            true,
+            true
+        );
+        if(!$mailerStatus)
+        {
+            CommonErrors::fatal(COMMONERROR_EMAILFAILED, NULL, $mailer->getError());
+        }
+        $this->_template->assign('active', $this);
+        $this->_template->assign('success', true);
+        $this->_template->assign('success_to', $emailTo);
+        $this->_template->display('./modules/candidates/emailSuccess.php');
+    }*/
+    
+    public function editemail ()
+	{
+            $db = DatabaseConnection::getInstance();	
+            $email_history_id=trim($_REQUEST["email_history_id"]);
+            $rs = $db->getAllAssoc(sprintf(
+        'SELECT recipients, from_address, text '
+        . 'FROM email_history '
+        . 'WHERE  email_history_id=%s' ,
+$email_history_id
+            ));
+			
+            if($rs)
+            {
+               /* $emailTemplates = new EmailTemplates($this->_siteID);
+                $emailTemplatesRS = $emailTemplates->getAll();
+                $arrTpl["emailTemplatesRS"]=$emailTemplatesRS;*/
+                $arrTmp=explode("Message:",$rs[0]["text"]);
+                $subject= $arrTmp[0];
+                $message=$arrTmp[1];
+                $arrSubj=explode("Subject:",$subject);
+                $this->_template->assign('active', $this);
+                $this->_template->assign('message', $message);
+                $this->_template->assign('subject', $arrSubj[1]);
+                $this->_template->assign('recipient', $rs[0]["recipients"]);
+                $this->_template->assign('from', $rs[0]["from_address"]);
+
+                $this->_template->display('./modules/candidates/editemail.php');
+            }
+            else
+            {
+                die("Unknown EMail details requested");
+            }	
+	}
+	public function onEditemail()
+	{
+		
+	}
 
     public function onShowQuestionnaire()
     {
@@ -3650,7 +4035,14 @@ class CandidatesUI extends UserInterface
         $printValue = !strcasecmp($printOption, 'yes') ? true : false;
 
         if (!$candidateID || !$title)
-        {
+        {$this->_template->assign('active', $this);
+        $this->_template->assign('candidateID', $candidateID);
+        $this->_template->assign('title', $title);
+        $this->_template->assign('cData', $cData);
+        $this->_template->assign('qData', $qData);
+        $this->_template->assign('print', $printValue);
+
+        $this->_template->display('./modules/candidates/Questionnaire.tpl');
             CommonErrors::fatal(COMMONERROR_BADINDEX);
         }
 

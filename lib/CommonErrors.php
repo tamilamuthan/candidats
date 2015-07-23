@@ -293,7 +293,7 @@ class CommonErrors
         $template->assign('errorTitle', $errorTitle);
         $template->assign('errorMessage', $errorMessage);
         $template->assign('modal', $modal);
-        $template->display('./modules/home/FriendlyError.tpl');
+        $template->display('./modules/home/FriendlyError.php');
         die();
     }
 

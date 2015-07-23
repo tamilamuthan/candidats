@@ -943,3 +943,4 @@ CREATE TABLE `zipcodes` (
   `areacode` smallint(6) NOT NULL default '0',
   PRIMARY KEY  (`zipcode`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+ALTER TABLE `system` ADD COLUMN `schema_version` int(11) NOT NULL default '0';

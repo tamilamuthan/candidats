@@ -117,8 +117,15 @@ class ActivityUI extends UserInterface
 
         $activityEntries = new ActivityEntries($this->_siteID);
         $this->_template->assign('numActivities', $activityEntries->getCount());
-
-        $this->_template->display('./modules/activity/ActivityDataGrid.tpl');
+		if($activityEntries->getCount()>0)
+		{
+			$this->_template->display('./modules/activity/ActivityDataGrid.php');
+		}
+		else
+		{
+			$this->_template->display('./modules/activity/NoRecord.php');
+		}
+        
     }
 
     /*
@@ -263,7 +270,7 @@ class ActivityUI extends UserInterface
         $activityEntries = new ActivityEntries($this->_siteID);
         $this->_template->assign('numActivities', $activityEntries->getCount());
 
-        $this->_template->display('./modules/activity/ActivityDataGrid.tpl');
+        $this->_template->display('./modules/activity/ActivityDataGrid.php');
     }
 
     /**

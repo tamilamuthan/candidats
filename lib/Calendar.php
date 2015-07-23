@@ -69,6 +69,82 @@ class Calendar
         $this->_db = DatabaseConnection::getInstance();
     }
 
+    /**
+     * Returns an array of events in a month, keyed by each day of the month.
+     * There will always be a key present for each day of the month, but if
+     * there are no events for a day then it's corresponding value will be an
+     * empty array.
+     *
+     * @param integer Month number (1-12).
+     * @param integer Year (four-digit).
+     * @return array Multi-dimensional result set array.
+     */
+    public function get($id)
+    {
+        // FIXME: Rewrite this query to use date ranges in WHERE, so that
+        //        indexes can be used.
+        $sql = sprintf(
+            "SELECT
+                calendar_event.calendar_event_id AS eventID,
+                calendar_event.data_item_id AS dataItemID,
+                calendar_event.data_item_type AS dataItemType,
+                calendar_event.joborder_id AS jobOrderID,
+                calendar_event.duration AS duration,
+                calendar_event.all_day AS allDay,
+                calendar_event.title AS title,
+                calendar_event.description AS description,
+                calendar_event.reminder_enabled AS reminderEnabled,
+                calendar_event.reminder_email AS reminderEmail,
+                calendar_event.reminder_time AS reminderTime,
+                calendar_event.public AS public,
+                DATE_FORMAT(
+                    calendar_event.date, '%%d'
+                ) AS day,
+                DATE_FORMAT(
+                    calendar_event.date, '%%m'
+                ) AS month,
+                DATE_FORMAT(
+                    calendar_event.date, '%%y'
+                ) AS year,
+                DATE_FORMAT(
+                    calendar_event.date, '%%m-%%d-%%y'
+                ) AS date,
+                DATE_FORMAT(
+                    calendar_event.date, '%%h:%%i %%p'
+                ) AS time,
+                DATE_FORMAT(
+                    calendar_event.date, '%%H'
+                ) AS hour,
+                DATE_FORMAT(
+                    calendar_event.date, '%%i'
+                ) AS minute,
+                calendar_event.date AS dateSort,
+                DATE_FORMAT(
+                    calendar_event.date_created, '%%m-%%d-%%y (%%h:%%i %%p)'
+                ) AS dateCreated,
+                calendar_event_type.calendar_event_type_id AS eventType,
+                calendar_event_type.short_description AS eventTypeDescription,
+                entered_by_user.user_id AS userID,
+                entered_by_user.first_name AS enteredByFirstName,
+                entered_by_user.last_name AS enteredByLastName,
+                calendar_event_type.short_description as eventType
+            FROM
+                calendar_event
+            LEFT JOIN calendar_event_type
+                ON calendar_event.type = calendar_event_type.calendar_event_type_id
+            LEFT JOIN user AS entered_by_user
+                ON calendar_event.entered_by = entered_by_user.user_id
+            WHERE
+                calendar_event.site_id = %s
+                AND calendar_event_id=%s",
+            $this->_siteID,
+            $id
+        );
+
+        $record = $this->_db->getAssoc($sql);
+
+        return $record;
+    }
 
     /**
      * Returns an array of events in a month, keyed by each day of the month.

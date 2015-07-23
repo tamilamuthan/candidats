@@ -31,6 +31,9 @@
  */
 
 include_once('./lib/License.php');
+include_once(__DIR__."/PRGPermissions.php");
+include_once(__DIR__."/PRGProfile.php");
+include_once(__DIR__."/PRGRole.php");
 
 /* Login status flags. */
 define('LOGIN_SUCCESS',               1);
@@ -55,14 +58,60 @@ class Users
 {
     private $_db;
     private $_siteID;
-
+    private $objRole=null;
+    
+    private $record=array();
 
     public function __construct($siteID)
     {
         $this->_siteID = $siteID;
         $this->_db = DatabaseConnection::getInstance();
     }
+    
+    public function sendEMail($subject, $body, $isHTML = false,
+        $logMessage = true, $replyTo = array(), $wrapLinesAt = 78,
+        $signature = true)
+    {
+        $arrEmailData=array();
+        $arrEmailData["id"]=$this->user_id;
 
+        $arrEmailData["email"][]=array("email"=>$this->email,"name"=>$this->first_name." ".$this->last_name);
+        $settings = new MailerSettings($this->_siteID);
+        $settings_config = $settings->getAll();
+        $mailer = new Mailer($this->_siteID);
+        return $mailer->send(
+            array($settings_config['fromAddress'], ''),
+            $arrEmailData,
+            $subject,
+            $body,
+            $isHTML,
+            $logMessage,
+            $replyTo,
+            $wrapLinesAt,
+            $signature,
+            "users"
+        );
+    }
+
+    public function getTestData()
+    {
+        return "000000000000000000000000";
+    }
+    public function __get($var)
+    {
+        if(isset($this->$var))
+        {
+            return $this->$var;
+        }
+        else if (isset($this->record[$var]))
+        {
+            return $this->record[$var];
+        }
+        else
+        {
+            return null; 
+        }
+    }
 
     /**
      * Adds a user to the database.
@@ -77,7 +126,7 @@ class Users
      * @return new user ID, or -1 on failure.
      */
     public function add($lastName, $firstName, $email, $username, $password,
-        $accessLevel, $eeoIsVisible = false)
+        $accessLevel, $eeoIsVisible = false,$roleid=0)
     {
         $sql = sprintf(
             "INSERT INTO user (
@@ -90,7 +139,8 @@ class Users
                 first_name,
                 last_name,
                 site_id,
-                can_see_eeo_info
+                can_see_eeo_info,
+                roleid
             )
             VALUES (
                 %s,
@@ -98,6 +148,7 @@ class Users
                 %s,
                 1,
                 0,
+                %s,
                 %s,
                 %s,
                 %s,
@@ -111,7 +162,8 @@ class Users
             $this->_db->makeQueryString($firstName),
             $this->_db->makeQueryString($lastName),
             $this->_siteID,
-            ($eeoIsVisible ? 1 : 0)
+            ($eeoIsVisible ? 1 : 0),
+            $roleid
         );
 
         $queryResult = $this->_db->query($sql);
@@ -121,6 +173,17 @@ class Users
         }
 
         return $this->_db->getLastInsertID();
+    }
+    
+    public function &getRole()
+    {
+        return $this->objRole;
+    }
+    
+    public function getPermission()
+    {
+        if($this->objRole) return $this->objRole->getPermission();
+        return null;
     }
 
     /**
@@ -135,7 +198,7 @@ class Users
      * @return boolean True if successful; false otherwise.
      */
     public function update($userID, $lastName, $firstName, $email,
-                           $username, $accessLevel = -1, $eeoIsVisible = false)
+                           $username, $accessLevel = -1, $eeoIsVisible = false,$roleid=0)
     {
         /* If an access level was specified, make sure the access level is
          * updated by the query.
@@ -160,7 +223,8 @@ class Users
                 first_name       = %s,
                 email            = %s,
                 user_name        = %s,
-                can_see_eeo_info = %s
+                can_see_eeo_info = %s,
+                roleid=%s
                 %s
             WHERE
                 user_id = %s
@@ -171,6 +235,7 @@ class Users
             $this->_db->makeQueryString($email),
             $this->_db->makeQueryString($username),
             ($eeoIsVisible ? 1 : 0),
+            $roleid,
             $accessLevelSQL,
             $this->_db->makeQueryInteger($userID),
             $this->_siteID
@@ -272,6 +337,7 @@ class Users
                 access_level.long_description AS accessLevelLongDescription,
                 user.first_name AS firstName,
                 user.last_name AS lastName,
+                user.roleid,
                 CONCAT(
                     user.first_name, ' ', user.last_name
                 ) AS fullName,
@@ -285,6 +351,7 @@ class Users
                 user.phone_work as phoneWork,
                 user.user_id AS userID,
                 user.password AS password,
+                auieo_roles.rolename,
                 user.categories AS categories,
                 user.session_cookie AS sessionCookie,
                 user.can_see_eeo_info AS canSeeEEOInfo,
@@ -303,6 +370,51 @@ class Users
                 force_logout as forceLogout
             FROM
                 user
+            LEFT JOIN auieo_roles on auieo_roles.id=user.roleid
+            LEFT JOIN access_level
+                ON user.access_level = access_level.access_level_id
+            LEFT JOIN user_login
+                ON user.user_id = user_login.user_id
+            WHERE
+                user.site_id = %s
+            AND
+                user.user_id = %s
+            GROUP BY
+                user.user_id",
+            $this->_siteID,
+            $this->_db->makeQueryInteger($userID)
+        );
+        $this->load($userID);
+        return $this->_db->getAssoc($sql);
+    }
+    
+    public function load($userID)
+    {
+        $sql=sprintf(
+            "SELECT
+                user.user_name,
+                user.access_level,
+                access_level.short_description,
+                access_level.long_description,
+                user.first_name,
+                user.last_name,
+                user.roleid,
+                user.email,
+                user.company,
+                user.city,
+                user.state,
+                user.zip_code,
+                user.country,
+                user.address,
+                user.phone_work,
+                user.user_id,
+                user.password,
+                user.categories,
+                user.session_cookie,
+                user.can_see_eeo_info,
+                force_logout
+            FROM
+                user
             LEFT JOIN access_level
                 ON user.access_level = access_level.access_level_id
             LEFT JOIN user_login
@@ -317,7 +429,11 @@ class Users
             $this->_db->makeQueryInteger($userID)
         );
 
-        return $this->_db->getAssoc($sql);
+        $this->record = $this->_db->getAssoc($sql);
+        if($this->record["roleid"]>0) 
+        {
+            $this->objRole = PRGRole::getInstance($this->record["roleid"]);
+        }
     }
 
     /**
@@ -625,6 +741,24 @@ class Users
         return $this->_db->getAllAssoc($sql);
     }
     
+    public function getSelectGroupList()
+    {
+        $sql = sprintf(
+            "SELECT
+                auieo_groups.id,
+                auieo_groups.groupname
+            FROM
+                auieo_groups
+            WHERE
+                auieo_groups.site_id = %s
+            ORDER BY
+                auieo_groups.groupname ASC",
+            $this->_siteID,
+            ACCESS_LEVEL_DISABLED
+        );
+        return $this->_db->getAllAssoc($sql);
+    }
+    
     public function getFirstUser()
     {
         $sql = sprintf(
@@ -791,23 +925,47 @@ class Users
         }
         
         $arrUsername=explode("@",$username);
-        if(!isset($arrUsername[1])) $arrUsername[1]=1;
-        
-        $username=$arrUsername[0];
-        $siteID=$arrUsername[1];
-        
-        $sql = sprintf(
-            "SELECT
-                user.user_name AS username,
-                user.password AS password,
-                user.access_level AS accessLevel
-            FROM
-                user
-            WHERE
-                user.user_name = %s and user.site_id=%s",
-            $this->_db->makeQueryString($username),
-            $siteID
-        );
+        if(!isset($arrUsername[1])) 
+        {
+            $sql = sprintf(
+                "SELECT
+                    user.user_name AS username,
+                    user.password AS password,
+                    user.access_level AS accessLevel
+                FROM
+                    user
+                LEFT JOIN
+                    site
+                ON
+                    user.site_id=site.site_id
+                WHERE
+                    user.user_name = %s and site.site_id=1",
+                $this->_db->makeQueryString($username)
+            );
+        }
+        else
+        {
+            $username=$arrUsername[0];
+            $siteUnixName=$arrUsername[1];
+
+            $sql = sprintf(
+                "SELECT
+                    user.user_name AS username,
+                    user.password AS password,
+                    user.access_level AS accessLevel
+                FROM
+                    user
+                LEFT JOIN
+                    site
+                ON
+                    user.site_id=site.site_id
+                WHERE
+                    user.user_name = %s and site.site_id=%s",
+                $this->_db->makeQueryString($username),
+                $siteUnixName
+            );
+        }
+
         $rs = $this->_db->getAssoc($sql);
 
         /* No results? Probably an invalid user. */
@@ -1167,14 +1325,68 @@ class Users
         return $this->_db->getAllAssoc($sql);
     }
     
-    public static function &getInstance($siteID)
+    public function getUserInfo($fieldName=false)
     {
-        static $objUser=null;
-        if(is_null($objUser))
+        if($fieldName===false) return $this->record;
+        return isset($this->record[$fieldName])?$this->record[$fieldName]:false;
+    }
+    
+    public function getChildRolesUsers()
+    {
+        static $arrUser=array();
+        if(empty($arrUser))
         {
-            $objUser=new Users($siteID);
+            $objRole = PRGRole::getInstance($this->record["roleid"]);
+            $arrRoles=$objRole->getChildrenRoles();
+            if($arrRoles)
+            {
+                foreach($arrRoles as $role=>$tmp)
+                {
+                    $objR= PRGRole::getInstance($role);
+                    $arrRoleUser=$objR->getRoleUsers();
+                    foreach($arrRoleUser as $userid=>$tmp)
+                    {
+                        $arrUser[$userid]=$tmp;
+                    }
+                }
+            }
         }
-        return $objUser;
+        return $arrUser;
+    }
+    
+    public function getAllGroups()
+    {
+        $objDB=  DatabaseConnection::getInstance();
+        $sql="select * from auieo_groups2users where user_id={$this->record["user_id"]} and site_id={$this->_siteID}";
+        $arrRow=$objDB->getAllAssoc($sql);
+        $arrGroup=array();
+        foreach($arrRow as $rw)
+        {
+            $arrGroup[]=$rw["groupid"];
+        }
+        
+        $sql="select * from auieo_groups2roles where roleid={$this->record["roleid"]} and site_id={$this->_siteID}";
+        $arrRow=$objDB->getAllAssoc($sql);
+        foreach($arrRow as $rw)
+        {
+            $arrGroup[]=$rw["groupid"];
+        }
+        return $arrGroup;
+    }
+    
+    public static function &getInstance($siteID=0,$isRefresh=false)
+    {
+        static $objUser=array();
+        if(empty($siteID))
+        {
+            $siteID=$_SESSION["CATS"]->getSiteID();
+        }
+        if(!isset($objUser[$siteID]) || $isRefresh)
+        {
+            $objUser[$siteID]=new Users($siteID);
+            $objUser[$siteID]->load($_SESSION["CATS"]->getUserID());
+        }
+        return $objUser[$siteID];
     }
 
     /**
@@ -1231,6 +1443,12 @@ class Users
         }
 
         return $rs;
+    }
+    
+    public function __toString()
+    {
+        $data = isset($this->record)?$this->record["first_name"]." ".$this->record["last_name"]:"";
+        return $data;
     }
 }
 

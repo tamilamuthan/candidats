@@ -29,7 +29,7 @@
 
 /* 
  * CandidATS
- * Extra Fileld Handler
+ * Extra Field Handler
  *
  * Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
  * 
@@ -67,19 +67,21 @@ class ExtraFields
     {
         $sql = sprintf(
             "SELECT
-                extra_field_settings.field_name AS fieldName,
-                extra_field_settings.extra_field_settings_id AS extraFieldSettingsID,
-                extra_field_settings.extra_field_type as extraFieldType,
-                extra_field_settings.extra_field_options as extraFieldOptions,
-                extra_field_settings.site_id AS siteID
+                auieo_fields.fieldname AS fieldName,
+                auieo_fields.id AS extraFieldSettingsID,
+                auieo_fields.uitype as extraFieldType,
+                auieo_fields.field_options as extraFieldOptions,
+                auieo_fields.site_id AS siteID
             FROM
-                extra_field_settings
+                auieo_fields
             WHERE
-                extra_field_settings.site_id = %s
+                auieo_fields.site_id = %s
             AND
-                extra_field_settings.data_item_type = %s
+                auieo_fields.data_item_type = %s
+            AND
+                auieo_fields.is_extra=1
             ORDER BY
-                extra_field_settings.position ASC",
+                auieo_fields.position ASC",
             $this->_siteID,
             $this->_dataItemType
         );
@@ -97,19 +99,21 @@ class ExtraFields
     public function define($fieldName, $fieldType)
     {
         $sql = sprintf(
-            "INSERT INTO extra_field_settings (
-                field_name,
+            "INSERT INTO auieo_fields (
+                fieldname,
                 site_id,
                 date_created,
                 data_item_type,
-                extra_field_type
+                uitype,
+                is_extra
              )
              VALUES (
                 %s,
                 %s,
                 NOW(),
                 %s,
-                %s
+                %s,
+                1
              )",
              $this->_db->makeQueryString($fieldName),
              $this->_siteID,
@@ -118,14 +122,49 @@ class ExtraFields
         );
         $this->_db->query($sql);
         
+        $table="";
+        if($this->_dataItemType==100)
+        {
+            $table="candidate";
+        }
+        else if($this->_dataItemType==200)
+        {
+            $table="company";
+        }
+        else if($this->_dataItemType==300)
+        {
+            $table="contact";
+        }
+        else if($this->_dataItemType==400)
+        {
+            $table="joborder";
+        }
+        $fieldTypeNum=$this->_db->makeQueryInteger($fieldType);
+        $fieldType="VARCHAR(255)";
+        if($fieldTypeNum==2)
+        {
+            $maximumlength=0;
+            $fieldType="TEXT";
+        }
+        else if($fieldTypeNum==3)
+        {
+            $maximumlength=1;
+            $fieldType="INT(1)";
+        }
+        else if($fieldTypeNum==4)
+        {
+            $fieldType="DATETIME";
+        }
+
+        $this->_db->query("ALTER IGNORE TABLE `{$table}` ADD COLUMN `{$fieldName}` {$fieldType} default NULL");
         /* Force this new extra field to have a position. */
         $sql = sprintf(
             "UPDATE 
-                extra_field_settings
+                auieo_fields
              SET
                 position = %s
              WHERE
-                extra_field_settings_id = %s
+                id = %s
              AND
                 site_id = %s",
              $this->_db->getLastInsertID(),
@@ -145,11 +184,13 @@ class ExtraFields
     {
         $sql = sprintf(
             "DELETE FROM
-                extra_field_settings
+                auieo_fields
              WHERE
-                field_name = %s
+                fieldname = %s
              AND
                 site_id = %s
+            AND
+                auieo_fields.is_extra=1
              AND
                 data_item_type = %s",
              $this->_db->makeQueryString($fieldName),
@@ -157,6 +198,24 @@ class ExtraFields
              $this->_dataItemType
         );
         $this->_db->query($sql);
+        $table="";
+        if($this->_dataItemType==100)
+        {
+            $table="candidate";
+        }
+        else if($this->_dataItemType==200)
+        {
+            $table="company";
+        }
+        else if($this->_dataItemType==300)
+        {
+            $table="contact";
+        }
+        else if($this->_dataItemType==400)
+        {
+            $table="joborder";
+        }
+        $this->_db->query("ALTER TABLE `{$table}` DROP `{$fieldName}`");
     }    
 
     /**
@@ -171,15 +230,17 @@ class ExtraFields
     {
         $sql = sprintf(
             "SELECT
-                extra_field_settings.extra_field_options as extraFieldOptions
+                auieo_fields.field_options as extraFieldOptions
             FROM
-                extra_field_settings
+                auieo_fields
             WHERE
-                extra_field_settings.site_id = %s
+                auieo_fields.site_id = %s
             AND
-                extra_field_settings.data_item_type = %s
+                auieo_fields.data_item_type = %s
             AND
-                extra_field_settings.field_name = %s",
+                auieo_fields.is_extra=1
+            AND
+                auieo_fields.fieldname = %s",
             $this->_siteID,
             $this->_dataItemType,
             $this->_db->makeQueryString($fieldName)
@@ -202,15 +263,17 @@ class ExtraFields
        
         $sql = sprintf(
             "UPDATE
-               extra_field_settings
+               auieo_fields
              SET
-               extra_field_options = %s
+               field_options = %s
              WHERE
-               extra_field_settings.site_id = %s
+               auieo_fields.site_id = %s
              AND
-               extra_field_settings.data_item_type = %s
+               auieo_fields.data_item_type = %s
              AND
-               extra_field_settings.field_name = %s
+               auieo_fields.fieldname = %s
+            AND
+                auieo_fields.is_extra=1
              ",
              $this->_db->makeQueryString(implode(',', $options)),
              $this->_siteID,
@@ -232,15 +295,17 @@ class ExtraFields
     {
         $sql = sprintf(
             "SELECT
-                extra_field_settings.extra_field_options as extraFieldOptions
+                auieo_fields.field_options as extraFieldOptions
             FROM
-                extra_field_settings
+                auieo_fields
             WHERE
-                extra_field_settings.site_id = %s
+                auieo_fields.site_id = %s
             AND
-                extra_field_settings.data_item_type = %s
+                auieo_fields.data_item_type = %s
             AND
-                extra_field_settings.field_name = %s",
+                auieo_fields.is_extra=1
+            AND
+                auieo_fields.fieldname = %s",
             $this->_siteID,
             $this->_dataItemType,
             $this->_db->makeQueryString($fieldName)
@@ -260,15 +325,17 @@ class ExtraFields
        
         $sql = sprintf(
             "UPDATE
-               extra_field_settings
+               auieo_fields
              SET
-               extra_field_options = %s
+               field_options = %s
              WHERE
-               extra_field_settings.site_id = %s
+               auieo_fields.site_id = %s
              AND
-               extra_field_settings.data_item_type = %s
+               auieo_fields.data_item_type = %s
+            AND
+                auieo_fields.is_extra=1
              AND
-               extra_field_settings.field_name = %s
+               auieo_fields.fieldname = %s
              ",
              $this->_db->makeQueryString(implode(',', $options)),
              $this->_siteID,
@@ -290,15 +357,17 @@ class ExtraFields
     {
         $sql = sprintf(
             "SELECT
-                extra_field_settings.position as position
+                auieo_fields.position as position
             FROM
-                extra_field_settings
+                auieo_fields
             WHERE
-                extra_field_settings.site_id = %s
+                auieo_fields.site_id = %s
             AND
-                extra_field_settings.data_item_type = %s
+                auieo_fields.data_item_type = %s
             AND
-                extra_field_settings.field_name = %s",
+                auieo_fields.is_extra=1
+            AND
+                auieo_fields.fieldname = %s",
             $this->_siteID,
             $this->_dataItemType,
             $this->_db->makeQueryString($fieldName1)
@@ -310,15 +379,17 @@ class ExtraFields
 
         $sql = sprintf(
             "SELECT
-                extra_field_settings.position as position
+                auieo_fields.position as position
             FROM
-                extra_field_settings
+                auieo_fields
             WHERE
-                extra_field_settings.site_id = %s
+                auieo_fields.site_id = %s
             AND
-                extra_field_settings.data_item_type = %s
+                auieo_fields.data_item_type = %s
             AND
-                extra_field_settings.field_name = %s",
+                auieo_fields.is_extra=1
+            AND
+                auieo_fields.fieldname = %s",
             $this->_siteID,
             $this->_dataItemType,
             $this->_db->makeQueryString($fieldName2)
@@ -330,15 +401,17 @@ class ExtraFields
  
         $sql = sprintf(
             "UPDATE
-                extra_field_settings
+                auieo_fields
             SET 
-                extra_field_settings.position = %s
+                auieo_fields.position = %s
             WHERE
-                extra_field_settings.site_id = %s
+                auieo_fields.site_id = %s
             AND
-                extra_field_settings.data_item_type = %s
+                auieo_fields.data_item_type = %s
             AND
-                extra_field_settings.field_name = %s",
+                auieo_fields.is_extra=1
+            AND
+                auieo_fields.fieldname = %s",
             $fieldPosition2,
             $this->_siteID,
             $this->_dataItemType,
@@ -349,15 +422,17 @@ class ExtraFields
         
         $sql = sprintf(
             "UPDATE
-                extra_field_settings
+                auieo_fields
             SET 
-                extra_field_settings.position = %s
+                auieo_fields.position = %s
             WHERE
-                extra_field_settings.site_id = %s
+                auieo_fields.site_id = %s
             AND
-                extra_field_settings.data_item_type = %s
+                auieo_fields.data_item_type = %s
             AND
-                extra_field_settings.field_name = %s",
+                auieo_fields.is_extra=1
+            AND
+                auieo_fields.fieldname = %s",
             $fieldPosition1,
             $this->_siteID,
             $this->_dataItemType,
@@ -379,15 +454,17 @@ class ExtraFields
     { 
         $sql = sprintf(
             "UPDATE
-                extra_field_settings
+                auieo_fields
             SET 
-                extra_field_settings.field_name = %s
+                auieo_fields.fieldname = %s
             WHERE
-                extra_field_settings.site_id = %s
+                auieo_fields.site_id = %s
             AND
-                extra_field_settings.data_item_type = %s
+                auieo_fields.data_item_type = %s
             AND
-                extra_field_settings.field_name = %s",
+                auieo_fields.is_extra=1
+            AND
+                auieo_fields.fieldname = %s",
             $this->_db->makeQueryString($newName),
             $this->_siteID,
             $this->_dataItemType,
@@ -400,13 +477,13 @@ class ExtraFields
             "UPDATE
                 extra_field
             SET 
-                extra_field.field_name = %s
+                extra_field.fieldname = %s
             WHERE
                 extra_field.site_id = %s
             AND
                 extra_field.data_item_type = %s
             AND
-                extra_field.field_name = %s",
+                extra_field.fieldname = %s",
             $this->_db->makeQueryString($newName),
             $this->_siteID,
             $this->_dataItemType,
@@ -424,27 +501,22 @@ class ExtraFields
      */
     public function getValues($record_id)
     {
+        $arrTableInfo=getTableInfoByDataItemType($this->_dataItemType);
         $sql = sprintf(
             "SELECT
-                extra_field.field_name AS fieldName,
-                extra_field.value AS value,
-                extra_field.extra_field_id AS extraFieldSettingsID,
-                extra_field.data_item_id AS dataItemID
+                *
             FROM
-                extra_field
+                {$arrTableInfo["table"]}
             WHERE
-                extra_field.data_item_id = %s
+                {$arrTableInfo["table"]}.{$arrTableInfo["primary_key"]} = %s
             AND
-                extra_field.data_item_type = %s
-            AND
-                extra_field.site_id = %s",
+                {$arrTableInfo["table"]}.site_id = %s",
             $this->_db->makeQueryInteger($record_id),
-            $this->_dataItemType,
             $this->_siteID
             
         );
 
-        return $this->_db->getAllAssoc($sql);
+        return $this->_db->getAssoc($sql);
     }
     /**
      * transfer all the extra field data to another site if the field name matches
@@ -457,9 +529,9 @@ class ExtraFields
          * get all the fields from the field settings
          */
         $objSQL=new ClsNaanalSQL();
-        $objSQL->addTable("extra_field_settings");
-        $objSQL->addWhereNew("extra_field_settings","data_item_type", $this->_dataItemType);
-        $objSQL->addWhereNew("extra_field_settings","site_id", $this->_siteID);
+        $objSQL->addTable("auieo_fields");
+        $objSQL->addWhereNew("auieo_fields","data_item_type", $this->_dataItemType);
+        $objSQL->addWhereNew("auieo_fields","site_id", $this->_siteID);
         $sql=$objSQL->render();
         $records=$this->_db->getAllAssoc($sql);
         if($records)
@@ -469,14 +541,14 @@ class ExtraFields
              * verify whether the field exist in remote site
              */
             $objSQL=new ClsNaanalSQL();
-            $objSQL->addTable("extra_field_settings");
-            $objSQL->addWhereNew("extra_field_settings","data_item_type", $this->_dataItemType);
-            $objSQL->addWhereNew("extra_field_settings","field_name", $record["field_name"]);
-            $objSQL->addWhereNew("extra_field_settings","site_id", $siteID);
+            $objSQL->addTable("auieo_fields");
+            $objSQL->addWhereNew("auieo_fields","data_item_type", $this->_dataItemType);
+            $objSQL->addWhereNew("auieo_fields","fieldname", $record["fieldname"]);
+            $objSQL->addWhereNew("auieo_fields","site_id", $siteID);
             $sql=$objSQL->render();
             $row=$this->_db->getAssoc($sql);
             if(empty($row)) continue;
-            $sql="update extra_field set site_id={$siteID} where field_name='{$record["field_name"]}' 
+            $sql="update extra_field set site_id={$siteID} where fieldname='{$record["fieldname"]}' 
             and site_id={$this->_siteID} and data_item_type='{$this->_dataItemType}'
             and data_item_id={$moduleID}";
             $this->_db->query($sql);
@@ -496,10 +568,10 @@ class ExtraFields
     public function setValue($field, $value, $moduleID)
     {
         $objSQL=new ClsNaanalSQL();
-        $objSQL->addTable("extra_field_settings");
-        $objSQL->addWhereNew("extra_field_settings","data_item_type", $this->_dataItemType);
-        $objSQL->addWhereNew("extra_field_settings","field_name", $field);
-        $objSQL->addWhereNew("extra_field_settings","site_id", $this->_siteID);
+        $objSQL->addTable("auieo_fields");
+        $objSQL->addWhereNew("auieo_fields","data_item_type", $this->_dataItemType);
+        $objSQL->addWhereNew("auieo_fields","fieldname", $field);
+        $objSQL->addWhereNew("auieo_fields","site_id", $this->_siteID);
         $sql=$objSQL->render();
         $row=$this->_db->getAssoc($sql);
         if(empty($row)) return false;
@@ -508,7 +580,7 @@ class ExtraFields
             "DELETE FROM
                 extra_field
             WHERE
-                extra_field.field_name = %s
+                extra_field.fieldname = %s
             AND
                 extra_field.data_item_id = %s
             AND
@@ -531,7 +603,7 @@ class ExtraFields
         $sql = sprintf(
             "INSERT INTO extra_field (
                 data_item_id,
-                field_name,
+                fieldname,
                 value,
                 import_id,
                 site_id,
@@ -545,7 +617,7 @@ class ExtraFields
                 %s,
                 %s
             )",
-            $this->_db->makeQueryInteger($candidateID),
+            $this->_db->makeQueryInteger($moduleID),
             $this->_db->makeQueryString($field),
             $this->_db->makeQueryString($value),
             $this->_siteID,
@@ -789,7 +861,7 @@ class ExtraFields
                return array('select'       => 'extra_field'.$uniqueIndex.'.value AS extra_field_value'.$uniqueIndex,
                           'join'         => 'LEFT JOIN extra_field AS extra_field' . $uniqueIndex . ' '.
                                             'ON '.$column.' = extra_field' . $uniqueIndex . '.data_item_id '.
-                                            'AND extra_field' . $uniqueIndex . '.field_name = ' . $db->makeQueryString($data['fieldName']) . ' '.
+                                            'AND extra_field' . $uniqueIndex . '.fieldname = ' . $db->makeQueryString($data['fieldName']) . ' '.
                                             'AND extra_field' . $uniqueIndex . '.data_item_type = ' . $this->_dataItemType,
                           'pagerRender'          => 'return ($rsData[\'extra_field_value' . $uniqueIndex . '\'] == \'Yes\' ? \'Yes\' : \'No\');',
                           'exportRender'          => 'return ($rsData[\'extra_field_value' . $uniqueIndex . '\'] == \'Yes\' ? \'Yes\' : \'No\');',
@@ -802,7 +874,7 @@ class ExtraFields
                 return array('select'  => 'extra_field'.$uniqueIndex.'.value AS extra_field_value'.$uniqueIndex,
                           'join'    => 'LEFT JOIN extra_field AS extra_field' . $uniqueIndex . ' '.
                                        'ON '.$column.' = extra_field' . $uniqueIndex . '.data_item_id '.
-                                       'AND extra_field' . $uniqueIndex . '.field_name = ' . $db->makeQueryString($data['fieldName']) . ' '.
+                                       'AND extra_field' . $uniqueIndex . '.fieldname = ' . $db->makeQueryString($data['fieldName']) . ' '.
                                        'AND extra_field' . $uniqueIndex . '.data_item_type = ' . $this->_dataItemType,
                           'pagerRender'     => 'if (isset($_SESSION[\'CATS\']) && $_SESSION[\'CATS\']->isLoggedIn() && $_SESSION[\'CATS\']->isDateDMY())
                                         {
@@ -845,7 +917,7 @@ class ExtraFields
                 return array('select'  => 'extra_field'.$uniqueIndex.'.value AS extra_field_value'.$uniqueIndex,
                           'join'    => 'LEFT JOIN extra_field AS extra_field' . $uniqueIndex . ' '.
                                        'ON '.$column.' = extra_field' . $uniqueIndex . '.data_item_id '.
-                                       'AND extra_field' . $uniqueIndex . '.field_name = ' . $db->makeQueryString($data['fieldName']) . ' '.
+                                       'AND extra_field' . $uniqueIndex . '.fieldname = ' . $db->makeQueryString($data['fieldName']) . ' '.
                                        'AND extra_field' . $uniqueIndex . '.data_item_type = ' . $this->_dataItemType,
                           'pagerRender'     => 'return htmlspecialchars($rsData[\'extra_field_value' . $uniqueIndex . '\']);',
                           'sortableColumn'    => 'extra_field_value' . $uniqueIndex,
@@ -1005,15 +1077,14 @@ class ExtraFields
         {
             $extraFieldSettingsRS[$index]['value'] = '';
             
-            foreach ($extraFieldRS as $index2 => $data2)
+            foreach ($extraFieldRS as $key => $val)
             {
-                if ($data2['fieldName'] == $data['fieldName'])
+                if ($key == $data['fieldName'])
                 {
-                    $extraFieldSettingsRS[$index]['value'] = $data2['value'];
+                    $extraFieldSettingsRS[$index]['value'] = $val;
                 }
             }        
         }
-
         return $extraFieldSettingsRS;
     }
     

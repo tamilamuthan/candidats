@@ -1,21 +1,7 @@
 <?php
-/**************************************************************************
- * Naanal PHP Framework, Simple, Efficient and Developer Friendly
- * Ver 4.0, Copyright (C) <2010>  <Tamil Amuthan. R>
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- ************************************************************************/
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 ///this class is created assuming the Named Placeholders of prepared statement is used. index based parameters in the sql statement will not work
 class ClsNaanalPDO extends PDO
@@ -66,6 +52,7 @@ class ClsNaanalPDO extends PDO
             {
                 die ("Unknown DSN. Please set config.php");
             }
+            Logger::getLogger("AuieoATS")->info("dsn is {$dsn}");
             $this->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->setStopOnError();
             $this->fetchmode = PDO::FETCH_ASSOC;
@@ -84,7 +71,7 @@ class ClsNaanalPDO extends PDO
         if(!isset(self::$arrFetchRow[$row]))
         {
             if (!is_object($result))
-                die("result is not an object");
+                trace("result is not an object");
             $result->Move($row);
             self::$arrFetchRow[$row] = $result->FetchRow();
         }
@@ -138,7 +125,7 @@ class ClsNaanalPDO extends PDO
         }
         catch(Exception $e)
         {
-            die("PDO Query execution failed prematurely. Error: ".print_r($e));
+            trace("PDO Query execution failed prematurely. Error: ".print_r($e));
         }
         if($this->statement===false)
         {
@@ -243,13 +230,15 @@ class ClsNaanalPDO extends PDO
     /** * MetaColumns: Retrieve information about a table's columns * @param table String name of table to find out about * @return Array of ADODB_PDO_FieldData objects */ 
     public function MetaColumns($table) 
     {
-        $out = array();
-        $st = $this->DoQuery('select * from '.$table);
-        for ($i=0; $i<$st->columnCount(); $i++) 
-        {
-                $out[] = new ADODB_PDO_FieldData($st->getColumnMeta($i));
+        $select = $this->DoQuery('SELECT * FROM '.$table.' limit 0,1');
+
+        $total_column = $select->columnCount();
+
+        for ($counter = 0; $counter < $total_column; $counter ++) {
+            $meta = $select->getColumnMeta($counter);
+            $column[] = $meta;
         }
-        return $out;
+        return $column;
     }
     /** * DoQuery: Private helper function for Get* * @param sql String query to execute * @param vars Array of variables to bind [optional] * @return PDOStatement object of results, or false on fail */
     ///DoQuery can execute batch sqls
@@ -309,13 +298,13 @@ class ClsNaanalPDO extends PDO
             }
             catch(Exception $e)
             {
-                die($e);
+                trace($e);
             }
             if(!$success) 
             {
                 $erroMessage=$this->ErrorMsg();
                 //$this->_db->rollBack();
-                die("Error occured while executing $sql and rolled back. Error Msg:".$erroMessage);
+                trace("Error occured while executing $sql and rolled back. Error Msg:".$erroMessage);
             }
             if($isSelectQuery)
             {
@@ -388,7 +377,7 @@ class ClsNaanalPDO extends PDO
             {
                 return $input;
             }
-            if($output == null) $output = array();//die($input,2);
+            if($output == null) $output = array();//trace($input,2);
             foreach($input as $value) {
                 if(empty($value)) continue;
                     if(is_array($value)) {
@@ -457,7 +446,7 @@ class ClsNaanalPDO extends PDO
             }
             else
             {
-                die("unexpected PDO instance requested");
+                trace("unexpected PDO instance requested");
             }
         }
         if($dbname==="")
@@ -496,93 +485,7 @@ class ClsNaanalPDO extends PDO
         self::$pdo[$dbname]->name=$name;
         $arrPDOName[$name]=$dbname;
         self::$instanceCount++;
-        //if($dbname=="vtigercrm610") die(self::$pdo[$dbname]);
         return self::$pdo[$dbname];
-        /*
-        $arrPDOName[$name]=$dbname;
-        {
-            if($dbuser==="" && $dbpass==="")
-            {
-                if($dbname==="")
-                {
-                
-                   $dbname=getAppConfig("DATABASE_NAME");
-                }
-            }
-        }
-  
-        if($name=="default")
-        {
-            
-        }
-        if(array_key_exists($name,$arrPDOName))
-        {
-            $PDODBName=$arrPDOName[$name];
-            if($dbname==="" || $dbname==$PDODBName)
-            {
-                return self::$pdo[$PDODBName];
-            }
-        }
-        if(array_key_exists($name,$arrPDOName)) 
-        {
-            $PDODBName=$arrPDOName[$name];
-            if($dbname!=$PDODBName)
-            {
-                self::$pdo[$PDODBName]->statement=null;
-                unset(self::$pdo[$PDODBName]);
-            }
-        }
-        if(!array_key_exists($dbname,self::$pdo))
-        {
-            if(self::$instanceCount>=self::$instanceMax) 
-            {
-                self::$arrStaticError[]="maximum instance reached";die(self::$arrStaticError);
-                return false;
-            }
-            if($dbname==="naanal_default")
-            {
-                ///if user also empty, connect to naanal framework's sqlite database
-                if(empty($user))
-                {
-                    $path=  dirname(dirname(__FILE__))."/naanal.sqlite";
-                    self::$pdo[$dbname]=new ClsNaanalPDO($host,false,false,$path,"sqlite");
-                    self::$pdo[$dbname]->name=$name;
-                    $arrPDOName[$name]=$dbname;
-                }
-                else
-                {
-                    self::$pdo[$dbname]=new ClsNaanalPDO($host,$user,$pass,null,$sqlserver);
-                    self::$pdo[$dbname]->name=$name;
-                    $arrPDOName[$name]=$dbname;
-                }
-            }
-            else
-            {
-                if($dbname==="")
-                {
-                    $dbname=getAppConfig("DATABASE_NAME");
-                }
-                if($dbname=="INFORMATION_SCHEMA")
-                {
-                    $user=$dbuser==""?ClsConfig::$DATABASE[$dbname]["user"]:$dbuser;
-                    $pass=$dbpass==""?ClsConfig::$DATABASE[$dbname]["password"]:$dbpass;
-                }
-                else
-                {
-                    if(!isset(ClsConfig::$DATABASE[$dbname]))
-                    {
-                        die("Unexpected databse");
-                    }
-                    $user=$dbuser==""?ClsConfig::$DATABASE[$dbname]["user"]:$dbuser;
-                    $pass=$dbpass==""?ClsConfig::$DATABASE[$dbname]["password"]:$dbpass;
-                }
-                self::$pdo[$dbname]=new ClsNaanalPDO($host,$user,$pass,$dbname,$sqlserver);
-                self::$pdo[$dbname]->name=$name;
-                $arrPDOName[$name]=$dbname;
-            }
-            self::$instanceCount++;
-        }
-        return self::$pdo[$arrPDOName[$name]];*/
     }
 
     function &getQueryObject($class)
@@ -638,12 +541,13 @@ class ClsNaanalPDO extends PDO
         if(empty($sql))
         {
             $this->arrError[]=array("message"=>"Unexpected empty sql: {$sql}","errorInfo"=>$this->errorInfo(),"errorCode"=>$this->errorCode(),"statementErrorInfo"=>$this->statement->errorInfo(),"statementErrorCode"=>$this->statement->errorCode(),"sql"=>$sql);
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($this->arrError);
             return false;
         }
         $objParam=$arrTmpParam;
         $this->arrLastSql[]=$sql;
         $this->sql=$sql;
+        Logger::getLogger("AuieoATS")->info($sql);
         try
         {
             if(empty($arrTmpParam)) 
@@ -652,12 +556,12 @@ class ClsNaanalPDO extends PDO
                 if($this->statement!==false) return true;
                 else if(empty($this->statement))
                 {
-                    die("PDO query returns unexpected empty instead of expected FALSE or statement object");
+                    trace("PDO query returns unexpected empty instead of expected FALSE or statement object");
                 }
                 else 
                 {
                     $this->arrError[]=array("message"=>"Statement Object Empty","errorInfo"=>$this->errorInfo(),"errorCode"=>$this->errorCode(),"sql"=>$sql);
-                    if($this->stopOnError) die($this->arrError);
+                    if($this->stopOnError) trace($this->arrError);
                     return false;
                 }
             }
@@ -668,7 +572,7 @@ class ClsNaanalPDO extends PDO
                 {
                     $this->error=new PDOException("Array Expected");
                     $this->arrError[]=array("message"=>"Array Expected for \$arrTmpParam","data"=>$arrTmpParam);
-                    if($this->stopOnError) die($this->arrError);
+                    if($this->stopOnError) trace($this->arrError);
                     return false;
                 }
                 $matches=array();
@@ -683,12 +587,13 @@ class ClsNaanalPDO extends PDO
                     $arrParam[$match]=$arrTmpParam[$match];
                 }    
                 $this->statement=$this->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                //trace($arrParam);
                 $this->statement->execute($arrParam);
                 return true;
             }
         }
         catch(PDOException $e)
-        {
+        {trace($e);
             if(empty($this->statement))
             {
                 $this->arrError[]=array("message"=>"Exception Occured for Database:({$this->dbname})","errorInfo"=>$this->errorInfo(),"errorCode"=>$this->errorCode(),"sql"=>$sql, "exception"=>$e);
@@ -697,7 +602,7 @@ class ClsNaanalPDO extends PDO
             {
                 $this->arrError[]=array("message"=>"Exception Occured for Database:({$this->dbname})","errorInfo"=>$this->errorInfo(),"errorCode"=>$this->errorCode(),"statementErrorInfo"=>$this->statement->errorInfo(),"statementErrorCode"=>$this->statement->errorCode(),"sql"=>$sql, "exception"=>$e);
             }
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($this->arrError);
             return false;
         }				
     }	
@@ -713,14 +618,14 @@ class ClsNaanalPDO extends PDO
         if(!class_exists($class))
         {
             $this->arrError[]=array("message"=>"Unexpected empty statement");
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($this->arrError);
             return false;
         }
         $obj=null;
         if(is_null($this->statement)) 
         {
             $this->arrError[]=array("message"=>"Unexpected empty statement","errorInfo"=>$this->errorInfo(),"errorCode"=>$this->errorCode());
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($this->arrError);
             $obj=false;
             return $obj;
         }
@@ -738,14 +643,14 @@ class ClsNaanalPDO extends PDO
                 if(empty($this->statement))
                 {
                     $this->arrError[]=array("message"=>"Unexpected empty statement","errorInfo"=>$this->errorInfo(),"errorCode"=>$this->errorCode());
-                    if($this->stopOnError) die($this->arrError);
+                    if($this->stopOnError) trace($this->arrError);
                     return false;
                 }
                 $obj=$this->statement->fetchObject($class,$arrParam);
                 if(empty($this->statement))
                 {
                     $this->arrError[]=array("message"=>"Fetching object throws error and statement object empty for class: {$class} and parameters:".print_r($arrParam,true).". Verify the class {$class} is valid","errorInfo"=>$this->errorInfo(),"errorCode"=>$this->errorCode());
-                    if($this->stopOnError) die($this->arrError);
+                    if($this->stopOnError) trace($this->arrError);
                     return false;
                 }
                 return $obj; 
@@ -755,7 +660,7 @@ class ClsNaanalPDO extends PDO
         catch(PDOException $e)
         {
             $this->arrError[]=array("message"=>"Exception Occured","errorInfo"=>$this->errorInfo(),"errorCode"=>$this->errorCode(),"statementErrorInfo"=>$this->statement->errorInfo(),"statementErrorCode"=>$this->statement->errorCode());
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($this->arrError);
             return false;
         }						
     } 	
@@ -775,7 +680,7 @@ class ClsNaanalPDO extends PDO
             $this->error=$e;
             $this->arrError[]=array("message"=>"Exception Occured","errorInfo"=>$this->errorInfo(),"errorCode"=>$this->errorCode(),"statementErrorInfo"=>$this->statement->errorInfo(),"statementErrorCode"=>$this->statement->errorCode());
             $row=false;
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($this->arrError);
             return $row;
         }	
     }
@@ -787,12 +692,20 @@ class ClsNaanalPDO extends PDO
     {
         return $this->statement->rowCount();
     }
-    function getColumn($colname,$isKeyID=false)
+    /**
+     * 
+     * @param type $colname - data of the column to store in the value
+     * @param type $keyField - data of the column to store in the key. if false, 
+     * it will be index, if true, it will be the id field or if any field name mentioned,
+     * the data of the field name will be used for key of the array
+     * @return boolean|null
+     */
+    function getColumn($colname,$keyField=false)
     {       
         if(empty($this->statement))
         {
             $this->arrError[]=array("message"=>"Statement Object Empty at getColumn method. Param:colname={$colname}, isKeyID={$isKeyID}");
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($this->arrError);
             return false;
         }
         try
@@ -803,9 +716,17 @@ class ClsNaanalPDO extends PDO
                 $arrCol=array();
                 foreach($arr as $ind=>$r)
                 {
-                    if($isKeyID)
+                    if($keyField===true)
                     {
-                        $arrCol[$r["id"]]=$r[$colname];
+                        $keyField="id";
+                    }
+                    if(!isset($r[$keyField]))
+                    {
+                        $keyField=false;
+                    }
+                    if($keyField)
+                    {
+                        $arrCol[$r[$keyField]]=$r[$colname];
                     }
                     else
                         $arrCol[]=$r[$colname];
@@ -818,7 +739,7 @@ class ClsNaanalPDO extends PDO
         {
             $this->error=$e;
             $this->arrError[]=array("message"=>"Exception Occured","errorInfo"=>$this->errorInfo(),"errorCode"=>$this->errorCode(),"statementErrorInfo"=>$this->statement->errorInfo(),"statementErrorCode"=>$this->statement->errorCode());
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($this->arrError);
             return false;
         }
     }
@@ -840,7 +761,7 @@ class ClsNaanalPDO extends PDO
         if(!class_exists($class))
         {
             $this->arrError[]=array("message"=>"{$class} not exist");
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($this->arrError);
             return false;
         }
         $arrObj=array();
@@ -861,7 +782,7 @@ class ClsNaanalPDO extends PDO
         if($this->arrError)
         {
             $arrObj=false;
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($this->arrError);
             return $arrObj;
         }
         return $arrObj;
@@ -871,7 +792,7 @@ class ClsNaanalPDO extends PDO
         if(empty($this->statement))
         {
             $this->arrError[]=array("message"=>"Statement Object Empty","errorInfo"=>$this->errorInfo(),"errorCode"=>$this->errorCode());
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($this->arrError);
             return false;
         }
         try
@@ -886,7 +807,7 @@ class ClsNaanalPDO extends PDO
         catch(PDOException $e)
         {
             $this->error=$e;
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($this->arrError);
             return false;
         }
     }
@@ -897,7 +818,7 @@ class ClsNaanalPDO extends PDO
             if(empty($this->statement))
             {
                 $this->arrError[]="Unexpected statement object empty";
-                if($this->stopOnError) die($this->arrError);
+                if($this->stopOnError) trace($this->arrError);
                 return false;
             }
             $this->statement->setFetchMode(PDO::FETCH_NUM);
@@ -910,7 +831,7 @@ class ClsNaanalPDO extends PDO
         catch(PDOException $e)
         {
             $this->error=$e;
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($e);
             return false;
         }
     }
@@ -928,14 +849,14 @@ class ClsNaanalPDO extends PDO
         catch(PDOException $e)
         {
             $this->error=$e;
-            if($this->stopOnError) die($this->arrError);
+            if($this->stopOnError) trace($this->arrError);
             return false;
         }
     }
     function isTableExist($tablename,$database=null)
     {
         $database=is_null($database)?$this->dbname:$database;
-        if(is_null($database)) die("Database not set");
+        if(is_null($database)) trace("Database not set");
 
         $sql="SELECT COUNT(*) as tot FROM information_schema.tables WHERE table_schema = '{$database}' AND table_name = '{$tablename}';";
         $this->setQuery($sql);
@@ -1024,6 +945,14 @@ class ClsNaanalPDO extends PDO
         }
         $this->setQuery($sql);
     }
+}
+class ClsNaanalDB extends ClsNaanalPDO
+{
+    public function __construct($host,$user,$pass,$dbname,$sqlserver="mysql")
+    {
+        parent::__construct($host,$user,$pass,$dbname,$sqlserver);
+    }
+    
 }
 class ClsNaanalRecords
 {

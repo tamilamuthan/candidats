@@ -1,19 +1,4 @@
-<?php /* $Id: Login.tpl 3530 2007-11-09 18:28:10Z brian $ */ ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html>
-    <head>
-        <title>CandidATS - Login</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=<?php echo(HTML_ENCODING); ?>" />
-        <style type="text/css" media="all">@import "modules/login/login.css";</style>
-        <script type="text/javascript" src="js/lib.js"></script>
-        <script type="text/javascript" src="modules/login/validator.js"></script>
-        <script type="text/javascript" src="js/submodal/subModal.js"></script>
-    </head>
-
-    <body>
     <!-- CandidATS_LOGIN -->
-    <?php TemplateUtility::printPopupContainer(); ?>
         <div id="headerBlock">
             <span id="mainLogo">CandidATS</span><br />
             <span id="subMainLogo">Applicant Tracking System</span>
@@ -67,7 +52,10 @@
 
                                 <input type="submit" class="button" value="Login" />
                                 <input type="reset"  id="reset" name="reset"  class="button" value="Reset" />
+                                
                             <?php else: ?>
+                            <br /><br />
+                            <b>User</b>: <i><?php echo(DEMO_LOGIN); ?></i>, <b>Pass</b>: <i><?php echo(DEMO_PASSWORD); ?></i>
                                 <br />
                                 <?php if ($this->aspMode): ?>
                                     <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=asp&amp;a=createsite&amp;p=0">Create Free Trial Site</a><br />
@@ -129,5 +117,3 @@
             initPopUp();
         </script>
         <?php TemplateUtility::printCookieTester(); ?>
-    </body>
-</html>

@@ -15,7 +15,7 @@
  *	@package    CANDIDATS
  *	@subpackage Library
  */
-if (class_exists('PDO'))
+if (class_exists('PDO') && in_array("mysql", PDO::getAvailableDrivers()))
 {
     include_once("lib/DatabaseConnectionPDO.php");
 }

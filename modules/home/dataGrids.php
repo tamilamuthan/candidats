@@ -53,7 +53,7 @@ class ImportantPipelineDashboard extends DataGrid
         $this->showChooseColumnsBox = true;
         $this->allowResizing = true;
         $this->dateCriterion = '';
-        $this->globalStyle = 'font-size:11px;';
+        $this->globalStyle = 'font-size:11px; margin:1px; padding:1px;';
         $this->ignoreSavedColumnLayouts = true;
 
         $this->defaultSortBy = 'dateModifiedSort';

@@ -60,10 +60,14 @@ class TemplateUtility
      */
     public static function printHeader($pageTitle, $headIncludes = array())
     {
-        self::_printCommonHeader($pageTitle, $headIncludes);
-        echo '<body style="background: #fff; border="0" padding="0" width: 100%;">', "\n";
-        self::_printQuickActionMenuHolder();
-        self::printPopupContainer();
+        pageTitle($pageTitle);
+        if($headIncludes)
+        {
+            foreach($headIncludes as $include)
+            {
+                pageHeaderInclude($include);
+            }
+        }
     }
 
     /**
@@ -92,20 +96,30 @@ class TemplateUtility
      */
     public static function printHeaderBlock($showTopRight = true)
     {
+        if(isset($_REQUEST["m"]) && $_REQUEST["m"]=="careers")
+        {
+            return "";
+        }
         $username     = $_SESSION['CATS']->getUsername();
         $siteName     = $_SESSION['CATS']->getSiteName();
         $fullName     = $_SESSION['CATS']->getFullName();
         $indexName    = CATSUtility::getIndexName();
+        
+        $prefix="";
+        if(isset($_REQUEST["m"]) && $_REQUEST["m"]=="careers")
+        {
+            $prefix="../";
+        }
 
-        echo '<div id="headerBlock">', "\n";
+        $headerBlock = "<div id='headerBlock'>\n";
 
         /* CandidATS Logo */
-        echo '<table cellspacing="0" cellpadding="0" style="margin: 0px; padding: 0px; float: left;">', "\n";
-        echo '<tr>', "\n";
-        echo '<td rowspan="2"><img src="images/applicationLogo.jpg" border="0" alt="CandidATS Applicant Tracking System" /></td>', "\n";
-        echo '</tr>', "\n";
-        echo '</table>', "\n";
-
+        $headerBlock = $headerBlock . "<table cellspacing='0' cellpadding='0' style='margin: 0px; padding: 0px; float: left;'>\n";
+        $headerBlock = $headerBlock . "<tr>\n";
+        $headerBlock = $headerBlock . "<td rowspan='2'><img src='{$prefix}images/applicationLogo.jpg' border='0' alt='CandidATS Applicant Tracking System' /></td>\n";
+        $headerBlock = $headerBlock . "</tr>\n";
+        $headerBlock = $headerBlock . "</table>\n";
+        
         if (!eval(Hooks::get('TEMPLATE_LIVE_CHAT'))) return;
 
         if (!eval(Hooks::get('TEMPLATE_LOGIN_INFO_PRE_TOP_RIGHT'))) return;
@@ -124,13 +138,13 @@ class TemplateUtility
             if (!eval(Hooks::get('TEMPLATE_LOGIN_INFO_TOP_RIGHT_1'))) return;
 
             /* Top Right Corner */
-            echo '<div id="topRight">', "\n";
+            $headerBlock = $headerBlock . "<div id='topRight'>\n";
 
-            echo '<div style="padding-bottom: 8px;">';
+            $headerBlock = $headerBlock . "<div style='padding-bottom: 8px;'>";
             // Begin top-right action block
             if (!eval(Hooks::get('TEMPLATE_LOGIN_INFO_TOP_RIGHT_UPGRADE'))) return;
 
-            if ((!file_exists('modules/asp') || (defined('CATS_TEST_MODE') && CATS_TEST_MODE)) && LicenseUtility::isProfessional() &&
+            /*if ((!file_exists('modules/asp') || (defined('CATS_TEST_MODE') && CATS_TEST_MODE)) && LicenseUtility::isProfessional() &&
                 $_SESSION['CATS']->getAccessLevel() >= ACCESS_LEVEL_SA)
             {
                 if (abs(LicenseUtility::getExpirationDate() - time()) < 60*60*24*30)
@@ -153,24 +167,29 @@ class TemplateUtility
                 echo '<a href="http://www.catsone.com/professional" target="_blank">';
                 echo '<img src="images/tabs/small_upgrade.jpg" border="0" /> ';
                 echo '<b>For more features, upgrade to CATS Professional</b></a>&nbsp;&nbsp;&nbsp;&nbsp;', "\n";
-            }
-
-            echo '<a href="', $indexName, '?m=logout">';
-            echo '<img src="images/tabs/small_logout.jpg" border="0" /> ';
-            echo 'Logout</a>', "\n";
-            echo '</div>', "\n";
+            }*/
+if(isset($_REQUEST["m"]) && $_REQUEST["m"]=="careers")
+        {}
+        else
+        {
+            $headerBlock = $headerBlock . "<a href='{$indexName}?m=logout'>";
+            $headerBlock = $headerBlock . "<img src='{$prefix}images/tabs/small_logout.jpg' border='0' /> ";
+            $headerBlock = $headerBlock . "Logout</a>\n";
+            $headerBlock = $headerBlock . "</div>\n";
+            $headerBlock = $headerBlock . "<span>{$fullName}&nbsp;&lt;{$username}&gt;&nbsp;({$siteName})</span>\n";
+        }
             // End top-right action block
 
             if (!eval(Hooks::get('TEMPLATE_LOGIN_INFO_EXTENDED_SITE_NAME'))) return;
 
-            echo '<span>', $fullName, '&nbsp;&lt;', $username, '&gt;&nbsp;(', $siteName, ')</span>', "\n";
+            
 
             if ($_SESSION['CATS']->getAccessLevel() >= ACCESS_LEVEL_SA)
             {
-                echo '&nbsp;<span style="font-weight:bold;">Administrator</span>', "\n";
+                $headerBlock = $headerBlock . "&nbsp;<span style='font-weight:bold;'>Administrator</span>\n";
             }
 
-            echo '<br />';
+            $headerBlock = $headerBlock . "<br />";
 
             $systemInfo = new SystemInfo();
             $systemInfoData = $systemInfo->getSystemInfo();
@@ -181,27 +200,28 @@ class TemplateUtility
                 !$systemInfoData['disable_version_check'] &&
                 $_SESSION['CATS']->getAccessLevel() >= ACCESS_LEVEL_SA)
             {
-                echo '<a href="http://www.catsone.com/download.php" target="catsdl">A new CATS version is available!</a><br />';
+                $headerBlock = $headerBlock . "<a href='http://www.catsone.com/download.php' target='catsdl'>A new CATS version is available!</a><br />";
             }
 
             /* Disabled notice */
             if (!$_SESSION['CATS']->accountActive())
             {
-                echo '<span style="font-weight:bold;">Account Inactive</span><br />', "\n";
+                $headerBlock = $headerBlock . "<span style='font-weight:bold;'>Account Inactive</span><br />\n";
             }
             else if ($_SESSION['CATS']->getAccessLevel() == ACCESS_LEVEL_READ)
             {
-                echo '<span>Read Only Access</span><br />', "\n";
+                $headerBlock = $headerBlock . "<span>Read Only Access</span><br />\n";
             }
             else
             {
                 if (!eval(Hooks::get('TEMPLATE_LOGIN_INFO_TOP_RIGHT_2_ELSE'))) return;
             }
 
-            echo '</div>', "\n";
+            $headerBlock = $headerBlock . "</div>\n";
         }
 
-        echo '</div>', "\n";
+        $headerBlock = $headerBlock . "</div>\n";
+        echo $headerBlock;
     }
 
     /**
@@ -258,6 +278,10 @@ class TemplateUtility
      */
     public static function printQuickSearch($wildCardString = '')
     {
+        if(isset($_REQUEST["m"]) && $_REQUEST["m"]=="careers")
+        {
+            return "";
+        }
         /* Get the formatted MRU list from Session. */
         $MRU = $_SESSION['CATS']->getMRU()->getFormatted();
         $indexName = CATSUtility::getIndexName();
@@ -546,31 +570,6 @@ class TemplateUtility
     }
 
     /**
-     * Outputs a popup container for use with JavaScript based popups like
-     * ListEditor.js and other subModal.js-based dialogs.
-     *
-     * @return void
-     */
-    public static function printPopupContainer()
-    {
-        echo '<div id="popupMask">&nbsp;</div><div id="popupContainer">',
-             '<div id="popupInner"><div id="popupTitleBar">',
-             '<div id="popupTitle"></div><div id="popupControls">',
-             '<img src="js/submodal/close.gif" alt="X" width="16" height="16"',
-             ' onclick="hidePopWin(false);" /></div></div>';
-
-        echo '<div style="width: 100%; height: 100%; background-color:',
-             ' transparent; display: none;" id="popupFrameDiv"></div>';
-
-        echo '<iframe src="js/submodal/loading.html" style="width: 100%; height: 100%;',
-             ' background-color: transparent; display: none;" scrolling="auto"',
-             ' frameborder="0" allowtransparency="true" id="popupFrameIFrame"',
-             ' width="100%" height="100%"></iframe>';
-
-        echo '</div></div>';
-    }
-
-    /**
      * Prints the module tabs.
      *
      * @param UserInterface active module interface
@@ -595,6 +594,10 @@ class TemplateUtility
          /* FIXME:  There is too much logic going on here, there should be something that loads settings or evaluates what tabs
                     shouldn't be drawn. */
 
+        if(isset($_REQUEST["m"]) && $_REQUEST["m"]=="careers")
+        {
+            return "";
+        }
         echo '<div id="header">', "\n";
         echo '<ul id="primary">', "\n";
 
@@ -794,51 +797,7 @@ class TemplateUtility
      */
     public static function printFooter()
     {
-        $build    = $_SESSION['CATS']->getCachedBuild();
-        $loadTime = $_SESSION['CATS']->getExecutionTime();
-
-        if ($build > 0)
-        {
-            $buildString = ' build ' . $build;
-        }
-        else
-        {
-            $buildString = '';
-        }
-
-        /* THE MODIFICATION OF THE COPYRIGHT AND 'Powered by CATS' LINES IS NOT ALLOWED
-           BY THE TERMS OF THE CPL FOR CATS OPEN SOURCE EDITION.
-
-             II) The following copyright notice must be retained and clearly legible
-             at the bottom of every rendered HTML document: Copyright (C) 2005 - 2007
-             Cognizo Technologies, Inc. All rights reserved.
-
-             III) The "Powered by CATS" text or logo must be retained and clearly
-             legible on every rendered HTML document. The logo, or the text
-             "CATS", must be a hyperlink to the CATS Project website, currently
-             http://www.catsone.com/.
-       */
-
-        echo '<div class="footerBlock">', "\n";
-        echo '<p id="footerText">CandidATS Version ', CATS_VERSION, $buildString,
-             '. <span id="toolbarVersion"></span>Powered by <a href="http://www.catsone.com/"><strong>CATS</strong></a>.</p>', "\n";
-        echo '<span id="footerResponse">Server Response Time: ', $loadTime, ' seconds.</span><br />';
-        //echo '<span id="footerCopyright">', COPYRIGHT_HTML, '</span>', "\n";
-        if (!eval(Hooks::get('TEMPLATEUTILITY_SHOWPRIVACYPOLICY'))) return;
-        echo '</div>', "\n";
-
-        eval(Hooks::get('TEMPLATE_UTILITY_PRINT_FOOTER'));
-
-        echo '</body>', "\n";
-        echo '</html>', "\n";
-
-        if ((!file_exists('modules/asp') || (defined('CATS_TEST_MODE') && CATS_TEST_MODE)) && LicenseUtility::isProfessional() && !rand(0,10))
-        {
-            if (!LicenseUtility::validateProfessionalKey(LICENSE_KEY))
-            {
-                CATSUtility::changeConfigSetting('LICENSE_KEY', "''");
-            }
-        }
+        
     }
 
     /**
@@ -1149,7 +1108,7 @@ class TemplateUtility
      * @param array JavaScript / CSS files to load
      * @return void
      */
-    private static function _printCommonHeader($pageTitle, $headIncludes = array())
+    public static function _printCommonHeader($pageTitle, $headIncludes = array())
     {
         if (!is_array($headIncludes))
         {
@@ -1172,15 +1131,15 @@ class TemplateUtility
         echo '"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">', "\n";
         echo '<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">', "\n";
         echo '<head>', "\n";
-        echo '<title>CandidATS - ', $pageTitle, '</title>', "\n";
+        echo '<title>CATS - ', $pageTitle, '</title>', "\n";
         echo '<meta http-equiv="Content-Type" content="text/html; charset=', HTML_ENCODING, '" />', "\n";
         echo '<link rel="icon" href="images/favicon.ico" type="image/x-icon" />', "\n";
         echo '<link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon" />', "\n";
         echo '<link rel="alternate" type="application/rss+xml" title="RSS" href="',
              CATSUtility::getIndexName(), '?m=rss" />', "\n";
-        echo '            <script src="js/jquery-ui/external/jquery/jquery.js"></script>
-            <link rel="stylesheet" href="js/jquery-ui/jquery-ui.min.css" />
-<script src="js/jquery-ui/jquery-ui.min.js"></script>';
+        echo '            <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+            <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>';
         /* Core JS files */
         echo '<script type="text/javascript" src="js/lib.js'.$javascriptAntiCache.'"></script>', "\n";
         echo '<script type="text/javascript" src="js/quickAction.js'.$javascriptAntiCache.'"></script>', "\n";

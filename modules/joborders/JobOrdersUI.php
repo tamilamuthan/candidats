@@ -47,8 +47,10 @@ include_once('./lib/Questionnaire.php');
 include_once('./lib/CommonErrors.php');
 include_once('./lib/Search.php');
 include_once('./lib/DocumentToText.php');
+include_once(__DIR__.'/ClsVJobordersList.php');
+include_once(__DIR__.'/ClsMJobordersList.php');
 
-class JobOrdersUI extends UserInterface
+class JobOrdersUI extends UserInterface 
 {
 
     /* Maximum number of characters of the job description to show without the
@@ -277,7 +279,7 @@ class JobOrdersUI extends UserInterface
         $jl = new JobOrders($this->_siteID);
         $this->_template->assign('totalJobOrders', $jl->getCount());
 
-        $this->_template->display('./modules/joborders/JobOrders.tpl');
+        $this->_template->display('./modules/joborders/JobOrders.php');
     }
 
     /*
@@ -285,16 +287,6 @@ class JobOrdersUI extends UserInterface
      */
     public function show()
     {
-        /* Is this a popup? */
-        if (isset($_GET['display']) && $_GET['display'] == 'popup')
-        {
-            $isPopup = true;
-        }
-        else
-        {
-            $isPopup = false;
-        }
-
         /* Bail out if we don't have a valid candidate ID. */
         if (!$this->isRequiredIDValid('jobOrderID', $_GET))
         {
@@ -314,7 +306,7 @@ class JobOrdersUI extends UserInterface
             CommonErrors::fatal(COMMONERROR_BADINDEX, $this, 'The specified job order ID could not be found.');
         }
 
-        if ($data['isAdminHidden'] == 1 && $this->_accessLevel < ACCESS_LEVEL_MULTI_SA)
+        if ($data['is_admin_hidden'] == 1 && $this->_accessLevel < ACCESS_LEVEL_MULTI_SA)
         {
             $this->listByView('This Job Order is hidden - only a CATS Administrator can unlock the Job Order.');
             return;
@@ -326,6 +318,19 @@ class JobOrdersUI extends UserInterface
         $data['cityAndState'] = StringUtility::makeCityStateString(
             $data['city'], $data['state']
         );
+        /**
+         * if ownertype is group, override the user full name
+         */
+        if($data['ownertype']>0)
+        {
+            $sql="select * from auieo_groups where id={$data['owner']}";
+            $objDB=DatabaseConnection::getInstance();
+            $row=$objDB->getAssoc($sql);
+            if($row)
+            {
+                $data["ownerFullName"]=$row["groupname"];
+            }
+        }
 
         $data['description'] = trim($data['description']);
         $data['notes'] = trim($data['notes']);
@@ -339,7 +344,7 @@ class JobOrdersUI extends UserInterface
         );
 
         /* Hot jobs [can] have different title styles than normal jobs. */
-        if ($data['isHot'] == 1)
+        if ($data['is_hot'] == 1)
         {
             $data['titleClass'] = 'jobTitleHot';
         }
@@ -423,10 +428,10 @@ class JobOrdersUI extends UserInterface
         if ($careerPortalEnabled && $data['public'])
         {
             $isPublic = true;
-            if ($data['questionnaireID'])
+            if ($data['questionnaire_id'])
             {
                 $questionnaire = new Questionnaire($this->_siteID);
-                $q = $questionnaire->get($data['questionnaireID']);
+                $q = $questionnaire->get($data['questionnaire_id']);
                 if (is_array($q) && !empty($q))
                 {
                     $questionnaireID = $q['questionnaireID'];
@@ -442,25 +447,158 @@ class JobOrdersUI extends UserInterface
             $careerPortalURL = CATSUtility::getAbsoluteURI() . 'careers/';
         }
 
+        //$sql="select * from auieo_fields where site_id={$this->_siteID} and tablename='joborder' and presence!=1";
+        //$db=DatabaseConnection::getInstance();
+        //$arrAssoc=$db->getAllAssoc($sql);
+        
+        $adminHidden="";
+        if ($data['is_admin_hidden'] == 1)
+        {
+            $adminHidden = "<p class='warning'>This Job Order is hidden.  Only CATS Administrators can view it or search for it.  To make it visible by the site users, click <a href='index.php?m=joborders&amp;a=administrativeHideShow&amp;jobOrderID={$jobOrderID}&amp;state=0' style='font-weight:bold;'>Here.</a></p>";
+        }
+        
+        $strFrozen="";
+        if (isset($frozen))
+        {
+            $strFrozen = "<table style='font-weight:bold; border: 1px solid #000; background-color: #ffed1a; padding:5px; margin-bottom:7px;' width='100%' id='candidateAlreadyInSystemTable'>
+                <tr>
+                    <td class='tdVertical' style='width:100%;'>
+                        This Job Order is {$this->data['status']} and can not be modified.
+                       ";
+            if ($this->accessLevel >= ACCESS_LEVEL_EDIT)
+            {
+                $strFrozen = $strFrozen . "
+                           <a id='edit_link' href='index.php?m=joborders&amp;a=edit&amp;jobOrderID={$this->jobOrderID}'>
+                               <img src='images/actions/edit.gif' width='16' height='16' class='absmiddle' alt='edit' border='0' />&nbsp;Edit
+                           </a>
+                           the Job Order to make it Active.&nbsp;&nbsp;
+                       ";
+            } 
+            $strFrozen = $strFrozen . "
+                    </td>
+                </tr>
+            </table>
+        ";
+        }
+        $public="";
+        if ($isPublic)
+        {
+            $public = "<div style='background-color: #E6EEFE; padding: 10px; margin: 5px 0 12px 0; border: 1px solid #728CC8;'>
+            <b>This job order is public";
+            if ($careerPortalURL === false)
+            {
+                $public = $public . ".</b>";
+            }
+            else
+            {
+                $public = $public . "
+                and will be shown on your
+                ";
+                if ($_SESSION['CATS']->getAccessLevel() >= ACCESS_LEVEL_SA){ 
+                    $public = $public . "
+                    <a style='font-weight: bold;' href='{$careerPortalURL}'>Careers Website</a>.
+                ";
+                }
+                else
+                {
+                    $public = $public . "
+                    Careers Website.
+                ";
+                } 
+                $public = $public . "</b>
+            ";
+            } 
+            if ($questionnaireID !== false)
+            {
+                $public = $public . "<br />Applicants must complete the '<i>{$questionnaireData['title']}</i>' (<a href='index.php?m=settings&a=careerPortalQuestionnaire&questionnaireID={$questionnaireID}'>edit</a>) questionnaire when applying.";
+            }
+            else
+            {
+                $public = $public . "<br />You have not attached any ";
+                if ($_SESSION['CATS']->getAccessLevel() >= ACCESS_LEVEL_SA)
+                {
+                    $public = $public . "<a href='index.php?m=settings&a=careerPortalSettings'>Questionnaires</a>.";
+                }
+                else
+                {
+                    $public = $public . "Questionnaires.";
+                }
+            }
+            $public = $public . "</div>";
+        }
+        
+        $ACCESS_LEVEL_EDIT_BUTTON="";
+        if ($this->_accessLevel >= ACCESS_LEVEL_EDIT)
+        { 
+            $ACCESS_LEVEL_EDIT_BUTTON = "<a id='edit_link' href='index.php?m=joborders&amp;a=edit&amp;jobOrderID={$jobOrderID}'>
+                <img src='images/actions/edit.gif' width='16' height='16' class='absmiddle' alt='edit' border='0' />&nbsp;Edit
+            </a>";
+        }
+        $ACCESS_LEVEL_DELETE_BUTTON="";
+        if ($this->_accessLevel >= ACCESS_LEVEL_DELETE)
+        { 
+            $ACCESS_LEVEL_DELETE_BUTTON = "<a id='delete_link' href='index.php?m=joborders&amp;a=delete&amp;jobOrderID={$jobOrderID}' onclick=\"javascript:return confirm('Delete this job order?');\">
+                <img src='images/actions/delete.gif' width='16' height='16' class='absmiddle' alt='delete' border='0' />&nbsp;Delete
+            </a>";
+        }
+        $ACCESS_LEVEL_MULTI_SA_BUTTON="";
+        if ($this->_accessLevel >= ACCESS_LEVEL_MULTI_SA)
+        {
+            if ($data['is_admin_hidden'] == 1)
+            {
+                $ACCESS_LEVEL_MULTI_SA_BUTTON = "<a href='index.php?m=joborders&amp;a=administrativeHideShow&amp;jobOrderID={$jobOrderID}&amp;state=0'>
+                    <img src='images/resume_preview_inline.gif' width='16' height='16' class='absmiddle' alt='delete' border='0' />&nbsp;Administrative Show
+                </a>";
+            }
+            else
+            {
+                $ACCESS_LEVEL_MULTI_SA_BUTTON = "<a href='index.php?m=joborders&amp;a=administrativeHideShow&amp;jobOrderID={$jobOrderID}&amp;state=1'>
+                <img src='images/resume_preview_inline.gif' width='16' height='16' class='absmiddle' alt='delete' border='0' />&nbsp;Administrative Hide
+            </a>";
+            }
+        }
+        $ACCESS_LEVEL_EDIT_CONSIDER="";
+        if ($this->_accessLevel >= ACCESS_LEVEL_EDIT)
+        { 
+            $ACCESS_LEVEL_EDIT_CONSIDER = "<a href='#' onclick=\"showPopWin('index.php?m=joborders&amp;a=considerCandidateSearch&amp;jobOrderID={$jobOrderID}', 820, 550, null); return false;\">
+                <img src='images/consider.gif' width='16' height='16' class='absmiddle' alt='add candidate' border='0' />&nbsp;Add Candidate to This Job Order Pipeline
+            </a>";
+        }
+        
         $this->_template->assign('active', $this);
-        $this->_template->assign('isPublic', $isPublic);
+        $this->_template->assign('public', $public);
+        $this->_template->assign('ACCESS_LEVEL_EDIT_BUTTON', $ACCESS_LEVEL_EDIT_BUTTON);
+        $this->_template->assign('ACCESS_LEVEL_DELETE_BUTTON', $ACCESS_LEVEL_DELETE_BUTTON);
+        $this->_template->assign('ACCESS_LEVEL_MULTI_SA_BUTTON', $ACCESS_LEVEL_MULTI_SA_BUTTON);
+        $this->_template->assign('ACCESS_LEVEL_EDIT_CONSIDER', $ACCESS_LEVEL_EDIT_CONSIDER);
         $this->_template->assign('questionnaireID', $questionnaireID);
         $this->_template->assign('questionnaireData', $questionnaireData);
         $this->_template->assign('careerPortalURL', $careerPortalURL);
         $this->_template->assign('data', $data);
+        $this->_template->assign('frozen', $strFrozen);
+        $this->_template->assign('adminHidden',$adminHidden);
         $this->_template->assign('extraFieldRS', $extraFieldRS);
         $this->_template->assign('attachmentsRS', $attachmentsRS);
         $this->_template->assign('pipelineEntriesPerPage', $pipelineEntriesPerPage);
         $this->_template->assign('pipelineGraph', $pipelineGraph);
         $this->_template->assign('jobOrderID', $jobOrderID);
-        $this->_template->assign('isPopup', $isPopup);
         $this->_template->assign('careerPortalEnabled', $careerPortalEnabled);
         $this->_template->assign('privledgedUser', $privledgedUser);
         $this->_template->assign('sessionCookie', $_SESSION['CATS']->getCookie());
+        //$this->_template->assign('fields_detail',$arrAssoc);
 
         if (!eval(Hooks::get('JO_SHOW'))) return;
-
-        $this->_template->display('./modules/joborders/Show.tpl');
+        /* Is this a popup? */
+        if (isset($_GET['display']) && $_GET['display'] == 'popup')
+        {
+            $this->_template->display('./modules/joborders/show_popup.php');
+            $isPopup = true;
+        }
+        else
+        {
+            $this->_template->display('./modules/joborders/Show.php');
+            $isPopup = false;
+        }
     }
 
     /*
@@ -477,7 +615,7 @@ class JobOrdersUI extends UserInterface
 
         if (!eval(Hooks::get('JO_ADD_MODAL'))) return;
 
-        $this->_template->display('./modules/joborders/AddModalPopup.tpl');
+        $this->_template->display('./modules/joborders/AddModalPopup.php');
     }
 
     /*
@@ -487,7 +625,7 @@ class JobOrdersUI extends UserInterface
     {
         $users = new Users($this->_siteID);
         $usersRS = $users->getSelectList();
-
+        $groupRS = $users->getSelectGroupList();
         $companies = new Companies($this->_siteID);
         $companiesRS = $companies->getSelectList();
 
@@ -595,6 +733,7 @@ class JobOrdersUI extends UserInterface
         $this->_template->assign('active', $this);
         $this->_template->assign('subActive', 'Add Job Order');
         $this->_template->assign('usersRS', $usersRS);
+        $this->_template->assign('groupRS', $groupRS);
         $this->_template->assign('userID', $this->_userID);
         $this->_template->assign('companiesRS', $companiesRS);
         $this->_template->assign('companyRS', $companyRS);
@@ -607,8 +746,14 @@ class JobOrdersUI extends UserInterface
         $this->_template->assign('sessionCookie', $_SESSION['CATS']->getCookie());
 
         if (!eval(Hooks::get('JO_ADD'))) return;
-
-        $this->_template->display('./modules/joborders/Add.tpl');
+        if($noCompanies)
+        {
+            $this->_template->display('./modules/joborders/NoCompany.php');
+        }
+        else
+        {
+            $this->_template->display('./modules/joborders/Add.php');
+        }
     }
 
     /*
@@ -631,12 +776,6 @@ class JobOrdersUI extends UserInterface
         if (!$this->isRequiredIDValid('recruiter', $_POST))
         {
             CommonErrors::fatal(COMMONERROR_BADINDEX, $this, 'Invalid recruiter user ID.');
-        }
-
-        /* Bail out if we don't have a valid owner user ID. */
-        if (!$this->isRequiredIDValid('owner', $_POST))
-        {
-            CommonErrors::fatal(COMMONERROR_BADINDEX, $this, 'Invalid owner user ID.');
         }
 
         /* Bail out if we don't have a valid number of openings. */
@@ -695,7 +834,9 @@ class JobOrdersUI extends UserInterface
         $recruiter   = $_POST['recruiter'];
         $owner       = $_POST['owner'];
         $openings    = $_POST['openings'];
-
+        $arrOwner=explode(":",$_POST['owner']);
+        $owner       = isset($arrOwner[1])?trim($arrOwner[1]):0;
+        $ownertype   = trim($arrOwner[0]);
         $title       = $this->getTrimmedInput('title', $_POST);
         $companyJobID = $this->getTrimmedInput('companyJobID', $_POST);
         $type        = $this->getTrimmedInput('type', $_POST);
@@ -707,6 +848,9 @@ class JobOrdersUI extends UserInterface
         $salary      = $this->getTrimmedInput('salary', $_POST);
         $description = $this->getTrimmedInput('description', $_POST);
         $notes       = $this->getTrimmedInput('notes', $_POST);
+        $candidate_mapping=false;
+        if(isset($_POST["candidate_mapping"]) && !empty($_POST["candidate_mapping"]))
+            $candidate_mapping = $_POST["candidate_mapping"];
 
         /* Bail out if any of the required fields are empty. */
         if (empty($title) || empty($type) || empty($city) || empty($state))
@@ -721,7 +865,7 @@ class JobOrdersUI extends UserInterface
             $title, $companyID, $contactID, $description, $notes, $duration,
             $maxRate, $type, $isHot, $isPublic, $openings, $companyJobID,
             $salary, $city, $state, $startDate, $this->_userID, $recruiter,
-            $owner, $department, $questionnaireID
+            $owner, $department, $questionnaireID,$candidate_mapping,$ownertype
         );
 
         if ($jobOrderID <= 0)
@@ -755,7 +899,10 @@ class JobOrdersUI extends UserInterface
 
         $jobOrders = new JobOrders($this->_siteID);
         $data = $jobOrders->getForEditing($jobOrderID);
-
+        if(isset($data["candidate_mapping"]) && !empty($data["candidate_mapping"]))
+        {
+            $data["candidate_mapping"]=  json_decode($data["candidate_mapping"]);
+        }
         /* Bail out if we got an empty result set. */
         if (empty($data))
         {
@@ -764,10 +911,10 @@ class JobOrdersUI extends UserInterface
 
         $users = new Users($this->_siteID);
         $usersRS = $users->getSelectList();
-
+        $groupRS = $users->getSelectGroupList();
         $companies = new Companies($this->_siteID);
         $companiesRS = $companies->getSelectList();
-        $contactsRS = $companies->getContactsArray($data['companyID']);
+        $contactsRS = $companies->getContactsArray($data['company_id']);
 
         /* Add an MRU entry. */
         $_SESSION['CATS']->getMRU()->addEntry(
@@ -808,7 +955,7 @@ class JobOrdersUI extends UserInterface
         }
 
         /* Get departments. */
-        $departmentsRS = $companies->getDepartments($data['companyID']);
+        $departmentsRS = $companies->getDepartments($data['company_id']);
         $departmentsString = ListEditor::getStringFromList($departmentsRS, 'name');
 
         /* Date format for DateInput()s. */
@@ -867,6 +1014,7 @@ class JobOrdersUI extends UserInterface
         $this->_template->assign('active', $this);
         $this->_template->assign('data', $data);
         $this->_template->assign('usersRS', $usersRS);
+        $this->_template->assign('groupRS', $groupRS);
         $this->_template->assign('companiesRS', $companiesRS);
         $this->_template->assign('departmentsRS', $departmentsRS);
         $this->_template->assign('departmentsString', $departmentsString);
@@ -877,7 +1025,7 @@ class JobOrdersUI extends UserInterface
 
         if (!eval(Hooks::get('JO_EDIT'))) return;
 
-        $this->_template->display('./modules/joborders/Edit.tpl');
+        $this->_template->display('./modules/joborders/Edit.php');
     }
 
     /*
@@ -961,6 +1109,7 @@ class JobOrdersUI extends UserInterface
         /* Public Job? */
         $public = $this->isChecked('public', $_POST);
 
+        
         /* If it is public, is a questionnaire attached? */
         $questionnaireID =
             // If a questionnaire is provided the field will be shown and it will != 'none'
@@ -973,13 +1122,15 @@ class JobOrdersUI extends UserInterface
 
         $companyID         = $_POST['companyID'];
         $contactID         = $_POST['contactID'];
-        $owner             = $_POST['owner'];
+        $arrOwner=explode(":",$_POST['owner']);
+        $owner       = isset($arrOwner[1])?trim($arrOwner[1]):0;
+        $ownertype   = trim($arrOwner[0]);
         $recruiter         = $_POST['recruiter'];
         $openings          = $_POST['openings'];
         $openingsAvailable = $_POST['openingsAvailable'];
 
         /* Change ownership email? */
-        if ($this->isChecked('ownershipChange', $_POST) && $owner > 0)
+        if ($this->isChecked('ownershipChange', $_POST) && $owner > 0 && $ownertype<=0)
         {
             $jobOrderDetails = $jobOrders->get($jobOrderID);
 
@@ -1054,7 +1205,10 @@ class JobOrdersUI extends UserInterface
         $salary      = $this->getTrimmedInput('salary', $_POST);
         $description = $this->getTrimmedInput('description', $_POST);
         $notes       = $this->getTrimmedInput('notes', $_POST);
-
+        if(isset($_POST["candidate_mapping"]) && !empty($_POST["candidate_mapping"]))
+            $candidate_mapping = $_POST["candidate_mapping"];
+        else
+            $candidate_mapping=false;
         /* Bail out if any of the required fields are empty. */
         if (empty($title) || empty($type) || empty($city) || empty($state))
         {
@@ -1066,7 +1220,8 @@ class JobOrdersUI extends UserInterface
         if (!$jobOrders->update($jobOrderID, $title, $companyJobID, $companyID, $contactID,
             $description, $notes, $duration, $maxRate, $type, $isHot,
             $openings, $openingsAvailable, $salary, $city, $state, $startDate, $status, $recruiter,
-            $owner, $public, $email, $emailAddress, $department, $questionnaireID))
+            $owner, $public, $email, $emailAddress, $department, $questionnaireID,$candidate_mapping,
+            $ownertype))
         {
             CommonErrors::fatal(COMMONERROR_RECORDERROR, $this, 'Failed to update job order.');
         }
@@ -1142,11 +1297,58 @@ class JobOrdersUI extends UserInterface
         }
 
         $jobOrderID = $_GET['jobOrderID'];
-
+        $objJoborder=new JobOrders($this->_siteID);
+        $objJoborder->load($jobOrderID);
+        $arrExtraFieldData=array();
+        $arrExtraFieldDataTmp=$objJoborder->extraFields->getValues($jobOrderID);
+        foreach($arrExtraFieldDataTmp as $arrData)
+        {
+            $arrExtraFieldData[$arrData["fieldName"]]=$arrData;
+        }
+        /* Execute the search. */
+        $search = new SearchCandidates($this->_siteID);
+        $arrMappingData=array();
+        foreach($objJoborder->candidate_mapping as $mapping)
+        {
+            if(isset($arrExtraFieldData[$mapping]["value"]))
+            {
+                $arrMappingData[$mapping]=$arrExtraFieldData[$mapping]["value"];
+            }
+            else
+            {
+                $arrMappingData[$mapping]=$objJoborder->$mapping;
+            }
+        }
+        $rs=$search->byJoborderMatching($arrMappingData);
+        
         if (!eval(Hooks::get('JO_CONSIDER_CANDIDATE_SEARCH'))) return;
 
+        $pipelines = new Pipelines($this->_siteID);
+        $pipelinesRS = $pipelines->getJobOrderPipeline($jobOrderID);
+
+        foreach ($rs as $rowIndex => $row)
+        {
+            if (ResultSetUtility::findRowByColumnValue($pipelinesRS,
+                'candidateID', $row['candidateID']) !== false)
+            {
+                $rs[$rowIndex]['inPipeline'] = true;
+            }
+            else
+            {
+                $rs[$rowIndex]['inPipeline'] = false;
+            }
+
+            $rs[$rowIndex]['ownerAbbrName'] = StringUtility::makeInitialName(
+                $row['ownerFirstName'],
+                $row['ownerLastName'],
+                false,
+                LAST_NAME_MAXLEN
+            );
+        }
+
+        $this->_template->assign('rs', $rs);
         $this->_template->assign('isFinishedMode', false);
-        $this->_template->assign('isResultsMode', false);
+        $this->_template->assign('isResultsMode', true);
         $this->_template->assign('jobOrderID', $jobOrderID);
         $this->_template->display('./modules/joborders/ConsiderSearchModal.tpl');
     }
@@ -1344,7 +1546,7 @@ class JobOrdersUI extends UserInterface
         if (!eval(Hooks::get('JO_ADD_CANDIDATE_MODAL'))) return;
 
         /* REMEMBER TO ALSO UPDATE CandidatesUI::add() IF APPLICABLE. */
-        $this->_template->display('./modules/candidates/Add.tpl');
+        $this->_template->display('./modules/candidates/Add.php');
     }
 
     /*
@@ -1528,7 +1730,7 @@ class JobOrdersUI extends UserInterface
         $candidatesUI = new CandidatesUI();
         $candidatesUI->publicAddActivityChangeStatus(
             true, $regardingID, $this->_moduleDirectory
-        );
+        );exit;
     }
 
     /*
@@ -1588,7 +1790,7 @@ class JobOrdersUI extends UserInterface
 
         if (!eval(Hooks::get('JO_SEARCH'))) return;
 
-        $this->_template->display('./modules/joborders/Search.tpl');
+        $this->_template->display('./modules/joborders/Search.php');
     }
 
     /*
@@ -1734,7 +1936,7 @@ class JobOrdersUI extends UserInterface
 
         if (!eval(Hooks::get('JO_ON_SEARCH'))) return;
 
-        $this->_template->display('./modules/joborders/Search.tpl');
+        $this->_template->display('./modules/joborders/Search.php');
     }
 
     /*
@@ -1757,7 +1959,7 @@ class JobOrdersUI extends UserInterface
         if (!eval(Hooks::get('JO_CREATE_ATTACHMENT'))) return;
 
         $this->_template->display(
-            './modules/joborders/CreateAttachmentModal.tpl'
+            './modules/joborders/CreateAttachmentModal.php'
         );
     }
 
@@ -1797,7 +1999,7 @@ class JobOrdersUI extends UserInterface
         $this->_template->assign('jobOrderID', $jobOrderID);
 
         $this->_template->display(
-            './modules/joborders/CreateAttachmentModal.tpl'
+            './modules/joborders/CreateAttachmentModal.php'
         );
     }
 

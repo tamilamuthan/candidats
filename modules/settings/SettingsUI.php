@@ -509,7 +509,355 @@ class SettingsUI extends UserInterface
         $this->_template->assign('rs', $rs);
         $this->_template->display('./modules/settings/duplicate.php');
     }
+    public function fields()
+    {
+        if(isset($_REQUEST["s"]) && $_REQUEST["s"]=="addnewfield")
+        {
+            $_siteID = $_SESSION['CATS']->getSiteID();
+            $fieldCaption=$_REQUEST["fieldname"];
+            $data_item_type=$_REQUEST["data_item_type"];
+            $arrExp=explode("_",$fieldCaption);
+            $fieldName=  strtolower($fieldCaption);
+            $fieldName= preg_replace("/\W|_/", " ", $fieldName);
+            $fieldName= preg_replace("/[ ]{2,}/", " ", $fieldName);
+            $fieldName= preg_replace("/\s/", "_", $fieldName);
+            $fieldName=trim($fieldName);
+            if(strlen($fieldName)>=3)
+            {
+                $db=  DatabaseConnection::getInstance();
+                $sql="select * from auieo_fields where fieldname='{$fieldName}' and site_id={$_siteID} and data_item_type={$data_item_type}";
+                $record=$db->getAssoc($sql);
+                if(empty($record))
+                {
+                    /**
+                     * get uitype details
+                     */
+                    $sql="select * from auieo_uitype where id={$_REQUEST["uitype"]}";
+                    $record=$db->getAssoc($sql);
+                    $fieldinfo=$record["fieldinfo"];
+                    $length=$record["length"];
+                    $arrFieldInfo=  getFieldInfoByUIType($fieldinfo);
+                    $datatype=$arrFieldInfo["datatype"];
+                    $tableInfo=getTableInfoByDataItemType($data_item_type);
+                    $fieldmodule=$tableInfo["module"];
+                    $tableName=$tableInfo["table"];
+                    
+                    $sql="select max(sequence) as seq from auieo_fields where site_id={$_siteID} and data_item_type={$data_item_type}";
+                    $recordSeq=$db->getAssoc($sql);
+                    $next_sequence=$recordSeq["seq"]+1;
+                    /**
+                     * create field in the table
+                     */
+                    $sql="alter table `{$tableName}` add {$fieldName} {$datatype}($length) NOT NULL";
+                    $db->query($sql);
+                    /**
+                     * insert into auieo_fields
+                     */
+                    $sql="insert into auieo_fields (fieldname,fieldlabel,sequence,site_id,data_item_type,is_extra) values('{$fieldName}','{$fieldCaption}','{$next_sequence}',{$_siteID},{$data_item_type},1)";
+                    $db->query($sql);
+                }
+            }
+            header("Location:index.php?m=settings&a=fields&fieldmodule={$fieldmodule}");exit;
+        }
+    }
     
+    public function moveDown()
+    {
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $sql="select * from auieo_fields where id={$_REQUEST["field_id"]} and site_id={$_siteID}";
+        $db=DatabaseConnection::getInstance();
+        $record=$db->getAssoc($sql);
+        if(empty($record)) die("Unknown field ID");
+ 
+        $sql="select * from auieo_fields where sequence=".($record["sequence"]+1)." and data_item_type={$record["data_item_type"]} and site_id={$_siteID}";
+        $prevRecord=$db->getAssoc($sql);
+        $prevID=$prevRecord["id"];
+        $sql="update auieo_fields set sequence=".$record["sequence"]." where id={$prevID}";
+        $db->query($sql);
+        $sql="update auieo_fields set sequence=".($record["sequence"]+1)." where id={$_REQUEST["field_id"]}";
+        $db->query($sql);
+        
+        header("Location:index.php?m=settings&a=fields&fieldmodule={$_REQUEST["modulename"]}");
+    }
+    
+    public function moveUp()
+    {
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $sql="select * from auieo_fields where id={$_REQUEST["field_id"]} and site_id={$_siteID}";
+        $db=DatabaseConnection::getInstance();
+        $record=$db->getAssoc($sql);
+        if(empty($record)) die("Unknown field ID");
+ 
+        $sqlprev="select * from auieo_fields where sequence=".($record["sequence"]-1)." and data_item_type={$record["data_item_type"]} and site_id={$_siteID}";
+        $prevRecord=$db->getAssoc($sqlprev);
+        $prevID=$prevRecord["id"];
+        $sql="update auieo_fields set sequence=".$record["sequence"]." where id={$prevID}";
+        $db->query($sql);
+        $sql="update auieo_fields set sequence=".($record["sequence"]-1)." where id={$_REQUEST["field_id"]}";
+        $db->query($sql);
+        
+        header("Location:index.php?m=settings&a=fields&fieldmodule={$_REQUEST["modulename"]}");
+    }
+    
+    public function delete()
+    {
+        $moduleInfo=getTableInfoByModule($_REQUEST["modulename"]);
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $db=DatabaseConnection::getInstance();
+        
+        $sql="select * from auieo_fields where data_item_type={$moduleInfo["data_item_type"]} and id='{$_REQUEST["field_id"]}' and site_id={$_siteID} and is_extra=1";
+        $record=$db->getAssoc($sql);
+        if(!empty($record))
+        {
+            $sql="delete from auieo_fields where data_item_type={$moduleInfo["data_item_type"]} and id='{$_REQUEST["field_id"]}' and site_id={$_siteID}";
+            $db->query($sql);
+
+            $sql="ALTER TABLE `{$moduleInfo["table"]}` DROP `{$record["fieldname"]}`";
+            $db->query($sql);
+        }
+        header("Location:index.php?m=settings&a=fields&fieldmodule={$_REQUEST["modulename"]}");exit;
+    }
+    
+    public function updateField()
+    {
+        $moduleInfo=getTableInfoByModule($_REQUEST["modulename"]);
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $sql="update auieo_fields set displaytype={$_REQUEST["checked"]} where data_item_type={$moduleInfo["data_item_type"]} and fieldname='{$_REQUEST["field_name"]}' and site_id={$_siteID}";
+        $db=DatabaseConnection::getInstance();
+        $db->query($sql);
+        exit;
+    }
+    
+    public function updateFieldReadonly()
+    {
+        $moduleInfo=getTableInfoByModule($_REQUEST["modulename"]);
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $sql="update auieo_fields set readonly={$_REQUEST["checked"]} where data_item_type={$moduleInfo["data_item_type"]} and fieldname='{$_REQUEST["field_name"]}' and site_id={$_siteID}";
+        $db=DatabaseConnection::getInstance();
+        $db->query($sql);
+        exit;
+    }
+    
+    private function getRootID()
+    {
+        $objDB=DatabaseConnection::getInstance();
+        $site_id=$_SESSION['CATS']->getSiteID();
+        $sql="select * from auieo_roles where site_id={$site_id} and parentid=0";
+        $objAssoc=$objDB->getAllAssoc($sql);
+        /**
+         * this condition will never true until abnormal happens
+         */
+        if(empty($objAssoc))
+        {
+            return 0;
+        }
+        $rootid=$objAssoc[0]["id"];
+        return $rootid;
+    }
+    
+    private function getParentID($id)
+    {
+        $objDB=DatabaseConnection::getInstance();
+        $site_id=$_SESSION['CATS']->getSiteID();
+        $sql="select * from auieo_roles where site_id={$site_id} and id={$id}";
+        $objAssoc=$objDB->getAllAssoc($sql);
+        /**
+         * this condition will never true until abnormal happens
+         */
+        if(empty($objAssoc))
+        {
+            return 0;
+        }
+        $parentid=$objAssoc[0]["parentid"];
+        return $parentid;
+    }
+    
+    private function createTreeFromList(array $array, $parent_id = 1) {
+        $return = array();
+
+        foreach ($array as $k => $v) {
+            if ($v['parentid'] == $parent_id) 
+            {
+                unset($v["parentid"]);
+                $return[$k] = $v; 
+                $return[$k]['nodes'] = $this->createTreeFromList($array, $v['id']);    
+            }
+        }
+        $arrReturn=array();
+        foreach($return as $ret)
+        {
+            $arrReturn[]=$ret;
+        }
+        return $arrReturn;
+    }
+
+    private function getJSONTree()
+    {
+        $db=  DatabaseConnection::getInstance();
+        $site_id=$_SESSION["CATS"]->getSiteID();
+        $query = "SELECT id,parentid,rolename as title FROM auieo_roles where site_id={$site_id} and parentid!=0";
+        $arrRow = $db->getAllAssoc($query);
+        $tree=$this->createTreeFromList($arrRow);//trace($tree);
+        $jsontree=  json_encode($tree);
+        return $jsontree;
+    }
+
+    private function syncRole()
+    {
+        $syncData = json_decode(file_get_contents("php://input"),true);
+        $callback=function ($childRecord,$parentRecordID)
+        {
+            $objDB=DatabaseConnection::getInstance();
+            $site_id=$_SESSION['CATS']->getSiteID();
+            $sql="select * from auieo_roles where site_id={$site_id} and id={$childRecord["id"]}";
+            $objAssoc=$objDB->getAllAssoc($sql);
+            $parentid=$objAssoc[0]["parentid"];
+            Logger::getLogger("AuieoATS")->info("At api.php:syncRole:callback. {$parentid}!={$parentRecordID}");
+            if($parentid!=$parentRecordID)
+            {
+                $sql="update auieo_roles set parentid={$parentRecordID} where site_id={$site_id} and id={$childRecord["id"]}";
+                Logger::getLogger("AuieoATS")->info("At api.php:syncRole:callback:if");
+                $objDB->query($sql);
+            }
+        };
+        Logger::getLogger("AuieoATS")->info("At api.php:syncRole.");
+        $this->recursiveNavigation($this->getRootID(), $syncData, $callback);
+        $success = array('status' => "Success", "msg" => "Role Synced Successfully.");
+        $this->response($this->json($success),200);
+    }
+    
+    public function roles()
+    {
+        
+    }
+    
+    public function webserviceInsertRole($api)
+    {
+        $role=$api->getInput();
+        $objDB=DatabaseConnection::getInstance();
+        $site_id=$_SESSION['CATS']->getSiteID();
+        $sql="select * from auieo_roles where site_id={$site_id}";
+        $objDB=DatabaseConnection::getInstance();
+        $arrAssoc=$objDB->getAllAssoc($sql);
+        if(empty($arrAssoc))
+        {
+            $sql="insert into auieo_roles (`id`,`rolename`,`site_id`,`parentid`) values (1,'root',$site_id,0)";
+            $objDB->query($sql);
+        }
+
+        /**
+         * if parentid not set in the input, get the root id and consider it as parent
+         */
+        if(!isset($role["parentid"]))
+        {
+            $role["parentid"]=$this->getRootID();
+        }
+
+        /**
+         * check whether the parentid exist in database.
+         * if exist, proceed as it is
+         * else throw error
+         */
+        $site_id=$_SESSION['CATS']->getSiteID();
+        $sql="select * from auieo_roles where site_id={$site_id} and id={$role["parentid"]}";
+        $arrAssoc=$objDB->getAllAssoc($sql);
+        if(empty($arrAssoc))
+        {
+            $fail = array('status' => "Fail", "msg" => "Unknown parent ID", "data" => $role);
+            $api->response($api->json($fail),406);
+            return;
+        }
+        /**
+         * check whether the duplicate rolename exist in database.
+         * if not exist, proceed as it is
+         * else throw error
+         */
+        $sql="select * from auieo_roles where site_id={$site_id} and rolename='{$role["rolename"]}'";
+        $objDB=DatabaseConnection::getInstance();
+        $arrAssoc=$objDB->getAllAssoc($sql);
+        if(!empty($arrAssoc))
+        {
+            $fail = array('status' => "Fail", "msg" => "Duplicate Role Name Exist", "data" => $role);
+            $api->response($api->json($fail),406);
+            return;
+        }
+        $role["site_id"]=$site_id;
+        $column_names = array('rolename','parentid','site_id');
+        $keys = array_keys($role);
+        $columns = '';
+        $values = '';
+        foreach($column_names as $desired_key){ // Check the customer received. If blank insert blank into the array.
+           if(!in_array($desired_key, $keys)) {
+                        $$desired_key = '';
+                }else{
+                        $$desired_key = $role[$desired_key];
+                }
+                $columns = $columns.$desired_key.',';
+                $values = $values."'".$$desired_key."',";
+        }
+        $query="select ";
+        $query = "INSERT INTO auieo_roles(".trim($columns,',').") VALUES(".trim($values,',').")";
+        if(!empty($role)){
+                $r = $objDB->query($query);
+                $id=$objDB->getLastInsertID();
+                $success = array('status' => "Success", "msg" => "Role Created Successfully.", "data" => $role,"id"=>$id);
+                $api->response($api->json($success),200);
+        }else
+                $api->response('',204);
+    }
+    
+    private function updateParentID($id,$parentid){	
+        $objDB=DatabaseConnection::getInstance();
+        $site_id=$_SESSION['CATS']->getSiteID();
+        $sql="update auieo_roles set parentid={$parentid} where site_id={$site_id} and id={$id}";
+        $objDB->query($sql);
+    }
+
+    public function webserviceDeleteRole($api){
+            $id = (int)$api->_request['id'];
+            if($id > 0)
+            {	
+                $objDB=DatabaseConnection::getInstance();
+                $site_id=$_SESSION['CATS']->getSiteID();
+                $rootid=$this->getRootID();
+                $sql="update auieo_roles set parentid={$rootid} where site_id={$site_id} and parentid={$id}";
+                $objDB->query($sql);
+                $query="DELETE FROM auieo_roles WHERE id = $id";
+                $r = $objDB->query($query);
+                $success = array('status' => "Success", "msg" => "Successfully deleted one record.", "tree"=>$this->getJSONTree());
+                $api->response($api->json($success),200);
+            }else
+                    $api->response('',204);	// If no records "No Content" status
+    }
+    
+    public function webserviceAddProfilesToRole($api)
+    {
+        $input=$api->getInput();
+        $objDB=DatabaseConnection::getInstance();
+        $site_id=$_SESSION['CATS']->getSiteID();
+        foreach($input["profileid"] as $profileid)
+        {
+            $sql="insert into auieo_roles2profiles (`roleid`,`profileid`,`site_id`) values('{$input["roleid"]}','{$profileid}','{$site_id}')";
+            $objDB->query($sql);
+        }
+        $success = array('status' => "Success", "msg" => "Successfully added ".(count($input["profileid"]))." record.");
+        $api->response($api->json($success),200);
+    }
+    
+    public function webserviceDeleteProfilesFromRole($api)
+    {
+        $input=$api->getInput();
+        $objDB=DatabaseConnection::getInstance();
+        $site_id=$_SESSION['CATS']->getSiteID();
+        foreach($input["profileid"] as $profileid)
+        {
+            $sql="delete from auieo_roles2profiles where `roleid`='{$input["roleid"]}' and `profileid`='{$profileid}' and `site_id`='{$site_id}'";
+            $objDB->query($sql);
+        }
+        $success = array('status' => "Success", "msg" => "Successfully deleted ".(count($input["profileid"]))." record.");
+        $api->response($api->json($success),200);
+    }
+
     public function transfer()
     {
         /* Bail out if the user doesn't have SA permissions. */
@@ -544,10 +892,15 @@ class SettingsUI extends UserInterface
 
         $sites = new Site($this->_siteID);
         $rs = $sites->getAll();
-
+        $arrSite=array();
+        foreach($rs as $ind=>$record)
+        {
+            if($record["siteID"]==180) continue;
+            $arrSite[$ind]=$record; 
+        }
         $this->_template->assign('active', $this);
         $this->_template->assign('subActive', 'Site Management');
-        $this->_template->assign('rs', $rs);
+        $this->_template->assign('rs', $arrSite);
         $this->_template->display('./modules/settings/Sites.php');
     }
     
@@ -575,13 +928,13 @@ class SettingsUI extends UserInterface
             $this->_template->assign("checked","");
         }
         $this->_template->display(
-            './modules/settings/customizeFilter.tpl'
+            './modules/settings/customizeFilter.php'
         );
     }
     public function onCustomizeFilter()
     {
         $this->_template->display(
-            './modules/settings/customizeFilter.tpl'
+            './modules/settings/customizeFilter.php'
         );
     }
     /*
@@ -596,17 +949,17 @@ class SettingsUI extends UserInterface
             switch($_GET['s'])
             {
                 case 'changePassword':
-                    $templateFile = './modules/settings/ChangePassword.tpl';
+                    $templateFile = './modules/settings/ChangePassword.php';
                     break;
 
                 default:
-                    $templateFile = './modules/settings/MyProfile.tpl';
+                    $templateFile = './modules/settings/MyProfile.php';
                     break;
             }
         }
         else
         {
-            $templateFile = './modules/settings/MyProfile.tpl';
+            $templateFile = './modules/settings/MyProfile.php';
         }
 
         if (!eval(Hooks::get('SETTINGS_DISPLAY_PROFILE_SETTINGS'))) return;
@@ -616,6 +969,225 @@ class SettingsUI extends UserInterface
         $this->_template->assign('active', $this);
         $this->_template->assign('subActive', 'My Profile');
         $this->_template->display($templateFile);
+    }
+    
+    public function groups()
+    {
+        if(isset($_REQUEST["s"]))
+        {
+            $objDB=DatabaseConnection::getInstance();
+            $site_id=$_SESSION["CATS"]->getSiteID();
+            switch($_REQUEST["s"])
+            {
+                case 'update_cell':
+                {
+                    $sql="update auieo_groups set groupname='{$_REQUEST["cell_data"]}' where id='{$_REQUEST["recordid"]}' and site_id={$site_id}";
+                    $objDB->query($sql);
+                    break;
+                }
+                case 'update_permission':
+                {
+                    $data_item_type=0;
+                    if($_REQUEST["module"]=="Candidate") $data_item_type=100;
+                    else if($_REQUEST["module"]=="Company") $data_item_type=200;
+                    else if($_REQUEST["module"]=="Contact") $data_item_type=300;
+                    else if($_REQUEST["module"]=="Joborder") $data_item_type=400;
+                    $sql="update auieo_profiles2permissions set permissions={$_REQUEST["cell_data"]}  where data_item_type='{$data_item_type}' and profileid={$_REQUEST["profileid"]} and operation={$_REQUEST["fieldname"]} and site_id={$site_id}";
+                    $objDB->query($sql);
+                    break;
+                }
+                case 'load_rolesusers':
+                {
+                    $arr=getGroupUIInfo($_REQUEST["groupid"]);
+                    echo json_encode($arr);
+                    break;
+                }
+                case "delete":
+                {
+                    $sql="delete from auieo_groups2roles  where groupid={$_REQUEST["groupid"]} and  site_id={$site_id}";
+                    $objDB->query($sql);
+                    $sql="delete from auieo_groups where id={$_REQUEST["groupid"]}";
+                    $objDB->query($sql);
+                    header("Location:index.php?m=settings&a=groups");exit;
+                    break;
+                }
+                case 'assign':
+                {
+                    if($_REQUEST["type"]=="role")
+                    {
+                        $sql="select * from auieo_groups2roles where groupid={$_REQUEST["group"]} and roleid={$_REQUEST["id"]} and site_id={$site_id}";
+                        $arrAssoc=$objDB->getAllAssoc($sql);
+                        if(empty($arrAssoc))
+                        {
+                            $sql="insert into auieo_groups2roles (groupid,roleid,site_id) values ({$_REQUEST["group"]},{$_REQUEST["id"]},{$site_id})";
+                            $objDB->query($sql);
+                        }
+                    }
+                    else
+                    {
+                        $sql="select * from auieo_groups2users where groupid={$_REQUEST["group"]} and user_id={$_REQUEST["id"]} and site_id={$site_id}";
+                        $arrAssoc=$objDB->getAllAssoc($sql);
+                        if(empty($arrAssoc))
+                        {
+                            $sql="insert into auieo_groups2users (groupid,user_id,site_id) values ({$_REQUEST["group"]},{$_REQUEST["id"]},{$site_id})";
+                            $objDB->query($sql);
+                        }
+                    }
+                    
+                    break;
+                }
+                case 'remove':
+                {
+                    if($_REQUEST["type"]=="role")
+                    {
+                        $sql="delete from auieo_groups2roles where groupid={$_REQUEST["group"]} and roleid={$_REQUEST["id"]} and site_id={$site_id}";
+                        $arrAssoc=$objDB->query($sql);
+                    }
+                    else
+                    {
+                        $sql="delete from auieo_groups2users where groupid={$_REQUEST["group"]} and user_id={$_REQUEST["id"]} and site_id={$site_id}";
+                        $arrAssoc=$objDB->getAllAssoc($sql);
+                    }
+                    
+                    break;
+                }
+                case 'addnew':
+                {
+                    $sql="insert into auieo_groups (`groupname`,`site_id`) values ('{$_REQUEST["groupname"]}','{$site_id}')";
+                    $objDB->query($sql);
+                    echo $objDB->getLastInsertID();
+                    break;
+                }
+                default:
+                {
+                    $sql="select * from auieo_groups where site_id=".$site_id;
+                    $arrAssoc=$objDB->getAllAssoc($sql);
+                    foreach( $arrAssoc as $ind=>$assoc)
+                    {
+                        $arrAssoc[$ind]["delete"]="Delete";
+                    }
+                    echo json_encode($arrAssoc);
+                }
+            }
+            exit;
+        }
+    }
+    
+    public function profiles()
+    {
+        if(isset($_REQUEST["s"]))
+        {
+            $objDB=DatabaseConnection::getInstance();
+            $site_id=$_SESSION["CATS"]->getSiteID();
+            switch($_REQUEST["s"])
+            {
+                case 'update_cell':
+                {
+                    $sql="update auieo_profiles set profilename='{$_REQUEST["cell_data"]}' where id='{$_REQUEST["recordid"]}' and site_id={$site_id}";
+                    $objDB->query($sql);
+                    break;
+                }
+                case 'delete':
+                {
+                    $sql="delete from auieo_profiles where id={$_REQUEST["profileid"]}";
+                    $objDB->query($sql);
+                    header("Location:index.php?m=settings&a=profiles");exit;
+                    break;
+                }
+                case 'update_permission':
+                {
+                    $data_item_type=0;
+                    $arrModuleInfo=getModuleInfo("modulename");
+                    foreach($arrModuleInfo as $modulename=>$moduleInfo)
+                    {
+                        if($_REQUEST["module"] == $modulename)
+                        {
+                            $data_item_type=$moduleInfo["data_item_type_id"];
+                            break;
+                        }
+                    }
+                    $sql="select * from auieo_profiles2permissions where  data_item_type='{$data_item_type}' and profileid={$_REQUEST["profileid"]} and operation={$_REQUEST["fieldname"]} and site_id={$site_id}";
+                    if($objDB->getAssoc($sql))
+                    {
+                        $sql="update auieo_profiles2permissions set permissions={$_REQUEST["cell_data"]}  where data_item_type='{$data_item_type}' and profileid={$_REQUEST["profileid"]} and operation={$_REQUEST["fieldname"]} and site_id={$site_id}";
+                        $objDB->query($sql);
+                    }
+                    else
+                    {
+                        $sql="insert into auieo_profiles2permissions (permissions,data_item_type,profileid,operation,site_id) values({$_REQUEST["cell_data"]},'{$data_item_type}',{$_REQUEST["profileid"]},'{$_REQUEST["fieldname"]}',{$site_id})";
+                        $objDB->query($sql);
+                    }
+                    break;
+                }
+                case 'load_profile':
+                {
+                    $arrProfilePermission=array();
+                    $modulesInfo=getModuleInfo("data_item_type");
+                    foreach($modulesInfo as $data_item_type=>$modInfo)
+                    {
+                        $arrProfilePermission[$data_item_type]=array("module"=>$modInfo["modulename"],"data_item_id"=>$data_item_type,0=>0,1=>0,2=>0,3=>0,4=>0);
+                    }
+
+                    //$arrSite=array(1,180);
+                    $arrSQL=array();
+
+                    $profileid=$_REQUEST["profileid"];
+                    $sql="select * from auieo_profiles2permissions where profileid={$profileid} and site_id=".$site_id;
+                    $arrAssoc=$objDB->getAllAssoc($sql);
+                    if($arrAssoc)
+                    {
+                        foreach($arrAssoc as $record)
+                        {
+                            $arrProfilePermission[$record["data_item_type"]][$record["operation"]]=$record["permissions"];
+                        }
+                    }
+                    else
+                    {
+                        foreach($arrProfilePermission as $data_item_type=>$rowData)
+                        {
+                            array_shift($rowData);
+                            array_shift($rowData);
+                            foreach($rowData as $operation=>$permissions)
+                            {
+                                $arrSQL[]="insert into auieo_profiles2permissions (`profileid`,`data_item_type`,`operation`,`permissions`,`site_id`) 
+                                values ('{$profileid}','{$data_item_type}','{$operation}','{$permissions}','{$site_id}')";
+                            }
+                        }
+                    }
+                    echo json_encode(array_values($arrProfilePermission));
+                    break;
+                }
+                case 'assign':
+                {
+                    $sql="select * from auieo_roles2profiles where roleid={$_REQUEST["role"]} && profileid={$_REQUEST["profileid"]}";
+                    $arrAssoc=$objDB->getAllAssoc($sql);
+                    if(empty($arrAssoc))
+                    {
+                        $sql="insert into auieo_roles2profiles (roleid,profileid,site_id) values ({$_REQUEST["role"]},{$_REQUEST["profileid"]},{$site_id})";
+                        $objDB->query($sql);
+                    }
+                    break;
+                }
+                case 'addnew':
+                {
+                    $sql="insert into auieo_profiles (`profilename`,`site_id`) values ('{$_REQUEST["profilename"]}','{$site_id}')";
+                    $objDB->query($sql);
+                    echo $objDB->getLastInsertID();
+                    break;
+                }
+                default:
+                {
+                    $sql="select * from auieo_profiles where site_id=".$_SESSION["CATS"]->getSiteID();
+                    $arrAssoc=$objDB->getAllAssoc($sql);
+                    foreach($arrAssoc as $ind=>$assoc)
+                    {
+                        $arrAssoc[$ind]["delete"]="Delete";
+                    }
+                    echo json_encode($arrAssoc);
+                }
+            }
+            exit;
+        }
     }
     
     /*
@@ -755,7 +1327,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('currentUser', $this->_userID);
         $this->_template->assign('loginDisplay', self::MAX_RECENT_LOGINS);
         $this->_template->assign('loginAttempts', $loginAttempts);
-        $this->_template->display('./modules/settings/ShowUser.tpl');
+        $this->_template->display('./modules/settings/ShowUser.php');
     }
     
     /*
@@ -811,7 +1383,7 @@ class SettingsUI extends UserInterface
 
         if (!eval(Hooks::get('SETTINGS_ADD_USER'))) return;
 
-        $this->_template->display('./modules/settings/AddUser.tpl');
+        $this->_template->display('./modules/settings/AddUser.php');
     }
 
     /*
@@ -836,7 +1408,8 @@ class SettingsUI extends UserInterface
         $retypePassword = $this->getTrimmedInput('retypePassword', $_POST);
         $role           = $this->getTrimmedInput('role', $_POST);
         $eeoIsVisible   = $this->isChecked('eeoIsVisible', $_POST);
-
+        $role        = $this->getTrimmedInput('role', $_POST);
+        $roleid        = $this->getTrimmedInput('roleid', $_POST);
         $users = new Users($this->_siteID);
         $license = $users->getLicenseData();
 
@@ -881,7 +1454,7 @@ class SettingsUI extends UserInterface
         }
 
         $userID = $users->add(
-            $lastName, $firstName, $email, $username, $password, $accessLevel, $eeoIsVisible
+            $lastName, $firstName, $email, $username, $password, $accessLevel, $eeoIsVisible,$roleid
         );
 
         /* Check role (category) to make sure that the role is allowed to be set. */
@@ -1013,7 +1586,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('currentUser', $this->_userID);
         $this->_template->assign('cannotEnableMessage', $cannotEnableMessage);
         $this->_template->assign('disableAccessChange', $disableAccessChange);
-        $this->_template->display('./modules/settings/EditUser.tpl');
+        $this->_template->display('./modules/settings/editUser.php');
     }
 
     /*
@@ -1054,6 +1627,7 @@ class SettingsUI extends UserInterface
         $password2   = $this->getTrimmedInput('password2', $_POST);
         $passwordRst = $this->getTrimmedInput('passwordIsReset', $_POST);
         $role        = $this->getTrimmedInput('role', $_POST);
+        $roleid        = $this->getTrimmedInput('roleid', $_POST);
         $eeoIsVisible   = $this->isChecked('eeoIsVisible', $_POST);
 
         /* Bail out if any of the required fields are empty. */
@@ -1099,7 +1673,7 @@ class SettingsUI extends UserInterface
         $users = new Users($this->_siteID);
 
         if (!$users->update($userID, $lastName, $firstName, $email, $username,
-            $accessLevel, $eeoIsVisible))
+            $accessLevel, $eeoIsVisible,$roleid))
         {
             CommonErrors::fatal(COMMONERROR_RECORDERROR, $this, 'Failed to update user.');
         }
@@ -1172,6 +1746,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('EEOSettingsRS', $EEOSettingsRS);
         $this->_template->assign('defaultAccessLevel', ACCESS_LEVEL_DELETE);
         $this->_template->assign('currentUser', $this->_userID);
+        $this->_template->assign('sites', $rs);
 
         if (!eval(Hooks::get('SETTINGS_ADD_USER'))) return;
 
@@ -1193,6 +1768,7 @@ class SettingsUI extends UserInterface
 
         $siteName      = $this->getTrimmedInput('siteName', $_POST);
         $unixName       = $this->getTrimmedInput('unixName', $_POST);
+        $modelSite      = $this->getTrimmedInput('modelsite', $_POST);
         $isDemo   = $this->isChecked('isDemo', $_POST);
         $isDemo = empty($isDemo)?0:1;
 
@@ -1213,7 +1789,7 @@ class SettingsUI extends UserInterface
         }
 
         $siteID = $sites->add(
-            $unixName, $siteName, $isDemo
+            $unixName, $siteName, $isDemo, $modelSite
         );
 
         if ($siteID <= 0)
@@ -1522,7 +2098,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('extraFieldSettingsJobOrdersRS', $jobOrdersRS);
         $this->_template->assign('extraFieldTypes', $extraFieldTypes);
         $this->_template->assign('active', $this);
-        $this->_template->display('./modules/settings/CustomizeExtraFields.tpl');
+        $this->_template->display('./modules/settings/CustomizeExtraFields.php');
     }
 
     /*
@@ -1618,7 +2194,11 @@ class SettingsUI extends UserInterface
                 return;
                 //$this->fatal(ERROR_NO_PERMISSION);
             }
-
+            $objDatabase=  DatabaseConnection::getInstance();//trace($objDatabase);
+            if(!$objDatabase->isFieldExist("email_template","basemodule"))
+            {
+                $objDatabase->addField("email_template","basemodule","VARCHAR",255);
+            }
             $emailTemplates = new EmailTemplates($this->_siteID);
             $emailTemplatesRS = $emailTemplates->getAll();
 
@@ -1643,7 +2223,8 @@ class SettingsUI extends UserInterface
             {
                 $emailTemplates = new EmailTemplates($this->_siteID);
                 $template=$emailTemplates->get($templateID);
-                $template["text"]=  addslashes($template["text"]);
+                $template["text"]=  $template["text"];
+                $template["templatemodule"]=  $template["baseModule"];
             }
             $arrTplVar=array();
             $arrTplVar = $template;
@@ -1655,16 +2236,19 @@ class SettingsUI extends UserInterface
             $arrModuleTable["joborders"]=array("module"=>"joborder","extra"=>"Joborder");
             $arrModuleTable["contacts"]=array("module"=>"contact","extra"=>"Contact");
             $arrModuleTable["companies"]=array("module"=>"company","extra"=>"Company");
-            $arrCandidateParentModule["candidates"]=array("joborders","companies");
-            $arrCandidateParentModule["contacts"]=array("companies");
+            $arrModuleTable["users"]=array("module"=>"user");
+            $arrCandidateParentModule["contacts"]=array("contacts"=>"contacts","companies"=>"companies","users"=>"users");
+            $arrCandidateParentModule["joborders"]=array("joborders"=>"joborders","companies"=>"companies","recruiter"=>"users","owner"=>"users");
+            $arrCandidateParentModule["candidates"]=array("candidates"=>"candidates","joborders"=>"joborders","companies"=>"companies","users"=>"users");
             $arrTplVar=array();
          
             $allModules=$arrCandidateParentModule[$templatemodule];
-            array_unshift($allModules,$templatemodule);
-            foreach($allModules as $amodule)
+            
+            if($allModules)
+            foreach($allModules as $foreignKey=>$amodule)
             {
                 $tableName=$arrModuleTable[$amodule]["module"];
-                $extraFieldTableName=$arrModuleTable[$amodule]["extra"];
+                $extraFieldTableName=isset($arrModuleTable[$amodule]["extra"])?$arrModuleTable[$amodule]["extra"]:"";
                 $objDatabase = DatabaseConnection::getInstance();
                 $sql="SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '".DATABASE_NAME."' AND TABLE_NAME = '{$tableName}' order by COLUMN_NAME";
                 $arrRow=$objDatabase->getAllAssoc($sql);
@@ -1675,18 +2259,25 @@ class SettingsUI extends UserInterface
                     $arrMainColumn[$row["COLUMN_NAME"]]=$row["COLUMN_NAME"];
                 }
                 asort($arrMainColumn,SORT_STRING);
-                $arrTplVar[$amodule]["main"]=$arrMainColumn;
+                $arrTplVar[$foreignKey][$amodule]["main"]=$arrMainColumn;
                 $arrExtraColumn=array();
-                $sql="select extra_field_settings_id,field_name from extra_field_settings left join data_item_type on data_item_type_id=data_item_type where short_description='{$extraFieldTableName}' order by field_name";
-                $arrRow=$objDatabase->getAllAssoc($sql);
-                if($arrRow)
-                foreach($arrRow as $row)
+                if($extraFieldTableName)
                 {
-                    $arrExtraColumn["EXTRA_".$row["field_name"]]=$row["field_name"];
+                    $sql="select extra_field_settings_id,field_name from extra_field_settings left join data_item_type on data_item_type_id=data_item_type where short_description='{$extraFieldTableName}' order by field_name";
+                    $arrRow=$objDatabase->getAllAssoc($sql);
+                    if($arrRow)
+                    foreach($arrRow as $row)
+                    {
+                        $arrExtraColumn["EXTRA_".$row["field_name"]]=$row["field_name"];
+                    }
+                    asort($arrExtraColumn,SORT_STRING);
                 }
-                asort($arrExtraColumn,SORT_STRING);
-                $arrTplVar[$amodule]["extra"]=$arrExtraColumn;
+                if($arrExtraColumn)
+                {
+                    $arrTplVar[$foreignKey][$amodule]["extra"]=$arrExtraColumn;
+                }
             }
+            $arrTplVar[$foreignKey][$amodule]["other"]["currentTime"]="currentTime";
             if(empty($arrTplVar))
             {
                 $arrTplVar=array();
@@ -1722,7 +2313,7 @@ class SettingsUI extends UserInterface
                 $disabled = 1;
             }
             $emailTemplates = new EmailTemplates($this->_siteID);
-            $emailTemplates->insert($_REQUEST["emailSubject"], $text, $disabled);
+            $emailTemplates->insert($_REQUEST["emailSubject"], $text, $_REQUEST["templatemodule"] ,$disabled);
         }
         else
         {
@@ -1855,7 +2446,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('sessionCookie', $_SESSION['CATS']->getCookie());
         $this->_template->assign('extraFieldsForJobOrders', $extraFieldsForJobOrders);
         $this->_template->assign('extraFieldsForCandidates', $extraFieldsForCandidates);
-        $this->_template->display('./modules/settings/CareerPortalTemplateEdit.tpl');
+        //$this->_template->display('./modules/settings/CareerPortalTemplateEdit.php');
     }
 
     //FIXME: Document me.
@@ -1949,7 +2540,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('careerPortalTemplateCustomNames', $careerPortalTemplateCustomNames);
         $this->_template->assign('careerPortalURL', $careerPortalURL);
         $this->_template->assign('sessionCookie', $_SESSION['CATS']->getCookie());
-        $this->_template->display('./modules/settings/CareerPortalSettings.tpl');
+        $this->_template->display('./modules/settings/CareerPortalSettings.php');
     }
 
     //FIXME: Document me.
@@ -2142,7 +2733,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('subActive', 'Administration');
         $this->_template->assign('EEOSettingsRS', $EEOSettingsRS);
         $this->_template->assign('sessionCookie', $_SESSION['CATS']->getCookie());
-        $this->_template->display('./modules/settings/EEOEOCSettings.tpl');
+        $this->_template->display('./modules/settings/EEOEOCSettings.php');
     }
 
     //FIXME: Document me.
@@ -2199,7 +2790,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('subActive', 'Administration');
         $this->_template->assign('mailerSettingsRS', $mailerSettingsRS);
         $this->_template->assign('sessionCookie', $_SESSION['CATS']->getCookie());
-        $this->_template->display('./modules/settings/EmailSettings.tpl');
+        $this->_template->display('./modules/settings/EmailSettings.php');
     }
 
     /*
@@ -2268,7 +2859,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('calendarSettingsRS', $calendarSettingsRS);
         $this->_template->assign('active', $this);
         $this->_template->assign('subActive', 'Administration');
-        $this->_template->display('./modules/settings/CustomizeCalendar.tpl');
+        $this->_template->display('./modules/settings/CustomizeCalendar.php');
     }
 
 
@@ -2402,7 +2993,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('active', $this);
         $this->_template->assign('subActive', 'Administration');
         $this->_template->assign('attachmentsRS', $attachmentsRS);
-        $this->_template->display('./modules/settings/Backup.tpl');
+        $this->_template->display('./modules/settings/Backup.php');
     }
 
     public function deleteBackup()
@@ -2632,7 +3223,7 @@ class SettingsUI extends UserInterface
             switch($_GET['s'])
             {
                 case 'siteName':
-                    $templateFile = './modules/settings/SiteName.tpl';
+                    $templateFile = './modules/settings/SiteName.php';
                     break;
 
                 case 'newVersionCheck':
@@ -2647,7 +3238,7 @@ class SettingsUI extends UserInterface
                     $this->_template->assign('availableVersion', $systemInfoData['available_version']);
                     $this->_template->assign('newVersion', $newVersion);
                     $this->_template->assign('newVersionNews', NewVersionCheck::getNews());
-                    $templateFile = './modules/settings/NewVersionCheck.tpl';
+                    $templateFile = './modules/settings/NewVersionCheck.php';
                     break;
 
                 case 'passwords':
@@ -2658,7 +3249,7 @@ class SettingsUI extends UserInterface
                         //$this->fatal(ERROR_NO_PERMISSION);
                     }
 
-                    $templateFile = './modules/settings/Passwords.tpl';
+                    $templateFile = './modules/settings/Passwords.php';
                     break;
 
                 case 'localization':
@@ -2671,7 +3262,7 @@ class SettingsUI extends UserInterface
 
                     $this->_template->assign('timeZone', $_SESSION['CATS']->getTimeZone());
                     $this->_template->assign('isDateDMY', $_SESSION['CATS']->isDateDMY());
-                    $templateFile = './modules/settings/Localization.tpl';
+                    $templateFile = './modules/settings/Localization.php';
                     break;
 
                 case 'systemInformation':
@@ -2710,13 +3301,13 @@ class SettingsUI extends UserInterface
                     break;
 
                 default:
-                    $templateFile = './modules/settings/Administration.tpl';
+                    $templateFile = './modules/settings/Administration.php';
                     break;
             }
         }
         else
         {
-            $templateFile = './modules/settings/Administration.tpl';
+            $templateFile = './modules/settings/Administration.php';
 
             /* Load extra settings. */
             $extraSettings = array();
@@ -2740,7 +3331,7 @@ class SettingsUI extends UserInterface
             $this->_template->assign('extraSettings', $extraSettings);
         }
 
-        if (!strcmp($templateFile, './modules/settings/Administration.tpl'))
+        if (!strcmp($templateFile, './modules/settings/Administration.php'))
         {
             // Highlight certain rows of importance based on criteria
             $candidates = new Candidates($this->_siteID);
@@ -2794,13 +3385,13 @@ class SettingsUI extends UserInterface
                     break;
 
                 default:
-                    $templateFile = './modules/settings/AspDownloads.tpl';
+                    $templateFile = './modules/settings/AspDownloads.php';
                     break;
             }
         }
         else
         {
-            $templateFile = './modules/settings/AspDownloads.tpl';
+            $templateFile = './modules/settings/AspDownloads.php';
         }
 
         $this->_template->assign('isFree', $_SESSION['CATS']->isFree());
@@ -3001,7 +3592,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('subActive', 'User Management');
         $this->_template->assign('rs', $rs);
         $this->_template->assign('license', $license);
-        $this->_template->display('./modules/settings/Users.tpl');
+        $this->_template->display('./modules/settings/Users.php');
     }
 
     public function manageProfessional()
@@ -3053,11 +3644,11 @@ class SettingsUI extends UserInterface
                         . 'Re-install PHP with the --enable-soap configuration option.<br /><br />'
                         . 'Please visit http://www.catsone.com for more support options.';
                 }
-                if (!LicenseUtility::validateProfessionalKey($key))
+                /*if (!LicenseUtility::validateProfessionalKey($key))
                 {
                     $message = 'That is not a valid Professional membership key<br /><span style="font-size: 16px; color: #000000;">Please verify that you have the correct key and try again.</span>';
                 }
-                else if (!CATSUtility::changeConfigSetting('LICENSE_KEY', "'" . $key . "'"))
+                else */if (!CATSUtility::changeConfigSetting('LICENSE_KEY', "'" . $key . "'"))
                 {
                     $message = 'Internal Permissions Error<br /><span style="font-size: 12px; color: #000000;">CATS is unable '
                         . 'to write changes to your <b>config.php</b> file. Please change the file permissions or contact us '
@@ -3090,7 +3681,7 @@ class SettingsUI extends UserInterface
     public function onChangePassword()
     {
         /* Bail out if the user is demo. */
-        if ($this->_realAccessLevel == ACCESS_LEVEL_DEMO)
+        if ($this->_realAccessLevel == ACCESS_LEVEL_DEMO || $this->_realAccessLevel == ENABLE_DEMO_MODE)
         {
             $this->fatal(
                 'You are not allowed to change your password.'
@@ -3192,7 +3783,7 @@ class SettingsUI extends UserInterface
             $this->_template->assign('active', $this);
             $this->_template->assign('subActive', 'My Profile');
             $this->_template->assign('errorMessage', join('<br />', $error));
-            $this->_template->display('./modules/settings/MyProfile.tpl');
+            $this->_template->display('./modules/settings/ChangePassword.php');
         }
     }
 
@@ -3279,7 +3870,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('totalPages', $totalPages);
         $this->_template->assign('pager', $loginActivityPager);
         $this->_template->assign('view', $view);
-        $this->_template->display('./modules/settings/LoginActivity.tpl');
+        $this->_template->display('./modules/settings/LoginActivity.php');
     }
 
     /*
@@ -3345,7 +3936,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('subActive', 'Login Activity');
         $this->_template->assign('data', $data);
         $this->_template->assign('revisionRS', $revisionRS);
-        $this->_template->display('./modules/settings/ItemHistory.tpl');
+        $this->_template->display('./modules/settings/ItemHistory.php');
     }
 
     public function wizard_addUser()
@@ -3495,14 +4086,14 @@ class SettingsUI extends UserInterface
                     }
                     else
                     {
-                        if (!LicenseUtility::validateProfessionalKey($key))
+                        /*if (!LicenseUtility::validateProfessionalKey($key))
                         {
                             echo "That is not a valid CATS Professional license key. Please visit "
                                 . "http://www.catsone.com/professional for more information about CATS Professional.\n\n"
                                 . "For a free open-source key, please visit http://www.catsone.com/ and "
                                 . "click on \"Downloads\".";
                             return;
-                        }
+                        }*/
                     }
                 }
 
@@ -3624,13 +4215,13 @@ class SettingsUI extends UserInterface
         if (!isset($_SESSION['CATS']) || empty($_SESSION['CATS']))
         {
             echo 'CATS has lost your session!';
-            return;
+            exit;
         }
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
         {
             echo 'You do not have acess to set the site password.';
-            return;
+            exit;
         }
 
         if (isset($_GET['password']) && !empty($_GET['password'])) $password = $_GET['password'];
@@ -3639,17 +4230,17 @@ class SettingsUI extends UserInterface
         if (strlen($password) < 5)
         {
             echo 'Your password length must be at least 5 characters long.';
-            return;
+            exit;
         }
 
         $users = new Users($this->_siteID);
         if ($users->changePassword($this->_userID, 'cats', $password) != LOGIN_SUCCESS)
         {
             echo 'Cannot change your site password!';
-            return;
+            exit;
         }
 
-        echo 'Ok';
+        echo 'Ok';exit;
     }
 
     public function wizard_email()
@@ -3657,7 +4248,7 @@ class SettingsUI extends UserInterface
         if (!isset($_SESSION['CATS']) || empty($_SESSION['CATS']))
         {
             echo 'CATS has lost your session!';
-            return;
+            exit;
         }
 
         if (isset($_GET['email']) && !empty($_GET['email'])) $email = $_GET['email'];
@@ -3666,13 +4257,13 @@ class SettingsUI extends UserInterface
         if (strlen($email) < 5)
         {
             echo 'Your e-mail address must be at least 5 characters long.';
-            return;
+            exit;
         }
 
         $site = new Users($this->_siteID);
         $site->updateSelfEmail($this->_userID, $email);
 
-        echo 'Ok';
+        echo 'Ok';exit;
     }
 
     public function wizard_siteName()
@@ -3680,13 +4271,13 @@ class SettingsUI extends UserInterface
         if (!isset($_SESSION['CATS']) || empty($_SESSION['CATS']))
         {
             echo 'CATS has lost your session!';
-            return;
+            exit;
         }
         /* Bail out if the user doesn't have SA permissions. */
         if ($this->_realAccessLevel < ACCESS_LEVEL_SA)
         {
             echo 'You do not have permission to change the site name.';
-            return;
+            exit;
         }
 
         if (isset($_GET['siteName']) && !empty($_GET['siteName'])) $siteName = $_GET['siteName'];
@@ -3695,7 +4286,7 @@ class SettingsUI extends UserInterface
         if ($siteName == 'default_site' || strlen($siteName) <= 0)
         {
             echo 'That is not a valid site name. Please choose a different one.';
-            return;
+            exit;
         }
 
         $site = new Site($this->_siteID);
@@ -3711,7 +4302,7 @@ class SettingsUI extends UserInterface
 
         $_SESSION['CATS']->setSiteName($siteName);
 
-        echo 'Ok';
+        echo 'Ok';exit;
     }
 
     public function wizard_import()
@@ -3833,7 +4424,7 @@ class SettingsUI extends UserInterface
         $this->_template->assign('questionnaireID', $questionnaireID);
         $this->_template->assign('active', $this);
         $this->_template->assign('subActive', '');
-        $this->_template->display('./modules/settings/CareerPortalQuestionnaire.tpl');
+        $this->_template->display('./modules/settings/CareerPortalQuestionnaire.php');
     }
 
     public function onCareerPortalQuestionnaire()

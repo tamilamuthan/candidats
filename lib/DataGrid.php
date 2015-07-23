@@ -411,7 +411,7 @@ class DataGrid
          }
          if (!$found)
          {
-             die ('Parameter defaultSortBy is not a valid sortable column.');
+             trace ('Parameter defaultSortBy is not a valid sortable column.');
          }
 
          //sortBy - If not set, set to defaultSortBy.  Should equal a sortable column.  If it doesn't, fatal.
@@ -431,7 +431,7 @@ class DataGrid
          }
          if (!$found)
          {
-             die ('Parameter sortBy is not a valid sortable column.');
+             trace ('Parameter sortBy is not a valid sortable column.');
          }
 
          //rangeStart - should be an integer or a character between A and Z.  If not set, set to 0.
@@ -1081,11 +1081,24 @@ class DataGrid
         }
 
         /* Build filter logic. */
+        if (!isset($this->_parameters['filter']))
+        {
+            $this->_parameters['filter']="OwnerID==".$_SESSION["CATS"]->getUserID();
+        }
         if (isset($this->_parameters['filter']))
         {
             $filterStrings = explode(',', $this->_parameters['filter']);
             $columnName = '';
+            foreach ($filterStrings as $index => $data)
+            {
+                if (strpos($data, '=') === false)
+                {
+                    continue;
+                }
 
+                $columnName = urldecode(substr($data, 0, strpos($data, '=')));
+                $argument = urldecode(substr($data, strpos($data, '=') + 2));
+            }
             foreach ($filterStrings as $index => $data)
             {
                 if (strpos($data, '=') === false)
@@ -1328,8 +1341,18 @@ class DataGrid
             //Make sure we do not apply the page results limit to this query.
             $limitSQL = '';
         }
-
-        $whereSQL = implode($whereSQL, ' AND '."\n");
+        $arrIns=explode(":",$this->_instanceName);
+        $dgModule=$arrIns[0];
+        //$whereSQL="";
+        //if($dgModule=="candidates" || $dgModule=="companies" || $dgModule=="contacts" || $dgModule=="joborders")
+        //{
+            $whereSQL=getPermittedRecordWhere($dgModule);
+        //}
+        //trace($whereSQL);
+        if($whereSQL)
+            $whereSQL = implode($whereSQL, ' AND '."\n");
+        else
+            $whereSQL = "";
         $havingSQL = implode($havingSQL, ' AND '."\n");
         $orderSQL = 'ORDER BY ' . $this->_parameters['sortBy'] . ' ' . $this->_parameters['sortDirection'];
 
@@ -1545,6 +1568,8 @@ class DataGrid
      */
     public function draw($noOverflow = false)
     {
+        $arrrTplVar=array();
+        
         /* Get data. */
         $this->_getData();
 
@@ -1571,48 +1596,50 @@ class DataGrid
             {
                 $currentFilterString = '';
             }
-
-            echo '<input type="hidden" id="filterArea'.$md5InstanceName.'" value="', htmlspecialchars($currentFilterString), '" />';
-            echo '<script type="text/javascript">', $this->_getApplyFilterFunctionDefinition(), '</script>';
+            ob_start();
+            $this->_getApplyFilterFunctionDefinition();
+            $filterDefinition=  ob_get_clean();
+            $currentFilterString=htmlspecialchars($currentFilterString);
+            $globalStyle=$this->globalStyle;
             $tableWidth=  strpos($this->_tableWidth, "%")?$this->_tableWidth:($this->_tableWidth + 10)."px";
-            /* This makes the table able to be wider then the displayable area. */
-            echo '<div id="OverflowDiv'.$md5InstanceName.'" style="overflow: auto; width: ' , $tableWidth , '; padding-left: 1px; overflow-y: hidden; overflow-x: none; padding-bottom: expression(this.scrollWidth > this.offsetWidth ? 14 : 4); ' . $this->globalStyle . '">', "\n";
+            $arrrTplVar["md5InstanceName"]=$md5InstanceName;
+            $arrrTplVar["currentFilterString"]=$currentFilterString;
+            $arrrTplVar["filterDefinition"]=$filterDefinition;
+            $arrrTplVar["tableWidth"]=$tableWidth;
+            $arrrTplVar["globalStyle"]=$globalStyle;
         }
-
-        /* IE fix for floating dialog boxes not floating over controls like dropdown lists. */
-        echo '<iframe id="helpShim'.$md5InstanceName.'" src="lib/IFrameBlank.html" scrolling="no" frameborder="0" style="position:absolute; display:none;"></iframe>', "\n";
-
-        /* Definition for the cell which appears to be showing when dragging a column into a new position (not resizing). */
-        echo ('<div class="moveableCell" style="cursor: move; position:absolute; width:100px; border:1px solid gray; display:none; zIndex:10000; filter:alpha(opacity=75);-moz-opacity:.75;opacity:.75; ' . $this->globalStyle . '" id="moveColumn'.$md5InstanceName.'"></div>' . "\n");
-
+        $listStyleBorder="";
+        $listStyleDisplay="";
         /* Actuall definition for the table. */
         if (isset($this->listStyle) && $this->listStyle == true)
         {
-            echo ('<table class="sortable" width="100%" onmouseover="javascript:trackTableHighlight(event)" id="table'.$md5InstanceName.'" style="border:none;">' . "\n");
-            echo ('<thead style="-moz-user-select:none; -khtml-user-select:none; user-select:none; display:none; ' . $this->globalStyle . '">' . "\n");
+            $listStyleBorder=" style='border:none;'";
+            $listStyleDisplay=" display:none;";
         }
-        else
-        {
-            echo ('<table class="sortable" width="100%" onmouseover="javascript:trackTableHighlight(event)" id="table'.$md5InstanceName.'">' . "\n");
-            echo ('<thead style="-moz-user-select:none; -khtml-user-select:none; user-select:none; ' . $this->globalStyle . '">' . "\n");
-        }
-        echo ('<tr>' . "\n");
-
+        $arrrTplVar["listStyleBorder"]=$listStyleBorder;
+        $arrrTplVar["listStyleDisplay"]=$listStyleDisplay;
+        
+        $arrHTMLTableData=array();
+        $indexTableData=0;
+        ob_start();
         if (!isset($this->showExportColumn) || $this->showExportColumn)
         {
             /* Column selector icon */ /**/
-            echo ('<th style="width:10px; border-right:1px solid gray; ' . $this->globalStyle . '" align="center" id="cellHideShow'.$md5InstanceName.'"><div style="width:10px;">' . "\n");
-
+            //echo ('<th style="width:10px; border-right:1px solid gray; ' . $this->globalStyle . '" align="center" id="cellHideShow'.$md5InstanceName.'"><div style="width:10px;">' . "\n");
+            $arrHTMLTableData[$indexTableData]["tag"]="th";
+            //$arrHTMLTableData[$indexTableData]["param"]=' style="width:10px; border-right:1px solid gray; ' . $this->globalStyle . '" align="center" id="cellHideShow'.$md5InstanceName.'"';
+            $arrHTMLTableData[$indexTableData]["param"]="class='param1' id='cellHideShow{$md5InstanceName}'";
+            $arrHTMLTableData[$indexTableData]["data"]='<div style="width:10px;">';
             /* Choose column box */
             if (isset($this->showChooseColumnsBox) && $this->showChooseColumnsBox == true)
             {
-                echo ('<a href="javascript:void(0);" id="exportBoxLink'.$md5InstanceName.'" onclick="toggleHideShowControls(\''.$md5InstanceName.'\'); return false;">' . "\n");
-                echo ('<img src="images/tab_add.gif" border="0" alt="" />' . "\n");
-                echo ('</a></div>' . "\n");
+                $arrHTMLTableData[$indexTableData]["data"].='<a href="javascript:void(0);" id="exportBoxLink'.$md5InstanceName.'" onclick="toggleHideShowControls(\''.$md5InstanceName.'\'); return false;">';;
+                $arrHTMLTableData[$indexTableData]["data"].='<img src="images/tab_add.gif" border="0" alt="" />';
+                $arrHTMLTableData[$indexTableData]["data"].='</a></div>';
 
                 /* Dropdown selector to choose which columns are visible. */
-                echo ('<div class="ajaxSearchResults" id="ColumnBox'.$md5InstanceName.'" align="left" onclick="toggleHideShowControls(\''.$md5InstanceName.'\');" style="width:200px; ' . $this->globalStyle . '">' . "\n");
-                echo ('<span style="font-weight:bold; color:#000000;">Show Columns:</span><br/><br />' . "\n");
+                $arrHTMLTableData[$indexTableData]["data"].='<div class="ajaxSearchResults" id="ColumnBox'.$md5InstanceName.'" align="left" onclick="toggleHideShowControls(\''.$md5InstanceName.'\');" style="width:200px; ' . $this->globalStyle . '">';
+                $arrHTMLTableData[$indexTableData]["data"].='<span style="font-weight:bold; color:#000000;">Show Columns:</span><br/><br />';
 
                 /* Contents of dropdown menu. */
                 foreach ($this->_classColumns as $index => $data)
@@ -1634,64 +1661,73 @@ class DataGrid
                             $newParameterArray = $this->_parameters;
                             $newParameterArray['removeColumn'] = $index;
 
-                            echo ('<span style="font-weight:normal;">' . $this->_makeControlLink($newParameterArray) . '<img src="images/checkbox.gif" border="0" alt="" />&nbsp;&nbsp;&nbsp;&nbsp;'. $index . '</a></span><br />' . "\n");
+                            $arrHTMLTableData[$indexTableData]["data"].='<span style="font-weight:normal;">' . $this->_makeControlLink($newParameterArray) . '<img src="images/checkbox.gif" border="0" alt="" />&nbsp;&nbsp;&nbsp;&nbsp;'. $index . '</a></span><br />';
                         }
                         else
                         {
                             $newParameterArray = $this->_parameters;
                             $newParameterArray['addColumn'] = $index;
 
-                            echo ('<span style="font-weight:normal;">' . $this->_makeControlLink($newParameterArray) . '<img src="images/checkbox_blank.gif" border="0" alt="" />&nbsp;&nbsp;&nbsp;&nbsp;'. $index . '</a></span><br />' . "\n");
+                            $arrHTMLTableData[$indexTableData]["data"].='<span style="font-weight:normal;">' . $this->_makeControlLink($newParameterArray) . '<img src="images/checkbox_blank.gif" border="0" alt="" />&nbsp;&nbsp;&nbsp;&nbsp;'. $index . '</a></span><br />';
                         }
                     }
                 }
 
                 /* Single option to reset the column sizes / contents. */
-                echo ('<br />');
+                $arrHTMLTableData[$indexTableData]["data"].='<br />';
                 $newParameterArray = $this->_parameters;
                 $newParameterArray['resetColumns'] = true;
-                echo ('<span style="font-weight:bold;">' . $this->_makeControlLink($newParameterArray) . '<img src="images/checkbox_blank.gif" alt="" border="0" />&nbsp;&nbsp;&nbsp;&nbsp;Reset to Default Columns</a></span><br />' . "\n");
+                $arrHTMLTableData[$indexTableData]["data"].='<span style="font-weight:bold;">' . $this->_makeControlLink($newParameterArray) . '<img src="images/checkbox_blank.gif" alt="" border="0" />&nbsp;&nbsp;&nbsp;&nbsp;Reset to Default Columns</a></span><br />';
 
-                echo ('</div>');
+                $arrHTMLTableData[$indexTableData]["data"].='</div>';
             }
 
             /* Ajax indicator. */
-            echo ('<span style="display:none;" id="ajaxTableIndicator'.$md5InstanceName.'"><img src="images/indicator_small.gif" alt="" /></span>');
+            $arrHTMLTableData[$indexTableData]["data"].='<span style="display:none;" id="ajaxTableIndicator'.$md5InstanceName.'"><img src="images/indicator_small.gif" alt="" /></span>';
 
             /* Selected Export ID's Array */
-            echo ('<script type="text/javascript">exportArray'.$md5InstanceName.' = new Array();</script>');
-
-            echo ('</th>');
+            $arrHTMLTableData[$indexTableData]["data"].='<script type="text/javascript">exportArray'.$md5InstanceName.' = new Array();</script>';
+            
+            echo "<{$arrHTMLTableData[$indexTableData]["tag"]} {$arrHTMLTableData[$indexTableData]["param"]}>{$arrHTMLTableData[$indexTableData]["data"]}</{$arrHTMLTableData[$indexTableData]["tag"]}>";
         }
         else
         {
             /* Ajax indicator. */
-            echo ('<span style="display:none;" id="ajaxTableIndicator'.$md5InstanceName.'"></span>');   
+            echo '<span style="display:none;" id="ajaxTableIndicator'.$md5InstanceName.'"></span>';   
         }
-
+        $indexTableData++;
         /* Column headers */
         foreach ($this->_currentColumns as $index => $data)
         {
             /* Is the column sizable?  If it is, then we need to make a second column to resize that appears to be part of the first column. */
+            $widthvalue='';
             if ((!isset($data['data']['sizable']) || $data['data']['sizable'] == true) &&
                 (isset($this->allowResizing) && $this->allowResizing == true))
             {
                 $sizable = true;
-                $this->_totalColumnWidths += $data['width'] + 1;
+                $widthvalue=$this->_totalColumnWidths += $data['width'] + 1;
+                //$arrHTMLTableData[$indexTableData]["param"]="<class='param2'>";
             }
             else
             {
                 $sizable = false;
-                $this->_totalColumnWidths += $data['width'];
+                $widthvalue=$this->_totalColumnWidths += $data['width'];
+                //$arrHTMLTableData[$indexTableData]["param"]="<class='param3'>";
             }
 
            /* Opening of header cell. */
-           echo ('<th align="left" style="width:'.$data['width'].'px; border-collapse: collapse; ' . $this->globalStyle);
+           //echo ('<th align="left" style="width:'.$data['width'].'px; border-collapse: collapse; ' . $this->globalStyle);
+           $arrHTMLTableData[$indexTableData]["tag"]="th";
+            
+           $arrHTMLTableData[$indexTableData]["param"]="class='param3' width={$widthvalue}";
+           //$arrHTMLTableData[$indexTableData]["param"]=' align="left" style="width:'.$data['width'].'px; border-collapse: collapse; ' . $this->globalStyle;
+            
            $arrKeys=array_keys($this->_currentColumns);
            if (end($arrKeys) != $index && !$sizable)
            {
                    //Uncomment for gray resize bars
-                   echo 'border-right:1px solid gray;';
+                   $arrHTMLTableData[$indexTableData]["param"].="class='param4'";
+                   //$arrHTMLTableData[$indexTableData]["param"].= 'border-right:1px solid gray;';
            }
 
            $newParameterArray = $this->_parameters;
@@ -1704,9 +1740,9 @@ class DataGrid
                 $formatString = '" id="cell%s%s" onmouseover="style.cursor = '
                     . '\'move\'" onmousedown="startMove(\'cell%s%s\', '
                     . '\'table%s\', \'cell%s%s\', \'%s\', \'%s\', \'%s\', '
-                    . '\'moveColumn%s\', \'OverflowDiv%s\', \'%s\', urlDecode(\'%s\'));">';
+                    . '\'moveColumn%s\', \'OverflowDiv%s\', \'%s\', urlDecode(\'%s\'));"';
                 $arrKeys=array_keys($this->_currentColumns);
-                echo sprintf(
+                $arrHTMLTableData[$indexTableData]["param"].= sprintf(
                     $formatString,
                     $md5InstanceName, $index,
                     $md5InstanceName, $index,
@@ -1723,10 +1759,10 @@ class DataGrid
             }
             else
             {
-               echo '" id="cell', $md5InstanceName, $index, '">';
+               $arrHTMLTableData[$indexTableData]["param"].= '" id="cell'.$md5InstanceName.$index.'"';
+               
             }
-
-            echo ('<div id="cell'.$md5InstanceName.$index.'div" style="width:'.$data['width'].'px;">' . "\n");
+            $arrHTMLTableData[$indexTableData]["data"]='<div id="cell'.$md5InstanceName.$index.'div" style="width:'.$data['width'].'px;">';
 
             /* Header cell contents. */
             if (isset($data['data']['pagerNoTitle']) && $data['data']['pagerNoTitle'] == true)
@@ -1772,7 +1808,7 @@ class DataGrid
 
                 if (isset($this->allowSorting) && $this->allowSorting == false)
                 {
-                    echo sprintf(
+                    $arrHTMLTableData[$indexTableData]["data"].= sprintf(
                         '<nobr>%s</nobr>',
                         (!isset($data['data']['columnHeaderText']) ? 
                             $data['name'] : 
@@ -1781,7 +1817,7 @@ class DataGrid
                 }
                 else if (isset($data['data']['columnHeaderText']))
                 {
-                    echo sprintf(
+                    $arrHTMLTableData[$indexTableData]["data"].= sprintf(
                         '%s<nobr>%s%s</nobr></a>',
                         $this->_makeControlLink($newParameterArray),
                         $data['data']['columnHeaderText'],
@@ -1790,7 +1826,7 @@ class DataGrid
                 }
                 else
                 {
-                    echo sprintf(
+                    $arrHTMLTableData[$indexTableData]["data"].= sprintf(
                         '%s<nobr>%s%s</nobr></a>',
                         $this->_makeControlLink($newParameterArray),
                         $data['name'],
@@ -1800,33 +1836,37 @@ class DataGrid
             }
             else
             {
-                echo '<span style="font-weight:bold;"><nobr>',
-                    $data['name'], '</nobr></span>';
+                $arrHTMLTableData[$indexTableData]["data"].= '<span style="font-weight:bold;"><nobr>'.
+                    $data['name'].'</nobr></span>';
             }
 
             /* Draw the closing part of the cell. */
-            echo '</div></th>', "\n";
-
+            $arrHTMLTableData[$indexTableData]["data"].= '</div>';
+            echo "<{$arrHTMLTableData[$indexTableData]["tag"]} {$arrHTMLTableData[$indexTableData]["param"]}>{$arrHTMLTableData[$indexTableData]["data"]}</{$arrHTMLTableData[$indexTableData]["tag"]}>";
+            
             /* If this cell can be resized, make a cell next to it to move around. */
             if ($sizable)
             {
-                $formatString = '<th align="left" class="resizeableCell" '
-                    . 'style="width:5px; border-collapse: collapse; '
-                    . '-moz-user-select: none; -khtml-user-select: none; ' . $this->globalStyle;
+                $indexTableData++;
+                $arrHTMLTableData[$indexTableData]["tag"]="th";
+                //$arrHTMLTableData[$indexTableData]["param"]=' align="left" class="resizeableCell" style="width:5px; border-collapse: collapse; -moz-user-select: none; -khtml-user-select: none; ' . $this->globalStyle;
+                $arrHTMLTableData[$indexTableData]["param"]="class='param5 resizeableCell'";
+                $formatString = '';
                 $arrTmp=array_keys($this->_currentColumns);
                if (end($arrTmp) != $index)
                {
                    //Uncomment for gray resize bars
-                   $formatString .= 'border-right:1px solid gray;';
+                   $arrHTMLTableData[$indexTableData]["param"] .="class='param4'";
+                   //$arrHTMLTableData[$indexTableData]["param"] .= 'border-right:1px solid gray;';
                }
 
                 $formatString .=
                       'user-select: none;" onmouseover="style.cursor = '
                     . '\'e-resize\'" onmousedown="startResize(\'cell%s%s\', '
                     . '\'table%s\', \'cell%s%s\', %s, \'%s\', \'%s\', '
-                    . '\'%s\', \'%s\', this.offsetWidth);">';
+                    . '\'%s\', \'%s\', this.offsetWidth);"';
                 $arrTmp=array_keys($this->_currentColumns);
-                echo sprintf(
+                $formatString= sprintf(
                     $formatString,
                     $md5InstanceName, $index,
                     $md5InstanceName,
@@ -1837,13 +1877,13 @@ class DataGrid
                     $data['name'],
                     implode(',', $cellIndexes)
                 );
-
-                echo '<div class="dataGridResizeAreaInnerDiv"></div></th>', "\n";
+                $arrHTMLTableData[$indexTableData]["param"] .= $formatString;
+                $arrHTMLTableData[$indexTableData]["data"]= '<div class="dataGridResizeAreaInnerDiv"></div>';
+                echo "<{$arrHTMLTableData[$indexTableData]["tag"]} {$arrHTMLTableData[$indexTableData]["param"]} >{$arrHTMLTableData[$indexTableData]["data"]}</{$arrHTMLTableData[$indexTableData]["tag"]}>";
             }
         }
-        echo '</tr>', "\n";
-        echo '</thead>', "\n";
-
+        echo '</thead>';
+        
         /* Table Data */
         foreach ($this->_rs as $rsIndex => $rsData)
         {
@@ -1855,21 +1895,74 @@ class DataGrid
             {
                 echo ('<tr class="' . TemplateUtility::getAlternatingRowClass($rsIndex) . '">' . "\n");
             }
-
+            
             if (!isset($this->showExportColumn) || $this->showExportColumn)
             {
+                $indexTableData++;
+                $arrHTMLTableData[$indexTableData]["tag"]="td";
                 /* Action/Export */
-                echo ('<td style="' . $this->globalStyle . '">');
+                $arrHTMLTableData[$indexTableData]["param"]="class='paramGlobal'";
+                //$arrHTMLTableData[$indexTableData]["param"]=' style="' . $this->globalStyle . '"';
+                $arrHTMLTableData[$indexTableData]["data"]="";
+                //echo ('<td>');
                 if (isset($rsData['exportID']) && isset($this->showExportCheckboxes) && $this->showExportCheckboxes == true)
                 {
-                    echo ('<input type="checkbox" id="checked_' . $rsData['exportID'] . '" name="checked_' . $rsData['exportID'] . '" onclick="addRemoveFromExportArray(exportArray'.$md5InstanceName.', '.$rsData['exportID'].');" />');
+                    $arrHTMLTableData[$indexTableData]["data"]='<input type="checkbox" id="checked_' . $rsData['exportID'] . '" name="checked_' . $rsData['exportID'] . '" onclick="addRemoveFromExportArray(exportArray'.$md5InstanceName.', '.$rsData['exportID'].');" />';
+                    //echo ('<input type="checkbox" id="checked_' . $rsData['exportID'] . '" name="checked_' . $rsData['exportID'] . '" onclick="addRemoveFromExportArray(exportArray'.$md5InstanceName.', '.$rsData['exportID'].');" />');
                 }
-                echo ('</td>');
+                //echo ('</td>');
+                echo "<{$arrHTMLTableData[$indexTableData]["tag"]} {$arrHTMLTableData[$indexTableData]["param"]} >{$arrHTMLTableData[$indexTableData]["data"]}</{$arrHTMLTableData[$indexTableData]["tag"]}>";
             }
 
             /* 1 Column of data */
             foreach ($this->_currentColumns as $index => $data)
             {
+                $indexTableData++;
+                $arrHTMLTableData[$indexTableData]["tag"]="td";
+                // Action/Export 
+                $arrHTMLTableData[$indexTableData]["param"]='';
+                $arrHTMLTableData[$indexTableData]["data"]="";
+                if (isset($data['data']['pagerAlign']))
+                {
+                    $arrHTMLTableData[$indexTableData]["param"]="class='paramGlobal' align='{$data['data']['pagerAlign']}'";
+                    //$arrHTMLTableData[$indexTableData]["param"]=' style="' . $this->globalStyle . '" align="' . $data['data']['pagerAlign'] . '"';
+                }
+                else
+                {
+                    $arrHTMLTableData[$indexTableData]["param"]="class='paramGlobalText'";
+                    //$arrHTMLTableData[$indexTableData]["param"]=' style="' . $this->globalStyle . '" align="left"';
+                }
+
+                if (isset($data['data']['sizable']) && $data['data']['sizable'] == false || (!isset($this->allowResizing) || $this->allowResizing == false))
+                {
+                    $arrHTMLTableData[$indexTableData]["param"]=''; 
+                    //echo ('>');
+                }
+                else
+                {
+                   //$arrHTMLTableData[$indexTableData]["param"]="class='param7'"; 
+                    $arrHTMLTableData[$indexTableData]["param"]=' colspan="2"';
+                    //echo (' colspan="2">');
+                }
+
+                if (!isset($data['data']['pagerRender']))
+                {
+                    $arrHTMLTableData[$indexTableData]["data"]=$rsData[$data['data']['sortableColumn']]; 
+                    //echo ($rsData[$data['data']['sortableColumn']]);
+                }
+                else
+                {
+                    $arrHTMLTableData[$indexTableData]["data"]=eval($data['data']['pagerRender']); 
+                    //echo (eval($data['data']['pagerRender']));
+                }
+
+                //echo ('</td>' . "\n");
+                echo "<{$arrHTMLTableData[$indexTableData]["tag"]} {$arrHTMLTableData[$indexTableData]["param"]} >{$arrHTMLTableData[$indexTableData]["data"]}</{$arrHTMLTableData[$indexTableData]["tag"]}>";
+            }
+            ///priya original
+            /*foreach ($this->_currentColumns as $index => $data)
+            {
+                
                 if (isset($data['data']['pagerAlign']))
                 {
                     echo ('<td valign="top" style="' . $this->globalStyle . '" align="' . $data['data']['pagerAlign'] . '"');
@@ -1900,19 +1993,32 @@ class DataGrid
                 echo ('</td>' . "\n");
             }
 
-            echo ('</tr>' . "\n");
-        }
 
-        echo ('</table>' . "\n");
+            echo ('</tr>' . "\n");*/
+        }
+        
 
         /* If the table is smaller than the maximum width, JS will extend out the last cell so the table takes up all of its allocated space. */$arrTmp=array_keys($this->_currentColumns);
-        echo ('<script type="text/javascript">setTableWidth("table'.$md5InstanceName.'", '.$this->_totalColumnWidths.', document.getElementById(\'cell'.$md5InstanceName.end($arrTmp).'\'), document.getElementById(\'cell'.$md5InstanceName.end($arrTmp).'div\'), "' . ($this->_tableWidth) . '");</script>' . "\n");
-
-        /* Close overflowdiv */
-        if (!$noOverflow)
+        $arrTmpEnd=end($arrTmp);
+        $_tableWidth=$this->_tableWidth;
+        $arrrTplVar["arrTmpEnd"]=$arrTmpEnd;
+        $arrrTplVar["_tableWidth"]=$_tableWidth;
+        $_totalColumnWidths=$this->_totalColumnWidths;
+        $arrrTplVar["_totalColumnWidths"]=$_totalColumnWidths;
+        $arrrTplVar["md5InstanceName"]=$md5InstanceName;
+        $arrrTplVar["globalStyle"]=$this->globalStyle;
+        $content = ob_get_clean();
+        //echo $content;exit;
+        $arrrTplVar["AUIEO_CONTENT"]=$content;
+        if(!$noOverflow)
         {
-            echo ('</div>');
+            $content=loadDoubleLayerTemplate("themes/default/datagrid_overflow.php","themes/default/datagrid_overflow.html",$arrrTplVar);
         }
+        else
+        {
+            $content=loadDoubleLayerTemplate("themes/default/datagrid.php","themes/default/datagrid.html",$arrrTplVar);
+        }
+        echo $content;
     }
     
     /**
@@ -2523,34 +2629,30 @@ class DataGrid
         $newParameterArray['rangeStart'] = 0;
         $newParameterArray['filter'] = '<dynamic>';
         $newParameterArray['filterVisible'] = true;
+        $arrTplVar=array();
+        $arrTplVar["md5InstanceName"]=$md5InstanceName;
 
-        echo 'submitFilter', $md5InstanceName, ' = function(retainFilterVisible) { ';
-
+        
         if (isset($this->ajaxMode) && ($this->ajaxMode))
         {
-           echo sprintf(
-                'populateAjaxPager(\'%s\', \'%s\', \'%s\', document.getElementById(\'filterArea%s\').value);',
-                urlencode($this->_instanceName),
-                urlencode(serialize($newParameterArray)),  //New parameter array
-                $_SESSION['CATS']->getCookie(),            //Cookie
-                $md5InstanceName
-            );
+            $arrTplVar["instanceName"]=urlencode($this->_instanceName);
+            $arrTplVar["newParameter"]=urlencode(serialize($newParameterArray));
+            $arrTplVar["cookie"]=$_SESSION['CATS']->getCookie();
+            $filterDefinition = loadDoubleLayerTemplate("themes/default/datagrid_filter_definition_ajax.php", "themes/default/datagrid_filter_definition_ajax.html", $arrTplVar);
+            echo $filterDefinition;
         }
         else
         {
             $requestString = $this->_getUnrelatedRequestString();
             $requestString .= '&' . urlencode('parameters' . $this->_instanceName) . '=' . urlencode(serialize($newParameterArray));
-            echo 'if (typeof(retainFilterVisible) == \'undefined\') {';
-
-                echo sprintf(
-                    'document.location.href=\'%s?%s&dynamicArgument%s=\' + urlEncode(document.getElementById(\'filterArea%s\').value);',
-                    CATSUtility::getIndexName(),
-                    $requestString,
-                    urlencode($this->_instanceName),
-                    $md5InstanceName
-                );
-
-            echo '} else if (typeof(retainFilterVisible) != \'undefined\' && retainFilterVisible == false) {';
+//'document.location.href=\'%s?%s&dynamicArgument%s=\' + urlEncode(document.getElementById(\'filterArea%s\').value);',
+            $arrTplVar["indexName"]=CATSUtility::getIndexName();
+            $arrTplVar["requestString"]=$requestString;
+            $arrTplVar["instanceName"]=urlencode($this->_instanceName);
+            $filterDefinition = loadDoubleLayerTemplate("themes/default/datagrid_filter_definition.php", "themes/default/datagrid_filter_definition.html", $arrTplVar);
+            echo $filterDefinition;
+            
+            
 
                 $newParameterArray = $this->_parameters;
                 $newParameterArray['rangeStart'] = 0;
@@ -2559,16 +2661,17 @@ class DataGrid
 
                 $requestString = $this->_getUnrelatedRequestString();
                 $requestString .= '&' . urlencode('parameters' . $this->_instanceName) . '=' . urlencode(serialize($newParameterArray));
-
-                echo sprintf(
-                    'document.location.href=\'%s?%s&dynamicArgument%s=\' + urlEncode(document.getElementById(\'filterArea%s\').value);',
+                //'document.location.href=\'%s?%s&dynamicArgument%s=\' + urlEncode(document.getElementById(\'filterArea%s\').value);'
+                /*echo sprintf(
+                    "document.location.href=\'{$indexName}?{$requestString}&dynamicArgument{$instanceName}=\' + urlEncode(document.getElementById(\'filterArea{$md5InstanceName}\').value);",
+                    
                     CATSUtility::getIndexName(),
                     $requestString,
                     urlencode($this->_instanceName),
                     $md5InstanceName
-                );
+                );*/
 
-            echo '} else {';
+            
 
                 $newParameterArray = $this->_parameters;
                 $newParameterArray['rangeStart'] = 0;
@@ -2577,17 +2680,17 @@ class DataGrid
                 $requestString = $this->_getUnrelatedRequestString();
                 $requestString .= '&' . urlencode('parameters' . $this->_instanceName) . '=' . urlencode(serialize($newParameterArray));
 
-                echo sprintf(
-                    'document.location.href=\'%s?%s&dynamicArgument%s=\' + urlEncode(document.getElementById(\'filterArea%s\').value);',
+                /*echo sprintf(
+                    'document.location.href=\'{$indexName}?{$requestString}&dynamicArgument{$instanceName}=\' + urlEncode(document.getElementById(\'filterArea{$md5InstanceName}\').value);',
                     CATSUtility::getIndexName(),
                     $requestString,
                     urlencode($this->_instanceName),
                     $md5InstanceName
                 );
 
-            echo '}';
+            echo '}';*/
         }
-        echo '}';
+        //echo '}';
     }
 
     /**

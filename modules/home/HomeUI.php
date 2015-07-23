@@ -132,7 +132,7 @@ class HomeUI extends UserInterface
         $this->_template->assign('upcomingEventsHTML', $upcomingEventsHTML);
         $this->_template->assign('upcomingEventsFupHTML', $upcomingEventsFupHTML);
         $this->_template->assign('wildCardQuickSearch', '');
-        $this->_template->display('./modules/home/Home.tpl');
+        $this->_template->display('./modules/home/home.php');
     }
 
     public function deleteSavedSearch()
@@ -371,7 +371,7 @@ class HomeUI extends UserInterface
 
         if (!eval(Hooks::get('HOME_QUICK_SEARCH'))) return;
 
-        $this->_template->display('./modules/home/SearchEverything.tpl');
+        $this->_template->display('./modules/home/SearchEverything.php');
     }
 }
 

@@ -37,7 +37,7 @@ include_once('./lib/DatabaseSearch.php');
 include_once('./lib/FileUtility.php');
 include_once('./lib/ExtraFields.php');
 include_once('./lib/Attachments.php');
-include_once('./lib/ParseUtility.php');
+//include_once('./lib/ParseUtility.php');
 include_once('./lib/Import.php');
 
 
@@ -319,7 +319,7 @@ class ImportUI extends UserInterface
 
         $this->_template->assign('active', $this);
         $this->_template->assign('bulk', $bulk);
-        $this->_template->display('./modules/import/Import1.tpl');
+        $this->_template->display('./modules/import/Import1.php');
     }
 
    /*
@@ -1288,7 +1288,7 @@ class ImportUI extends UserInterface
         );
 
         $doc2text = new DocumentToText();
-        $pu = new ParseUtility();
+        /*$pu = new ParseUtility();
         if (LicenseUtility::isParsingEnabled())
         {
             $parsingEnabled = true;
@@ -1296,7 +1296,7 @@ class ImportUI extends UserInterface
         else
         {
             $parsingEnabled = false;
-        }
+        }*/
 
         if ($doc2text->convert($name, $type) === false)
         {
@@ -1310,7 +1310,7 @@ class ImportUI extends UserInterface
         // Decode things like _rATr to @ so the parser can accurately find things
         $contents = DatabaseSearch::fulltextDecode($contents);
 
-        if ($parsingEnabled)
+        /*if ($parsingEnabled)
         {
             switch ($type)
             {
@@ -1323,17 +1323,17 @@ class ImportUI extends UserInterface
             {
                 $contents = str_replace('  ', ' ', $contents);
             }
-        }
+        }*/
 
         $mp['contents'] = $contents;
 
-        if ($parsingEnabled)
+        /*if ($parsingEnabled)
         {
             $parseData = $pu->documentParse($realName, strlen($contents), 'application/text',
                 $contents
             );
             $mp['parse'] = $parseData;
-        }
+        }*/
 
         $mp['success'] = true;
         $_SESSION['CATS_PARSE_TEMP'][] = $mp;
