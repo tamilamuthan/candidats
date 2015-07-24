@@ -1,0 +1,48 @@
+{$_(
+"
+* CandidATS
+* Login
+*
+* Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+* 
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/.
+")}
+<!-- CandidATS_LOGIN -->
+<div id="headerBlock">
+    <span id="mainLogo">CandidATS</span><br />
+    <span id="subMainLogo">Applicant Tracking System</span>
+</div>
+
+<div id="contents">
+{$AUIEO_CONTENT}
+    <div id="footerBlock">
+        <!--<span class="footerCopyright"><?php echo(COPYRIGHT_HTML); ?></span>-->
+        <div>Powered by <a href="http://www.catsone.com/"><strong>CATS</strong></a>.</div>
+    </div>
+</div>
+<script type="text/javascript">
+    initPopUp();
+</script>
+<script type="text/javascript">
+if (navigator.cookieEnabled)
+{
+    var cookieEnabled = true;
+}
+else
+{
+    var cookieEnabled = false;
+}
+
+if (typeof(navigator.cookieEnabled) == "undefined" && !cookieEnabled)
+{
+    document.cookie = 'testcookie';
+    cookieEnabled = (document.cookie.indexOf('testcookie') != -1) ? true : false;
+}
+
+if (!cookieEnabled)
+{
+    showPopWin('index.php?m=login&amp;a=noCookiesModal', 400, 225, null);
+}
+</script>

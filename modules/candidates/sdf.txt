@@ -1,0 +1,16 @@
+select loginname,jobboard, count(wcrmext.resume.candidatesid) as Resume_Opened, sum(case when level>5 then 1 else 0 end) as Resume_shortlisted,sum(case when jobboard='Monster' then logouttime-logintime else 0 end) as duration 
+from wcrm.vtiger_joborders left join wcrm.vtiger_crmentityrel as aa on aa.relcrmid=wcrm.vtiger_joborders.jobordersid 
+left join wcrm.vtiger_salesorder on wcrm.vtiger_salesorder.salesorderid=aa.crmid 
+left join wcrm.vtiger_crmentityrel as bb on bb.relcrmid=wcrm.vtiger_salesorder.salesorderid 
+left join wcrm.vtiger_account on wcrm.vtiger_account.accountid=bb.crmid 
+left join wcrmext.fireuserlog on wcrmext.fireuserlog.joborderid=wcrm.vtiger_joborders.jobordersid 
+left join wcrmext.resume on wcrmext.resume.fireuserlog_id=wcrmext.fireuserlog.id where jobboard='dice' and wcrm.vtiger_account.accountname='cts' 
+
+
+select loginname,jobboard, count(wcrmext.resume.candidatesid) as Resume_Opened, sum(case when level>5 then 1 else 0 end) as Resume_shortlisted,sum(case when jobboard='Monster' then logouttime-logintime else 0 end) as duration from wcrm.vtiger_joborders 
+left join wcrm.vtiger_crmentityrel as aa on aa.relcrmid=wcrm.vtiger_joborders.jobordersid 
+left join wcrm.vtiger_salesorder on wcrm.vtiger_salesorder.salesorderid=aa.crmid 
+left join wcrm.vtiger_crmentityrel as bb on bb.relcrmid=wcrm.vtiger_salesorder.salesorderid 
+left join wcrm.vtiger_account on wcrm.vtiger_account.accountid=bb.crmid 
+left join wcrmext.fireuserlog on wcrmext.fireuserlog.joborderid=wcrm.vtiger_joborders.jobordersid 
+left join wcrmext.resume on wcrmext.resume.fireuserlog_id=wcrmext.fireuserlog.id where loginname='admin' 

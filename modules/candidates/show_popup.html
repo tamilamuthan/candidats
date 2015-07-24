@@ -1,0 +1,156 @@
+{$_(
+"
+* CandidATS
+* Sites Management
+*
+* Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+* 
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/.
+")}
+
+<p class="note">Candidate Details</p>
+{$this->adminHidden}
+<div class="detailsOutside" width="100%">
+    <div style='float:left;width:50%;'>
+<table class="detailsInside" height="100%">
+    <tr>
+        <td class="vertical">Name:</td>
+        <td class="data">
+            <span style="font-weight: bold;" class="{$this->data['titleClass']}">
+                {$this->data['firstName']}
+                            {$this->data['middleName']}
+                            {$this->data['lastName']}
+                            {$this->recordInActive}
+                            {$AUIEO_SINGLE_MENU}
+                            
+                            </span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">E-Mail:</td>
+                    <td class="data">
+                        <a href="mailto:{$this->data['email1']}">
+                            {$this->data['email1']}
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="vertical">2nd E-Mail:</td>
+                    <td class="data">
+                        <a href="mailto:{$this->data['email2']}">
+                            {$this->data['email2']}
+                        </a>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">Home Phone:</td>
+                    <td class="data">{$this->data['phoneHome']}</td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">Cell Phone:</td>
+                    <td class="data">{$this->data['phoneCell']}</td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">Work Phone:</td>
+                    <td class="data">{$this->data['phoneWork']}</td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">Best Time To Call:</td>
+                    <td class="data">{$this->data['bestTimeToCall']}</td>
+                </tr>
+                <tr>
+                    <td class="vertical">Address:</td>
+                    <td class="data">{$AUIEO_ADDRESS}</td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">&nbsp;</td>
+                    <td class="data">
+                        {$this->data['cityAndState']}
+                        {$this->data['zip']}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">Web Site:</td>
+                    <td class="data">
+                        {$AUIEO_WEBSITE}
+                                        </td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">Source:</td>
+                    <td class="data">{$this->data['source']}</td>
+                </tr>
+{$AUIEO_EXTRA_FIELD}
+
+                <tr>
+                    <td class="vertical"></td>
+                    <td class="data"></td>
+                </tr>
+            </table>
+        </div>
+
+        <div  style='float:right;width:50%;'>
+            <table class="detailsInside" height="100%">   
+                        
+                            <tr>
+                                <td class="vertical">Date Available:</td>
+                                <td class="data">{$this->data['dateAvailable']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Current Employer:</td>
+                                <td class="data">{$this->data['currentEmployer']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Key Skills:</td>
+                                <td class="data">{$this->data['keySkills']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Can Relocate:</td>
+                                <td class="data">{$this->data['canRelocate']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Current Pay:</td>
+                                <td class="data">{$this->data['currentPay']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Desired Pay:</td>
+                                <td class="data">{$this->data['desiredPay']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Pipeline:</td>
+                                <td class="data">{$this->data['pipeline']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Submitted:</td>
+                                <td class="data">{$this->data['submitted']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Created:</td>
+                                 <td class="data">{$this->data['dateCreated']} ({$this->data['enteredByFullName']})</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Owner:</td>
+                                <td class="data">{$this->data['ownerFullName']}</td>
+                            </tr>
+                            {$AUIEO_EXTRA_FIELD2}
+                            </table>
+        </div></div>
+{$AUIEO_CONTENT}

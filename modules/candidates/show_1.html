@@ -1,0 +1,189 @@
+{$_(
+"
+* CandidATS
+* Sites Management
+*
+* Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+* 
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/.
+")}
+<script type="text/javascript">
+function detailView()
+{
+    this.record={$AUIEO_JSON_RENDER};
+}
+var arrData={$AUIEO_JSON_DATA};
+arrData["name"]=arrData["first_name"]+" "+arrData["middle_name"]+" "+arrData["last_name"]
+arrData["mailto1"]="mailto:"+arrData["email1"];
+arrData["mailto2"]="mailto:"+arrData["email2"];
+jQuery(document).ready(function ()
+{
+    // Activates knockout.js
+//ko.applyBindings(arrData);
+//ko.applyBindings(new detailView());
+ko.applyBindings(arrData,document.getElementById("previeworiginal"));
+ko.applyBindings(new DetailViewModel(),document.getElementById("preview"));
+});
+// Overall viewmodel for this screen, along with initial state
+function DetailViewModel() {
+    this.id = {$AUIEO_RECORD_ID};
+    this.display = {$AUIEO_JSON_RENDER};
+}
+
+</script>
+<table class="detailsInside" id="preview">
+    <tbody data-bind="foreach: display">
+        <tr>
+            <td class="vertical" data-bind="html: col0"></td>
+            <td class="data" data-bind="html: col1"></td>
+            <td class="vertical" data-bind="html: col2"></td>
+            <td class="data" data-bind="html: col3"></td>
+        </tr>    
+    </tbody>
+</table>
+
+<p class="note">Candidate Details</p>
+{$this->adminHidden}
+<div id="previeworiginal" class="detailsOutside" width="100%">
+    <div style='float:left;width:50%;'>
+<table class="detailsInside" height="100%">
+    <tr>
+        <td class="vertical">Name:</td>
+        <td class="data">
+            <span data-bind="text:name" style="font-weight: bold;" class="{$this->data['titleClass']}"></span>
+            <span>
+                {$this->recordInActive}
+                            {$AUIEO_SINGLE_MENU}
+            </span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">E-Mail:</td>
+                    <td class="data">
+                        <a href="#" data-bind="text:email1,attr:{href:mailto1}">EMail</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="vertical">2nd E-Mail:</td>
+                    <td class="data">
+                        <a href="#" data-bind="text:email2,attr:{href:mailto2}">
+                            EMail2
+                        </a>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">Home Phone:</td>
+                    <td data-bind="text:phone_home" class="data"></td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">Cell Phone:</td>
+                    <td data-bind="text:phone_cell" class="data"></td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">Work Phone:</td>
+                    <td class="data">{$this->data['phone_work']}</td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">Best Time To Call:</td>
+                    <td class="data">{$this->data['best_time_to_call']}</td>
+                </tr>
+                <tr>
+                    <td class="vertical">Address:</td>
+                    <td class="data">{$AUIEO_ADDRESS}</td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">&nbsp;</td>
+                    <td class="data">
+                        {$this->data['cityAndState']}
+                        {$this->data['zip']}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">Web Site:</td>
+                    <td class="data">
+                        {$AUIEO_WEBSITE}
+                                        </td>
+                </tr>
+
+                <tr>
+                    <td class="vertical">Source:</td>
+                    <td class="data">{$this->data['source']}</td>
+                </tr>
+{$AUIEO_EXTRA_FIELD}
+
+                <tr>
+                    <td class="vertical"></td>
+                    <td class="data"></td>
+                </tr>
+            </table>
+        </div>
+
+        <div  style='float:right;width:50%;'>
+            <table class="detailsInside" height="100%">   
+                        
+                            <tr>
+                                <td class="vertical">Date Available:</td>
+                                <td class="data">{$this->data['dateAvailable']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Current Employer:</td>
+                                <td class="data">{$this->data['current_employer']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Key Skills:</td>
+                                <td class="data">{$this->data['key_skills']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Can Relocate:</td>
+                                <td class="data">{$this->data['can_relocate']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Current Pay:</td>
+                                <td class="data">{$this->data['current_pay']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Desired Pay:</td>
+                                <td class="data">{$this->data['desired_pay']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Pipeline:</td>
+                                <td class="data">{$this->data['pipeline']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Submitted:</td>
+                                <td class="data">{$this->data['submitted']}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Created:</td>
+                                 <td class="data">{$this->data['dateCreated']} ({$this->data['enteredByFullName']})</td>
+                            </tr>
+
+                            <tr>
+                                <td class="vertical">Owner:</td>
+                                <td class="data">{$this->data['ownerFullName']}</td>
+                            </tr>
+                            {$AUIEO_EXTRA_FIELD2}
+                            </table>
+        </div></div>
+{$AUIEO_CONTENT}
+</table><div id='addActivityDiv'>
+{$this->accessLevelEdit}
+<img src='images/indicator2.gif' id='addActivityIndicator' alt='' style='visibility: hidden; margin-left: 5px;' height='16' width='16' />
+</div>

@@ -1,0 +1,331 @@
+{$_(
+"
+* CandidATS
+* Roles Management
+*
+* Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+* 
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/.
+")}
+<style>
+.btn {
+    margin-right: 8px;
+}
+
+.angular-ui-tree-handle {
+    background: #f8faff;
+    border: 1px solid #dae2ea;
+    color: #7c9eb2;
+    padding: 10px 10px;
+}
+
+.angular-ui-tree-handle:hover {
+    color: #438eb9;
+    background: #f4f6f7;
+    border-color: #dce2e8;
+}
+
+.angular-ui-tree-placeholder {
+    background: #f0f9ff;
+    border: 2px dashed #bed2db;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+
+.group-title {
+    background-color: #687074 !important;
+    color: #FFF !important;
+}
+
+</style>
+<link rel="stylesheet" href="css/bootstrap.min.css" />
+<link rel="stylesheet" href="js/angular/angular-ui-tree/dist/angular-ui-tree.min.css" />
+<script type="text/javascript" src="js/angular/angular-ui-tree/dist/angular-ui-tree.min.js"></script>
+<!--<script type="text/javascript" src="js/dragtree.js"></script>-->
+
+<script type="text/javascript" src="modules/settings/js/services.js"></script>
+
+<script type="text/javascript">
+  var app = angular.module('treeApp', ['ui.tree']);
+    app.factory("services", objService);
+  app.controller('treeCtrl', function(\$scope, \$rootScope, services) {
+
+    \$scope.removeItem = function(scope) {
+        var isDelete=confirm("Do you want to delete?");
+        if(isDelete==true)
+        {
+            var nodeData = scope.\$modelValue;
+            services.deleteRole(nodeData.id).then(function (returnData)
+            {
+                if(returnData["data"]["status"]=="Success")
+                {
+                    window.location.href = 'index.php?m=settings&a=roles';
+                }                
+            });
+        }
+    };
+
+    \$scope.toggle = function(scope) {
+      scope.toggle();
+    };
+
+    \$scope.moveLastToTheBegginig = function () {
+      var a = \$scope.data.pop();
+      \$scope.data.splice(0,0, a);
+    };
+    
+    \$scope.assignProfile = function (scope)
+    {
+        \$rootScope.loadProfiles(scope.\$modelValue);
+    };
+
+    \$scope.newSubItem = function(scope) {
+        var retVal=prompt("Role Name");
+        if(retVal!="")
+        {
+            var nodeData = scope.\$modelValue;
+            services.insertRole(retVal,nodeData.id).then(function (returnData)
+            {
+                if(returnData["data"]["status"]=="Success")
+                {
+                    nodeData.nodes.push({
+                      id: returnData["data"]["id"],
+                      title: retVal,
+                      nodes: []
+                    });
+                }
+            });
+        }
+    };
+    
+    \$scope.syncRole = function ()
+    {
+        services.syncRole(\$scope.data);
+    }
+
+    var getRootNodesScope = function() {
+      return angular.element(document.getElementById("tree-root")).scope();
+    };
+
+    \$scope.collapseAll = function() {
+      var scope = getRootNodesScope();
+      scope.collapseAll();
+    };
+
+    \$scope.expandAll = function() {
+      var scope = getRootNodesScope();
+      scope.expandAll();
+    };
+
+    \$scope.data = {$AUIEO_ROLES_DATA};
+  });
+  
+  
+  app.controller('listCtrl', function(\$scope, \$rootScope,\$http,services) {
+      \$scope.selectFaIndex = 0;
+    \$scope.SelectedAvailItems = [];
+    \$scope.SelectedSelectedListItems = [];
+    \$scope.SelectedListItems =  {$AUIEO_JSON_PROFILE_ROLE_SELECTED}; //I create this as a multi dimension array to handle the startup
+    //\$scope.AvailableListItems = [[]]; //I create this as a multi dimension array to handle the startup
+    \$scope.test = 'Email Form';
+
+    \$scope.selectFaIndex = \$scope.FaName = {$AUIEO_JSON_PROFILE_SELECT_INDEX};
+    \$scope.DefaultListItems = {$AUIEO_JSON_PROFILE_ROLE};
+    \$scope.AvailableListItems = {$AUIEO_JSON_PROFILE_ROLE_AVAILABLE};
+    
+    //angular.copy(\$scope.DefaultListItems, \$scope.AvailableListItems);
+
+    \$scope.FaChange = function () {
+
+        if (\$scope.SelectedListItems.length < \$scope.AvailableListItems.length) {
+            var x = \$scope.SelectedListItems.length;
+            while (x < \$scope.DefaultListItems.length) {
+                \$scope.SelectedListItems.push([]);
+                x++;
+            }
+        }
+        \$scope.selectFaIndex = \$scope.FaName;
+        \$scope.SelectedSelectedListItems = [];
+        \$scope.SelectedAvailItems = [];
+
+
+
+    };
+    
+    \$scope.selectedProfile = "";
+
+    \$rootScope.loadProfiles=function(profileData)
+    {
+        \$scope.selectFaIndex = \$scope.FaName = profileData["id"];
+        \$scope.selectedProfile = profileData["title"];
+    };
+
+    \$scope.OnAvailableChange = function () {
+
+        \$scope.AvailLength = \$scope.SelectedAvailItems.length;
+
+    };
+
+    \$scope.SearchButtonClick = function () {
+
+
+        \$scope.AvailableListItems = [];
+        \$scope.SelectedListItems = {};
+        \$scope.SelectedSelectedListItems = [];
+        \$scope.SelectedAvailItems = [[]];
+        \$scope.selectFaIndex = \$scope.FaName = "0";
+
+
+        angular.copy(\$scope.DefaultListItems, \$scope.AvailableListItems);
+
+
+    };
+
+    \$scope.btnRight = function () {
+        //move selected.
+        //add to selected and remove the ones that were moved from the source.
+        /*angular.forEach(\$scope.SelectedAvailItems, function (value, key) {
+            for (var i = \$scope.AvailableListItems[\$scope.selectFaIndex].length - 1; i >= 0; i--) {
+                if (\$scope.AvailableListItems[\$scope.selectFaIndex][i].email == value.email) {
+                    if(!(\$scope.SelectedListItems[\$scope.selectFaIndex] && \$scope.SelectedListItems[\$scope.selectFaIndex][0])) \$scope.SelectedListItems[\$scope.selectFaIndex]=[];
+                    \$scope.SelectedListItems[\$scope.selectFaIndex][\$scope.SelectedListItems[\$scope.selectFaIndex].length]=value;
+                    \$scope.AvailableListItems[\$scope.selectFaIndex].splice(i, 1);
+                    jQuery.get("index.php?m=settings&a=profiles&s=assign&role="+\$scope.selectFaIndex+"&profileid="+value.profileid);
+                }
+            }
+        });*/
+        //move selected.
+        var arrSelected=[];
+        angular.forEach(\$scope.SelectedAvailItems, function (value, key) 
+        {
+            var profileid=value["profileid"];
+            var matchingIndex=getMatchingIndex(profileid,\$scope.AvailableListItems[\$scope.selectFaIndex]);
+            \$scope.SelectedListItems[\$scope.selectFaIndex].push(value);
+            \$scope.AvailableListItems[\$scope.selectFaIndex].splice(matchingIndex,1);
+            arrSelected.push(profileid);
+        }, \$scope.SelectedListItems[\$scope.selectFaIndex]);
+        \$scope.SelectedAvailItems = {};
+        services.addProfilesToRole({"profileid":arrSelected,"roleid":\$scope.selectFaIndex});
+    };
+    
+    var getMatchingIndex=function(profileid, elements)
+    {
+        for(var i in elements)
+        {
+            if(elements[i].profileid==profileid) return i;
+        }
+        return -1;
+    };
+
+    \$scope.btnAllRight = function () {
+        //add to selected and remove the ones that were moved from the source.       
+        for (var i = \$scope.AvailableListItems[\$scope.selectFaIndex].length - 1; i >= 0; i--) {
+            if(!(\$scope.SelectedListItems[\$scope.selectFaIndex] && \$scope.SelectedListItems[\$scope.selectFaIndex][0])) \$scope.SelectedListItems[\$scope.selectFaIndex]=[];
+            \$scope.SelectedListItems[\$scope.selectFaIndex][\$scope.SelectedListItems[\$scope.selectFaIndex].length]=\$scope.AvailableListItems[\$scope.selectFaIndex][i];
+            \$scope.AvailableListItems[\$scope.selectFaIndex].splice(i, 1);
+        }
+
+    };
+
+    \$scope.btnLeft = function () {
+        //move selected.
+        var arrSelected=[];
+        angular.forEach(\$scope.SelectedSelectedListItems, function (value, key) 
+        {
+            var profileid=value["profileid"];
+            var matchingIndex=getMatchingIndex(profileid,\$scope.SelectedListItems[\$scope.selectFaIndex]);
+            \$scope.AvailableListItems[\$scope.selectFaIndex].push(value);
+            \$scope.SelectedListItems[\$scope.selectFaIndex].splice(matchingIndex,1);
+            arrSelected.push(profileid);
+        }, \$scope.AvailableListItems[\$scope.selectFaIndex]);
+        \$scope.SelectedSelectedListItems = {};
+        services.deleteProfilesFromRole({"profileid":arrSelected,"roleid":\$scope.selectFaIndex});
+    };
+
+    \$scope.btnAllLeft = function () {
+
+        //move over all items
+        angular.forEach(\$scope.SelectedListItems[\$scope.selectFaIndex], function (value, key) {
+            this.push(value);
+        }, \$scope.AvailableListItems[\$scope.selectFaIndex]);
+
+        //remove the ones that were moved from the source.           
+        for (var i = \$scope.SelectedListItems[\$scope.selectFaIndex].length - 1; i >= 0; i--) {
+            \$scope.SelectedListItems[\$scope.selectFaIndex].splice(i, 1);
+        }
+        \$scope.SelectedSelectedListItems = {};
+
+    };
+  });
+
+</script>
+
+<div style="float:left;width:100%;" ng-app="treeApp">
+    <div  style="float:left;width:40%;" class="container" ng-controller="treeCtrl">
+    <div class="row">
+      <div style="width:100%;" class="col-lg-6">
+        <!-- Nested node template -->
+        <script type="text/ng-template" id="nodes_renderer.html">
+          <div ui-tree-handle class="tree-node tree-node-content">
+            <a class="btn btn-success btn-xs" data-nodrag ng-click="assignProfile(this)"><span class="glyphicon" ng-class="{'glyphicon-chevron-right': collapsed, 'glyphicon-chevron-down': !collapsed}"></span></a>
+            {{node.title}}
+            <a class="pull-right btn btn-danger btn-xs" data-nodrag ng-click="removeItem(this)"><span class="glyphicon glyphicon-remove"></span></a>
+            <a class="pull-right btn btn-primary btn-xs" data-nodrag ng-click="newSubItem(this)" style="margin-right: 8px;"><span class="glyphicon glyphicon-plus"></span></a>
+          </div>
+          <ol ui-tree-nodes="" ng-model="node.nodes" ng-class="{hidden: collapsed}">
+            <li ng-repeat="node in node.nodes" ui-tree-node ng-include="'nodes_renderer.html'">
+            </li>
+          </ol>
+        </script>
+        <div ui-tree id="tree-root">
+          <ol ui-tree-nodes="" ng-model="data">
+            <li ng-repeat="node in data" ui-tree-node ng-include="'nodes_renderer.html'"></li>
+          </ol>
+        </div>
+        <button ng-click="syncRole()">Sync Role</button>
+      </div>
+        <!--<div><pre>{{ data | json }}</pre>
+        </div>-->
+    </div>
+        
+  </div>
+
+    <div style="float:right;" ng-controller="listCtrl">
+<!--{{ AvailableListItems }}<br /><br />
+        {{ SelectedListItems }}<br /><br />-->
+<div style="float:left;">
+    <div>
+    <h1>{{ selectedProfile }}</h1><br />
+    </div>
+    <div>
+            <div style="float:left;background-color:#666699"><span style="margin-left:5px;color:white;background-color:#666699;width:250px;">Available</span>
+                                <br />
+                                <select multiple id="availabelist" size="10" style="width:275px" ng-change="OnAvailableChange()" ng-model="SelectedAvailItems" ng-options="availitem as availitem.email for availitem in AvailableListItems[selectFaIndex] | orderBy:'email'"></select>
+                            </div>
+            <div style="float:left;height:500px;">
+                
+                <input id="btnRight" type="button" value="-->" style="width:50px" ng-click="btnRight()" />
+                                            <br/>
+                                            <input id="btnAllRight" type="button" value="==>" style="width:50px" ng-click="btnAllRight()" />
+                                            <br/>
+                                            <input id="btnAllLeft" type="button" value="<==" style="width:50px" ng-click="btnAllLeft()" />
+                                            <br/>
+                                            <input id="btnLeft" type="button" value="<--" style="width:50px" ng-click="btnLeft()" />
+                
+            </div>
+                            <div style="float:left;background-color:#666699"><span style="margin-left:5px;color:white;background-color:#666699;width:250px;">Selected</span>
+                                <br />
+                                <select multiple id="selectedlist" size="10" style="width:275px" ng-model="SelectedSelectedListItems" ng-options="selitem as selitem.email for selitem in SelectedListItems[selectFaIndex] | orderBy:'email'"></select>
+                            </div>
+            
+    </div>
+    </div>      
+    </div>
+    
+</div>
+
+    

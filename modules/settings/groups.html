@@ -1,0 +1,328 @@
+{$_(
+"
+* CandidATS
+* Roles Management
+*
+* Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+* 
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/.
+")}
+<style>
+        .grid {
+      width: 95%;
+      height: 100%;
+    }
+
+    #gridleft {
+      width: 30%;
+      height: 100%;
+    }
+    
+    #gridright {
+      width: 65%;
+      height: 100%;
+    }
+    </style>
+<style>
+.btn {
+    margin-right: 8px;
+}
+
+.angular-ui-tree-handle {
+    background: #f8faff;
+    border: 1px solid #dae2ea;
+    color: #7c9eb2;
+    padding: 10px 10px;
+}
+
+.angular-ui-tree-handle:hover {
+    color: #438eb9;
+    background: #f4f6f7;
+    border-color: #dce2e8;
+}
+
+.angular-ui-tree-placeholder {
+    background: #f0f9ff;
+    border: 2px dashed #bed2db;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+
+.group-title {
+    background-color: #687074 !important;
+    color: #FFF !important;
+}
+
+</style>
+<link rel="stylesheet" href="css/bootstrap.min.css" />
+<script src="js/angular/angular-touch.js"></script>
+<script src="js/angular/angular-animate.js"></script>
+<!--<script src="http://ui-grid.info/docs/grunt-scripts/csv.js"></script>
+<script src="http://ui-grid.info/docs/grunt-scripts/pdfmake.js"></script>
+<script src="http://ui-grid.info/docs/grunt-scripts/vfs_fonts.js"></script>-->
+<script type="text/javascript" src="js/angular-ui-grid/ui-grid.js"></script>
+<link rel="stylesheet" href="js/angular-ui-grid/ui-grid.css" />
+<!--<script type="text/javascript" src="js/dragtree.js"></script>-->
+
+<script type="text/javascript">
+    var app = angular.module('app', ['ngTouch', 'ui.grid', 'ui.grid.edit', 'ui.grid.selection']);
+    app.factory("services", ['\$http', function(\$http) {
+  var serviceBase = 'api.php?x='
+    var obj = {};
+    obj.getRoles = function(){
+        return \$http.get(serviceBase + 'roles');
+    }
+    obj.getRole = function(roleID){
+        return \$http.get(serviceBase + 'role&id=' + roleID);
+    }
+
+    obj.insertRole = function (rolename,parentid) {
+    return \$http.post(serviceBase + 'insertRole', {rolename:rolename,parentid:parentid}).then(function (results) {
+        return results;
+    });
+	};
+
+	obj.updateRole = function (id,role) {
+	    return \$http.post(serviceBase + 'updateRole', {id:id, role:role}).then(function (status) {
+	        return status.data;
+	    });
+	};
+
+	obj.deleteRole = function (id) {
+	    return \$http.delete(serviceBase + 'deleteRole&id=' + id).then(function (results) {
+	        return results;
+	    });
+	};
+        obj.syncRole = function (syncData)
+        {
+            return \$http.post(serviceBase + 'syncRole', syncData).then(function (results) {
+	        return results;
+	    });
+        };
+        obj.login = function (email,pwd)
+        {
+            return \$http.post(serviceBase + 'login', {email:email, pwd:pwd}).then(function (status) {
+	        return status.data;
+	    });
+        };
+    return obj;   
+}]);
+
+  app.controller('groupList', function (\$scope, \$rootScope, \$http) {
+      
+      \$scope.SelectedListItems = [{}];
+    \$scope.DefaultListItems = [{}];
+    \$scope.AvailableListItems = [{}];
+    
+      \$scope.gridOptions = { 
+    enableRowSelection: true,
+    enableSelectAll: true,
+    selectionRowHeaderWidth: 35,
+    rowHeight: 35,
+    showGridFooter:true
+  };
+  
+  \$scope.selectedProfile="";
+  
+    \$scope.addnew = function ()
+    {
+        var retVal=prompt("Group Name");
+        if(retVal!=null && retVal!="")
+        {
+            \$http.get('index.php?m=settings&a=groups&s=addnew&groupname='+retVal).success(function(id) 
+            {
+                if(id)
+                {
+                    \$scope.gridOptions.data.push({"id":id,"groupname":retVal,"delete":"Delete"});
+                }
+            });
+        }
+    };
+     
+      \$scope.gridOptions.columnDefs = [
+        {name:'id', enableCellEdit: false},
+        {name:'groupname',enableCellEdit:true,type:'string'},
+        {name:'delete',enableCellEdit:false,type:'string'}
+      ];
+      
+       \$scope.gridOptions.onRegisterApi = function(gridApi)
+       {
+            //set gridApi on scope
+            \$scope.gridApi = gridApi;
+            gridApi.edit.on.afterCellEdit(\$scope,function(rowEntity, colDef, newValue, oldValue)
+            {
+                if(newValue!=oldValue)
+                {
+                    \$http.get("index.php?m=settings&a=groups&s=update_cell&recordid="+rowEntity.id+"&cell_data="+newValue+"&old_data="+oldValue);
+                }
+            });
+        };
+        
+        \$scope.gridOptions.appScopeProvider= 
+        {
+            onDblClick : function(row,col) 
+            {
+                if(col["displayName"]=="Delete")
+                {
+                    window.location.assign('index.php?m=settings&a=groups&s=delete&groupid='+row.entity["id"]);
+                }
+                else
+                {
+                    curProfileID=row.entity["id"];
+                    \$http.get('index.php?m=settings&a=groups&s=load_rolesusers&groupid='+row.entity["id"]).success(function(data) 
+                    {
+                        \$scope.SelectedListItems =  data.exist;
+                        \$scope.selectFaIndex = row.entity["id"];
+                        \$scope.selectedProfile = row.entity["groupname"];
+                        \$scope.DefaultListItems = data.default;
+                        \$scope.AvailableListItems = data.notexist;
+                    });
+                }
+            }
+        };
+        \$scope.gridOptions.rowTemplate= "<div ng-dblclick=\"grid.appScope.onDblClick(row,col)\" ng-repeat=\"(colRenderIndex, col) in colContainer.renderedColumns track by col.colDef.name\" class=\"ui-grid-cell\" ng-class=\"{ 'ui-grid-row-header-cell': col.isRowHeader }\" ui-grid-cell ></div>";
+     
+      \$http.get('index.php?m=settings&a=groups&s=load')
+        .success(function(data) {
+          \$scope.gridOptions.data = data;
+        });
+        
+        
+
+    \$scope.test = 'Email Form';
+
+    \$scope.DefaultListItems = \$rootScope.DefaultListItems;
+    \$scope.AvailableListItems = \$rootScope.AvailableListItems;
+    
+    \$rootScope.loadProfiles=function(profileData)
+    {
+        \$scope.selectFaIndex = \$scope.FaName = profileData["id"];
+    };
+
+    /*\$scope.OnAvailableChange = function () {
+
+        \$scope.AvailLength = \$scope.AvailableListItems.length;
+    };*/
+
+    \$scope.SearchButtonClick = function () {
+        \$scope.AvailableListItems = [];
+        \$scope.SelectedListItems = {};
+        \$scope.SelectedSelectedListItems = [];
+        \$scope.SelectedAvailItems = [[]];
+        \$scope.selectFaIndex = \$scope.FaName = "0";
+        angular.copy(\$scope.DefaultListItems, \$scope.AvailableListItems);
+    };
+
+    \$scope.btnRight = function () {
+        //move selected.
+        //add to selected and remove the ones that were moved from the source.
+        angular.forEach(\$scope.SelectedAvailItems, function (value, key) {
+            for (var i = \$scope.AvailableListItems.length - 1; i >= 0; i--) {
+                if (\$scope.AvailableListItems[i].id == value.id) {
+                    if(!(\$scope.SelectedListItems && \$scope.SelectedListItems[0])) \$scope.SelectedListItems=[];
+                    \$scope.SelectedListItems[\$scope.SelectedListItems.length]=value;
+                    \$scope.AvailableListItems.splice(i, 1);
+                    jQuery.get("index.php?m=settings&a=groups&s=assign&group="+\$scope.selectFaIndex+"&id="+value.id+"&type="+value.type);
+                }
+            }
+        });
+        \$scope.SelectedAvailItems = [];
+
+    };
+
+    \$scope.btnAllRight = function () {
+        //add to selected and remove the ones that were moved from the source.       
+        for (var i = \$scope.AvailableListItems.length - 1; i >= 0; i--) {
+            if(!(\$scope.SelectedListItems && \$scope.SelectedListItems[0])) \$scope.SelectedListItems=[];
+            \$scope.SelectedListItems[\$scope.SelectedListItems.length]=\$scope.AvailableListItems[i];
+            \$scope.AvailableListItems.splice(i, 1);
+        }
+
+    };
+
+    \$scope.btnLeft = function () {
+        //remove the ones that were moved from the source container.
+        angular.forEach(\$scope.SelectedSelectedListItems, function (value, key) {
+            for (var i = \$scope.SelectedListItems.length - 1; i >= 0; i--) {
+                if (\$scope.SelectedListItems[i].id == value.id) {
+                    if(!(\$scope.AvailableListItems && \$scope.AvailableListItems[0])) \$scope.AvailableListItems=[];
+                    \$scope.AvailableListItems[\$scope.SelectedListItems.length]=value;
+                    \$scope.SelectedListItems.splice(i, 1);
+                    jQuery.get("index.php?m=settings&a=groups&s=remove&group="+\$scope.selectFaIndex+"&id="+value.id+"&type="+value.type);
+                }
+            }
+        });
+        \$scope.SelectedSelectedListItems = {};
+
+    };
+
+    \$scope.btnAllLeft = function () {
+
+        //move over all items
+        angular.forEach(\$scope.SelectedListItems, function (value, key) {
+            this.push(value);
+        }, \$scope.AvailableListItems);
+
+        //remove the ones that were moved from the source.           
+        for (var i = \$scope.SelectedListItems.length - 1; i >= 0; i--) {
+            \$scope.SelectedListItems.splice(i, 1);
+        }
+        \$scope.SelectedSelectedListItems = {};
+
+    };
+  });
+  
+  
+  /*app.controller('listCtrl', function(\$scope, \$rootScope, services) {
+    
+  });*/
+
+</script>
+
+<div ng-app="app">
+    
+    <div style="float:left;" ng-controller="groupList">
+<div id="gridleft" style="float:left;width:500px;">
+    <input type="button" ng-click="addnew()" value="+" /><strong>Total Display Records:</strong> {{ gridOptions.data.length | number }}<br />
+        <div id="grid1" ui-grid-selection ui-grid="gridOptions" ui-grid-edit class="grid"></div>
+    </div>           
+
+<!--{{ AvailableListItems }}<br /><br />
+        {{ SelectedListItems }}<br /><br />-->
+<div style="float:left;">
+    <div>
+    <h1>{{ selectedProfile }}</h1><br />
+    </div>
+    <div>
+            <div style="float:left;background-color:#666699"><span style="margin-left:5px;color:white;background-color:#666699;width:250px;">Available</span>
+                                <br />
+                                <select multiple id="availabelist" size="10" style="width:275px" ng-model="SelectedAvailItems" ng-options="i as i.email for i in AvailableListItems | orderBy:'email'"></select>
+                            </div>
+            <div style="float:left;height:500px;">
+                
+                <input id="btnRight" type="button" value="-->" style="width:50px" ng-click="btnRight()" />
+                                            <!--<br/>
+                                            <input id="btnAllRight" type="button" value="==>" style="width:50px" ng-click="btnAllRight()" />
+                                            <br/>
+                                            <input id="btnAllLeft" type="button" value="<==" style="width:50px" ng-click="btnAllLeft()" />-->
+                                            <br/>
+                                            <input id="btnLeft" type="button" value="<--" style="width:50px" ng-click="btnLeft()" />
+                
+            </div>
+    
+                            <div style="float:left;background-color:#666699"><span style="margin-left:5px;color:white;background-color:#666699;width:250px;">Selected</span>
+                                <br />
+                                <select multiple id="selectedlist" size="10" style="width:275px" ng-model="SelectedSelectedListItems" ng-options="i as i.email for i  in SelectedListItems | orderBy:'email'"></select>
+                            </div>
+      </div>
+</div>      
+    </div>
+    
+    
+</div>
+
+    

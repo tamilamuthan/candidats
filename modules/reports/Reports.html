@@ -1,0 +1,380 @@
+{$_(
+"
+* CandidATS
+* Candidates
+*
+* Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+* 
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/.
+")}
+<p class="note">Reports</p>
+
+<table border="0" width="100%">
+    <tr>
+        <td width="320">
+            <table class="statisticsTable" width="300">
+                <tr>
+                    <th align="left">Today</th>
+                    <th align="left">&nbsp;&nbsp;</th>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Job Orders</td>
+                    <td align="right">{$this->statisticsData['jobOrdersToday']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Candidates</td>
+                    <td align="right">{$this->statisticsData['candidatesToday']}&nbsp;&nbsp;</td>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Companies</td>
+                    <td align="right">{$this->statisticsData['companiesToday']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showSubmissionReport&amp;period=today" target="_blank">New Submissions</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['submissionsToday']}&nbsp;&nbsp;</td>
+                </tr>
+
+                                            <tr class="evenTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showPlacementReport&amp;period=today" target="_blank">New Placements</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['placementsToday']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="evenTableRow">
+                    <td align="left">New Contacts</td>
+                    <td align="right">{$this->statisticsData['contactsToday']}&nbsp;&nbsp;</td>
+                </tr>
+            </table>
+        </td>
+
+        <td width="320">
+            <table class="statisticsTable" width="300">
+                <tr>
+                    <th align="left">Yesterday</th>
+                    <th align="left">&nbsp;&nbsp;</th>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Job Orders</td>
+                    <td align="right">{$this->statisticsData['jobOrdersYesterday']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Candidates</td>
+                    <td align="right">{$this->statisticsData['candidatesYesterday']}&nbsp;&nbsp;</td>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Companies</td>
+                    <td align="right">{$this->statisticsData['companiesYesterday']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showSubmissionReport&amp;period=yesterday" target="_blank">New Submissions</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['submissionsYesterday']}&nbsp;&nbsp;</td>
+                </tr>
+
+                                            <tr class="evenTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showPlacementReport&amp;period=yesterday" target="_blank">New Placements</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['placementsYesterday']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Contacts</td>
+                    <td align="right">{$this->statisticsData['contactsYesterday']}&nbsp;&nbsp;</td>
+                </tr>
+            </table>
+        </td>
+
+        <td width="320">
+            <table class="statisticsTable" width="300">
+                <tr>
+                    <th align="left">This Week</th>
+                    <th align="left">&nbsp;&nbsp;</th>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Job Orders</td>
+                    <td align="right">{$this->statisticsData['jobOrdersThisWeek']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Candidates</td>
+                    <td align="right">{$this->statisticsData['candidatesThisWeek']}&nbsp;&nbsp;</td>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Companies</td>
+                    <td align="right">{$this->statisticsData['companiesThisWeek']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showSubmissionReport&amp;period=thisWeek" target="_blank">New Submissions</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['submissionsThisWeek']}&nbsp;&nbsp;</td>
+                </tr>
+
+                                            <tr class="evenTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showPlacementReport&amp;period=thisWeek" target="_blank">New Placements</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['placementsThisWeek']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Contacts</td>
+                    <td align="right">{$this->statisticsData['contactsThisWeek']}&nbsp;&nbsp;</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+
+        <td>
+            <table class="statisticsTable" width="300">
+                <tr>
+                    <th align="left">Last Week</th>
+                    <th align="left">&nbsp;&nbsp;</th>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Job Orders</td>
+                    <td align="right">{$this->statisticsData['jobOrdersLastWeek']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Candidates</td>
+                    <td align="right">{$this->statisticsData['candidatesLastWeek']}&nbsp;&nbsp;</td>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Companies</td>
+                    <td align="right">{$this->statisticsData['companiesLastWeek']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showSubmissionReport&amp;period=lastWeek" target="_blank">New Submissions</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['submissionsLastWeek']}&nbsp;&nbsp;</td>
+                </tr>
+
+                                            <tr class="evenTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showPlacementReport&amp;period=lastWeek" target="_blank">New Placements</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['placementsLastWeek']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Contacts</td>
+                    <td align="right">{$this->statisticsData['contactsLastWeek']}&nbsp;&nbsp;</td>
+                </tr>
+            </table>
+        </td>
+
+        <td width="320" valign="top">
+            <table class="statisticsTable" width="300">
+                <tr>
+                    <th align="left">This Month</th>
+                    <th align="left">&nbsp;&nbsp;</th>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Job Orders</td>
+                    <td align="right">{$this->statisticsData['jobOrdersThisMonth']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Candidates</td>
+                    <td align="right">{$this->statisticsData['candidatesThisMonth']}&nbsp;&nbsp;</td>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Companies</td>
+                    <td align="right">{$this->statisticsData['companiesThisMonth']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showSubmissionReport&amp;period=thisMonth" target="_blank">New Submissions</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['submissionsThisMonth']}&nbsp;&nbsp;</td>
+                </tr>
+
+                                            <tr class="evenTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showPlacementReport&amp;period=thisMonth" target="_blank">New Placements</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['placementsThisMonth']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Contacts</td>
+                    <td align="right">{$this->statisticsData['contactsThisMonth']}&nbsp;&nbsp;</td>
+                </tr>
+            </table>
+        </td>
+
+        <td width="320" valign="top">
+            <table class="statisticsTable" width="300">
+                <tr>
+                    <th align="left">Last Month</th>
+                    <th align="left">&nbsp;&nbsp;</th>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Job Orders</td>
+                    <td align="right">{$this->statisticsData['jobOrdersLastMonth']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Candidates</td>
+                    <td align="right">{$this->statisticsData['candidatesLastMonth']}&nbsp;&nbsp;</td>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Companies</td>
+                    <td align="right">{$this->statisticsData['companiesLastMonth']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showSubmissionReport&amp;period=lastMonth" target="_blank">New Submissions</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['submissionsLastMonth']}&nbsp;&nbsp;</td>
+                </tr>
+
+                                            <tr class="evenTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showPlacementReport&amp;period=lastMonth" target="_blank">New Placements</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['placementsLastMonth']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Contacts</td>
+                    <td align="right">{$this->statisticsData['contactsLastMonth']}&nbsp;&nbsp;</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+
+        <td width="320" valign="top">
+            <table class="statisticsTable" width="300">
+                <tr>
+                    <th align="left">This Year</th>
+                    <th align="left">&nbsp;&nbsp;</th>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Job Orders</td>
+                    <td align="right">{$this->statisticsData['jobOrdersThisYear']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Candidates</td>
+                    <td align="right">{$this->statisticsData['candidatesThisYear']}&nbsp;&nbsp;</td>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Companies</td>
+                    <td align="right">{$this->statisticsData['companiesThisYear']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showSubmissionReport&amp;period=thisYear" target="_blank">New Submissions</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['submissionsThisYear']}&nbsp;&nbsp;</td>
+                </tr>
+
+                                            <tr class="evenTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showPlacementReport&amp;period=thisYear" target="_blank">New Placements</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['placementsThisYear']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Contacts</td>
+                    <td align="right">{$this->statisticsData['contactsThisYear']}&nbsp;&nbsp;</td>
+                </tr>
+            </table>
+        </td>
+
+        <td width="320" valign="top">
+            <table class="statisticsTable" width="300">
+                <tr>
+                    <th align="left">Last Year</th>
+                    <th align="left">&nbsp;&nbsp;</th>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Job Orders</td>
+                    <td align="right">{$this->statisticsData['jobOrdersLastYear']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Candidates</td>
+                    <td align="right">{$this->statisticsData['candidatesLastYear']}&nbsp;&nbsp;</td>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">New Companies</td>
+                    <td align="right">{$this->statisticsData['companiesLastYear']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showSubmissionReport&amp;period=lastYear" target="_blank">New Submissions</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['submissionsLastYear']}&nbsp;&nbsp;</td>
+                </tr>
+
+                                            <tr class="evenTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showPlacementReport&amp;period=lastYear" target="_blank">New Placements</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['placementsLastYear']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">New Contacts</td>
+                    <td align="right">{$this->statisticsData['contactsLastYear']}&nbsp;&nbsp;</td>
+                </tr>
+            </table>
+        </td>
+
+        <td width="320" valign="top">
+            <table class="statisticsTable" width="300">
+                <tr>
+                    <th align="left">To Date</th>
+                    <th align="left">&nbsp;&nbsp;</th>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">Total Companies</td>
+                    <td align="right">{$this->statisticsData['totalCompanies']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">Total Candidates</td>
+                    <td align="right">{$this->statisticsData['totalCandidates']}&nbsp;&nbsp;</td>
+                </tr>
+
+                <tr class="evenTableRow">
+                    <td align="left">Total Job Orders</td>
+                    <td align="right">{$this->statisticsData['totalJobOrders']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showSubmissionReport&amp;period=toDate" target="_blank">Total Submissions</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['totalSubmissions']}&nbsp;&nbsp;</td>
+                </tr>
+
+                                            <tr class="evenTableRow">
+                    <td align="left">
+                        <a href="index.php?m=reports&amp;a=showPlacementReport&amp;period=toDate" target="_blank">New Placements</a>
+                    </td>
+                    <td align="right">{$this->statisticsData['totalPlacements']}&nbsp;&nbsp;</td>
+                </tr>
+                <tr class="oddTableRow">
+                    <td align="left">Total Contacts</td>
+                    <td align="right">{$this->statisticsData['totalContacts']}&nbsp;&nbsp;</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>

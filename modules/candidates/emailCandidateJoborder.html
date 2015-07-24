@@ -1,0 +1,98 @@
+{$_(
+"
+* CandidATS
+* Email Management
+*
+* Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+* 
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/.
+")}
+
+<table>
+    <tr>
+        <td width="3%">
+            <img src="images/candidate.gif" width="24" height="24" border="0" alt="Candidates" style="margin-top: 3px;" />&nbsp;
+        </td>
+        <td><h2>Candidates: Send E-mail</h2></td>
+    </tr>
+</table>
+
+<p class="note">Send Candidates E-mail</p>
+<script type="text/javascript">
+/*jQuery(document).ready(function ()
+{
+    ckedit=CKEDITOR.replace( 'emailBody' );
+    jQuery("#titleSelect").change(function ()
+    {
+        var templateid=jQuery("#titleSelect").val();
+        jQuery.ajax({
+            url:"index.php?m=settings&a=ajaxEmailTemplate&templateid="+templateid,
+            beforeSend: function( xhr ) 
+            {
+                ckedit.setData("...loading. Please wait.");
+            },
+            success:function (response)
+            {
+                var objTplVar=JSON.parse(response);
+                ckedit.setData(objTplVar.text);
+                jQuery("#emailSubject").val(objTplVar.emailTemplateTitle);
+            }
+        });
+    });
+});*/
+jQuery(document).ready(function ()
+{
+    ckedit=CKEDITOR.replace( 'emailBody' );
+});
+$(document).ready(function() 
+{
+    jQuery('#emailTo').bind('copy paste cut',function(e) {
+    e.preventDefault(); //disable cut,copy,paste
+    alert('cut,copy & paste options are disabled !!');
+    });
+
+    $('#emailTo').bind('contextmenu', function (e) {
+        e.preventDefault();
+        alert('Right Click is not allowed');
+    }); 
+    
+    jQuery("#titleSelect").change(function ()
+    {
+        templateid=jQuery("#titleSelect").val();
+        if(templateid=="")
+        {
+            loadModule();
+            jQuery("#templatevars").html("<option value=''>- Select -</option>");
+            ckedit.setData("");
+        }
+        else
+        {
+            jQuery.ajax({
+                url:"index.php?m=settings&a=templateVariables&templateID="+templateid,
+                beforeSend: function( xhr ) 
+                {
+                    ckedit.setData("...loading. Please wait.");
+                },
+                success:function (response)
+                {
+                    var objTplVar=JSON.parse(response);
+                    ckedit.setData(objTplVar.text);
+                    jQuery("#emailSubject").val(objTplVar.emailTemplateTitle);
+                    if(objTplVar.disabled==1)
+                    {
+                        jQuery("#useThisTemplate").prop("checked",false)
+                    }
+                    else
+                    {
+                        jQuery("#useThisTemplate").prop("checked",true)
+                    }
+                }
+            });
+        }
+    });
+});
+</script>
+                <br /> <a href="javascript:window.history.go(-2);">Back</a>  
+{$AUIEO_CONTENT}

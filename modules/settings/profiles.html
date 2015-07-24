@@ -1,0 +1,190 @@
+{$_(
+"
+* CandidATS
+* Roles Management
+*
+* Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+* 
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/.
+")}
+<div ng-app="app">
+<style>
+        .grid {
+      width: 95%;
+      height: 100%;
+    }
+
+    #gridleft {
+      width: 30%;
+      height: 100%;
+    }
+    
+    #gridright {
+      width: 65%;
+      height: 100%;
+    }
+    </style>
+<script src="js/angular/angular-touch.js"></script>
+<script src="js/angular/angular-animate.js"></script>
+<!--<script src="http://ui-grid.info/docs/grunt-scripts/csv.js"></script>
+<script src="http://ui-grid.info/docs/grunt-scripts/pdfmake.js"></script>
+<script src="http://ui-grid.info/docs/grunt-scripts/vfs_fonts.js"></script>-->
+<script type="text/javascript" src="js/angular-ui-grid/ui-grid.js"></script>
+<link rel="stylesheet" href="js/angular-ui-grid/ui-grid.css" />
+<script>
+    /**
+     * store current profile ID when profile name clicked and profile details loaded at 2nd grid
+     */
+    var curProfileID=0;
+    var app = angular.module('app', ['ngTouch', 'ui.grid', 'ui.grid.edit', 'ui.grid.selection']);
+     
+    app.controller('MainCtrl', ['\$scope', '\$http', function (\$scope, \$http) {
+      \$scope.gridOptions = { 
+    enableRowSelection: true,
+    enableSelectAll: true,
+    selectionRowHeaderWidth: 35,
+    rowHeight: 35,
+    showGridFooter:true
+  };
+    \$scope.selectedProfile = "";
+    \$scope.addnew = function ()
+    {
+        var retVal=prompt("Profile Name");
+        if(retVal!=null && retVal!="")
+        {
+            \$http.get('index.php?m=settings&a=profiles&s=addnew&profilename='+retVal).success(function(id) 
+            {
+                if(id)
+                {
+                    \$scope.gridOptions.data.push({"id":id,"profilename":retVal});
+                }
+            });
+        }
+    };
+     
+      \$scope.gridOptions.columnDefs = [
+        {name:'id', enableCellEdit: false},
+        {name:'profilename',enableCellEdit:true,type:'string'},
+        {name:'delete',enableCellEdit:false,type:'string'}
+      ];
+      
+       \$scope.gridOptions.onRegisterApi = function(gridApi)
+       {
+            //set gridApi on scope
+            \$scope.gridApi = gridApi;
+            gridApi.edit.on.afterCellEdit(\$scope,function(rowEntity, colDef, newValue, oldValue)
+            {
+                if(newValue!=oldValue)
+                {
+                    \$http.get("index.php?m=settings&a=profiles&s=update_cell&recordid="+rowEntity.id+"&cell_data="+newValue+"&old_data="+oldValue);
+                }
+            });
+        };
+        
+        \$scope.gridOptions.appScopeProvider= 
+        {
+            onDblClick : function(row,col) 
+            {
+                if(col["displayName"]=="Delete")
+                {
+                    window.location.assign('index.php?m=settings&a=profiles&s=delete&profileid='+row.entity["id"]);
+                }
+                else
+                {
+                    curProfileID=row.entity["id"];
+                    \$http.get('index.php?m=settings&a=profiles&s=load_profile&profileid='+row.entity["id"]).success(function(data) 
+                    {
+                        \$scope.gridOptions2.data = data;
+                        \$scope.selectedProfile = row.entity["profilename"];
+                    });
+                }
+            }
+        };
+        \$scope.gridOptions.rowTemplate= "<div ng-dblclick=\"grid.appScope.onDblClick(row,col)\" ng-repeat=\"(colRenderIndex, col) in colContainer.renderedColumns track by col.colDef.name\" class=\"ui-grid-cell\" ng-class=\"{ 'ui-grid-row-header-cell': col.isRowHeader }\" ui-grid-cell ></div>";
+     
+      \$http.get('index.php?m=settings&a=profiles&s=load')
+        .success(function(data) {
+          \$scope.gridOptions.data = data;
+        });
+        
+        
+        \$scope.gridOptions2 = { 
+    enableRowSelection: true,
+    enableSelectAll: true,
+    selectionRowHeaderWidth: 35,
+    rowHeight: 35,
+    showGridFooter:true
+  };
+      \$scope.gridOptions2.columnDefs = [
+        {name:'module', displayName:'Module', enableCellEdit: false},
+        { name: '0', displayName: 'Create', editableCellTemplate: 'ui-grid/dropdownEditor', width: '15%',
+            cellFilter: 'mapOperation', editDropdownValueLabel: 'operationtype', editDropdownOptionsArray: [
+            { id: 0, operationtype :'No' },
+            { id: 1, operationtype :'Yes' }
+          ] },
+        { name: '1', displayName: 'Edit', editableCellTemplate: 'ui-grid/dropdownEditor', width: '15%',
+            cellFilter: 'mapOperation', editDropdownValueLabel: 'operationtype', editDropdownOptionsArray: [
+            { id: 0, operationtype :'No' },
+            { id: 1, operationtype :'Yes' }
+          ] },
+        { name: '2', displayName: 'Preview', editableCellTemplate: 'ui-grid/dropdownEditor', width: '15%',
+            cellFilter: 'mapOperation', editDropdownValueLabel: 'operationtype', editDropdownOptionsArray: [
+            { id: 0, operationtype :'No' },
+            { id: 1, operationtype :'Yes' }
+          ] },
+        { name: '3', displayName: 'Delete', editableCellTemplate: 'ui-grid/dropdownEditor', width: '15%',
+            cellFilter: 'mapOperation', editDropdownValueLabel: 'operationtype', editDropdownOptionsArray: [
+            { id: 0, operationtype :'No' },
+            { id: 1, operationtype :'Yes' }
+          ] },
+        { name: '4', displayName: 'List', editableCellTemplate: 'ui-grid/dropdownEditor', width: '15%',
+            cellFilter: 'mapOperation', editDropdownValueLabel: 'operationtype', editDropdownOptionsArray: [
+            { id: 0, operationtype :'No' },
+            { id: 1, operationtype :'Yes' }
+          ] }
+      ];
+        
+        \$scope.gridOptions2.onRegisterApi = function(gridApi)
+       {
+            //set gridApi on scope
+            \$scope.gridApi = gridApi;
+            gridApi.edit.on.afterCellEdit(\$scope,function(rowEntity, colDef, newValue, oldValue)
+            {
+                if(newValue!=oldValue)
+                {
+                    \$http.get("index.php?m=settings&a=profiles&s=update_permission&module="+rowEntity.module+"&fieldname="+colDef.name+"&cell_data="+newValue+"&old_data="+oldValue+"&profileid="+curProfileID);
+                }
+            });
+        };
+        
+    }]).filter('mapOperation', function() {
+      var genderHash = {
+        0: 'No',
+        1: 'Yes'
+      };
+     
+      return function(input) {
+        if (!input){
+          return 'No';
+        } else {
+          return genderHash[input];
+        }
+      };
+    })
+    ;
+</script>
+
+<div ng-controller="MainCtrl">
+    <div id="gridleft" style="float:left;">
+        <input type="button" ng-click="addnew()" value="+" /><strong>Total Display Records:</strong> {{ gridOptions.data.length | number }}<br />
+        <div id="grid1" ui-grid-selection ui-grid="gridOptions" ui-grid-edit class="grid"></div>
+    </div>
+    <div id="gridright" style="float:right;">
+        <h1>{{ selectedProfile }}</h1><br />
+        <strong>Total Display Records:</strong> {{ gridOptions2.data.length | number }}<br />
+          <div id="grid2" ui-grid-selection ui-grid="gridOptions2" ui-grid-edit class="grid"></div>
+    </div>
+</div>
+</div>
