@@ -1,0 +1,70 @@
+.param1
+{
+     width:10px;
+     border-right:1px solid gray; 
+     font-size:11px; 
+     margin:1px; 
+     padding:1px;
+     text-align:center ;
+}
+.param2
+{
+    text-align:left;
+    border-collapse: collapse;
+    font-size:11px;
+    margin:1px; 
+    padding:1px;
+    
+}
+.param3
+{
+    text-align:left;
+    border-collapse: collapse;
+    font-size:11px;
+    margin:1px; 
+    padding:1px;
+    
+}
+.paramGlobal
+{
+    
+    font-size:11px;
+    margin:1px; 
+    padding:1px;
+    
+}
+.paramGlobalText
+{
+    
+    font-size:11px;
+    margin:1px; 
+    padding:1px;
+    text-align:left;
+}
+.param4
+{
+    border-right:1px solid gray;
+    
+}
+.param5
+{
+    width:5px;
+    border-collapse: collapse; 
+    -moz-user-select: none; 
+    -khtml-user-select: none; 
+    font-size:11px;
+    margin:1px; 
+    padding:1px;
+    text-align:left;
+}
+.param6
+{
+    font-size:11px;
+    margin:1px; 
+    padding:1px;
+    
+}
+.param7
+{
+    colspan:2;
+}

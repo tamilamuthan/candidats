@@ -246,6 +246,4 @@ define('DEFAULT_FROM_EMAIL',"info@auieo.in");
 
 define('DEFAULT_FROM_EMAIL_NAME',"CandidATS");
 
-define('DEVELOPER_MODE"',true);
-
 ?>

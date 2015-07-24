@@ -43,6 +43,7 @@ $coreModules = array(
 /* CATS Version */
 define('CATS_VERSION', '2.0.0 Beta');
 define('CANDIDATS_VERSION', '2.0.0 Beta');
+define('DEVELOPER_MODE',true);
 
 /* Copyright information at bottom of pages. */
 define('COPYRIGHT_HTML', '&copy; 2014 - 2015 Auieo Software Private Limited.');

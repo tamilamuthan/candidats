@@ -1,0 +1,39 @@
+An error has occoured in __BACKUP__.  Line 85 of file 'E:\auieo\project\git\candidats\modules\install\backupDB.php'.
+Script: '/candidats/ajax.php'.
+
+mysql_query() expects parameter 2 to be resource, object given-----------------------------------------------
+
+An error has occoured in __BACKUP__.  Line 85 of file 'E:\auieo\project\git\candidats\modules\install\backupDB.php'.
+Script: '/candidats/ajax.php'.
+
+mysql_query() expects parameter 2 to be resource, object given-----------------------------------------------
+
+An error has occoured in __BACKUP__.  Line 85 of file 'E:\auieo\project\git\candidats\modules\install\backupDB.php'.
+Script: '/candidats/ajax.php'.
+
+mysql_query() expects parameter 2 to be resource, object given-----------------------------------------------
+
+An error has occoured in __BACKUP__.  Line 85 of file 'E:\auieo\project\git\candidats\modules\install\backupDB.php'.
+Script: '/candidats/ajax.php'.
+
+mysql_query() expects parameter 2 to be resource, object given-----------------------------------------------
+
+An error has occoured in __BACKUP__.  Line 85 of file 'E:\auieo\project\git\candidats\modules\install\backupDB.php'.
+Script: '/candidats/ajax.php'.
+
+mysql_query() expects parameter 2 to be resource, object given-----------------------------------------------
+
+An error has occoured in __BACKUP__.  Line 85 of file 'E:\auieo\project\git\candidats\modules\install\backupDB.php'.
+Script: '/candidats/ajax.php'.
+
+mysql_query() expects parameter 2 to be resource, object given-----------------------------------------------
+
+An error has occoured in __BACKUP__.  Line 85 of file 'E:\auieo\project\git\candidats\modules\install\backupDB.php'.
+Script: '/candidats/ajax.php'.
+
+mysql_query() expects parameter 2 to be resource, object given-----------------------------------------------
+
+An error has occoured in __BACKUP__.  Line 886 of file 'E:\auieo\project\git\candidats\lib\ClsNaanalPDO.php'.
+Script: '/candidats/ajax.php'.
+
+Array to string conversion
