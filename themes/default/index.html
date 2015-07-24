@@ -1,0 +1,114 @@
+{$_(
+"
+* CandidATS
+* Default Theme
+*
+* Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+* 
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/.
+")}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>CandidATS - {$pageTitle}</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="icon" href="images/favicon.ico" type="image/x-icon" />
+<link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon" />
+<link rel="alternate" type="application/rss+xml" title="RSS" href="{$indexName}?m=rss" />
+<script src="js/jquery-ui/external/jquery/jquery.js"></script>
+<script>
+    jQuery.noConflict();
+</script>
+<link rel="stylesheet" href="js/jquery-ui/jquery-ui.min.css" />
+<link rel="stylesheet" href="datagrid.css" />
+<script src="js/jquery-ui/jquery-ui.min.js"></script>
+<script src="js/knockout.js"></script>
+<script src="js/knockout.mapping.js"></script>
+<script src="js/angular/angular.js"></script>
+
+<script type="text/javascript" src="js/lib.js{$javascriptAntiCache}"></script>
+<script type="text/javascript" src="js/quickAction.js{$javascriptAntiCache}"></script>
+<script type="text/javascript" src="js/calendarDateInput.js{$javascriptAntiCache}"></script>
+<script type="text/javascript" src="js/submodal/subModal.js{$javascriptAntiCache}"></script>
+<script type="text/javascript">CATSIndexName = "{$indexName}"</script>
+{$AUIEO_PAGE_START}
+<!--[if IE]><link rel="stylesheet" type="text/css" href="ie.css" /><![endif]-->
+<![if !IE]><link rel="stylesheet" type="text/css" href="not-ie.css" /><![endif]>
+</head>
+
+<body style="background: #fff;width: 100%;" border="0" padding="0">
+    <div class="ajaxSearchResults" id="singleQuickActionMenu" align="left" style="width:200px;">
+    </div>
+    <div id="popupMask">&nbsp;</div>
+    <div id="popupContainer">
+        <div id="popupInner">
+            <div id="popupTitleBar">
+                <div id="popupTitle"></div>
+                <div id="popupControls">
+                    <img src="js/submodal/close.gif" alt="X" width="16" height="16" onclick="hidePopWin(false);" />
+                </div>
+            </div>
+
+        <div style="width: 100%; height: 100%; background-color:transparent; display: none;" id="popupFrameDiv"></div>
+
+        <iframe src="js/submodal/loading.html" style="width: 100%; height: 100%; background-color: transparent; display: none;" scrolling="auto" frameborder="0" allowtransparency="true" id="popupFrameIFrame" width="100%" height="100%"></iframe>
+
+        </div>
+    </div>
+    <div id='headerBlock'>
+        <table cellspacing='0' cellpadding='0' style='margin: 0px; padding: 0px; float: left;'>
+            <tr>
+                <td rowspan='2'><img src='{$AUIEO_PREFIX}images/applicationLogo.jpg' border='0' alt='CandidATS Applicant Tracking System' /></td>
+            </tr>
+        </table>
+        <div id='topRight'>
+            <div style='padding-bottom: 8px;'>
+                <a href='{$AUIEO_INDEX_NAME}?m=logout'>
+                    <img src='{$AUIEO_PREFIX}images/tabs/small_logout.jpg' border='0' /> 
+                    Logout
+                </a>
+            </div>
+            <span>{$AUIEO_FULL_NAME}&nbsp;&lt;{$AUIEO_USER_NAME}&gt;&nbsp;({$AUIEO_SITE_NAME})</span>
+            {$ACCESS_LEVEL_SA_GREATER}<br />
+            {$AUIEO_DOWNLOAD_LATEST}
+            {$AUIEO_NOTICE}
+        </div>
+    </div>
+    <div id="header">
+        <ul id="primary">
+        {$_AUIEO_TABS}
+        </ul>
+    </div>
+    <div id="main">
+        <div id='MRUPanel'>
+            <div id='MRUBlock'>
+                {$AUIEO_RECENT}
+            </div>
+
+            <form id='quickSearchForm' action='{$indexName}' method='get' onsubmit='return checkQuickSearchForm(document.quickSearchForm);'>
+                <div id='quickSearchBlock'>
+                    <div style="float:left;color:#777777;font-weight: bold;font-size: 1.5em;padding-left: 1em;margin: 0px;">
+                        {$AUIEO_MODULE_ICON} {$AUIEO_MODULE_CAPTION}</div><div style="float:right;">
+                    {$AUIEO_HAS_USER_CATEGORY}
+                    <input name="quickSearchFor" id="quickSearchFor" class="quickSearchBox" value="{$wildCardString}" />&nbsp;
+                    <input type="submit" name="quickSearch" class="button" value="Go" /></div>
+                </div>
+            </form>
+        </div>
+        <div id="contents">
+            {$AUIEO_ERROR_MSG}<br />
+            {$out}
+        </div>
+    </div>
+    <div class='footerBlock'>
+        <p id='footerText'>CandidATS Version {$AUIEO_CANDIDATS_VERSION}
+             <span id='toolbarVersion'></span>Powered by <a href='http://candidats.auieo.com/'><strong>CandidATS</strong></a> and <a href='http://www.catsone.com/'><strong>CATS</strong></a>.
+        </p>
+        <span id='footerResponse'>Server Response Time: {$AUIEO_LOAD_TIME} seconds.</span><br />
+        <!--<span id='footerResponse'>URL : {$AUIEO_URL}.</span><br />-->
+    </div>
+</body>
+</html>

@@ -1,0 +1,3 @@
+<?php
+$HTML_ENCODING=HTML_ENCODING;
+?>

@@ -1,0 +1,10 @@
+<iframe id='helpShim{$md5InstanceName}' src='lib/IFrameBlank.html' scrolling='no' frameborder='0' style='position:absolute; display:none;'></iframe>
+<div class='moveableCell' style='cursor: move; position:absolute; width:100px; border:1px solid gray; display:none; zIndex:10000; filter:alpha(opacity=75);-moz-opacity:.75;opacity:.75; {$globalStyle}' id='moveColumn{$md5InstanceName}'></div>
+<table class='sortable' width='100%' onmouseover='javascript:trackTableHighlight(event)' id='table{$md5InstanceName}'{$listStyleBorder}>
+    <thead style='-moz-user-select:none; -khtml-user-select:none; user-select:none;{$listStyleDisplay} {$globalStyle}'>
+        <tr>
+            {$AUIEO_CONTENT}
+</table>
+<script type='text/javascript'>
+    setTableWidth('table{$md5InstanceName}', "100%", document.getElementById("cell{$md5InstanceName}{$arrTmpEnd}"), document.getElementById("cell{$md5InstanceName}{$arrTmpEnd}div"), '{$_tableWidth}');
+</script>

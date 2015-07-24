@@ -1,0 +1,16 @@
+submitFilter{$md5InstanceName} = function(retainFilterVisible) 
+{ 
+    if (typeof(retainFilterVisible) == 'undefined') 
+    {
+        document.location.href='{$indexName}?{$requestString}&dynamicArgument{$instanceName}=' + urlEncode(document.getElementById('filterArea{$md5InstanceName}').value);
+    } 
+    else if (typeof(retainFilterVisible) != 'undefined' && retainFilterVisible == false) 
+    { 
+        document.location.href='{$indexName}?{$requestString}&dynamicArgument{$instanceName}=' + urlEncode(document.getElementById('filterArea{$md5InstanceName}').value);
+    } 
+    else 
+    {    
+        document.location.href='{$indexName}?{$requestString}&dynamicArgument{$instanceName}=' + urlEncode(document.getElementById('filterArea{$md5InstanceName}').value);
+    }  
+}
+        
