@@ -368,7 +368,7 @@ if (!isset($this->isPopup)): ?>
             </script>
 
 <?php if (!isset($this->isPopup)): ?>
-            <?php if ($this->accessLevel >= ACCESS_LEVEL_EDIT && !isset($this->frozen)): ?>
+            <?php if ($this->accessLevel >= ACCESS_LEVEL_EDIT && empty($this->frozen)): ?>
                 <a href="#" onclick="showPopWin('<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&amp;a=considerCandidateSearch&amp;jobOrderID=<?php echo($this->jobOrderID); ?>', 820, 550, null); return false;">
                     <img src="images/consider.gif" width="16" height="16" class="absmiddle" alt="add candidate" border="0" />&nbsp;Add Candidate to This Job Order Pipeline
                 </a>
