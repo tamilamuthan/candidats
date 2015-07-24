@@ -1,0 +1,314 @@
+{$_(
+"
+* CandidATS
+* Email Management
+*
+* Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+* 
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/.
+")}
+
+<br />
+
+<style type="text/css">
+
+                                                                                          
+.box, .row-fluid .box 
+{
+    background-color: #FFF;
+    border: 1px solid #CCC;
+    border-radius: 10px;
+    box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
+    padding: 10px;
+    position: relative;
+    text-align: left;
+}
+
+.span8 
+{
+    width: 89%;
+    float: right;
+    margin-top: 20px;
+    margin-left: 1%;
+}
+
+ #contents 
+{
+    background: none repeat scroll 0% 0% #FFF;
+    color: #000;
+    padding: 0px;
+    font: 12px "Open Sans",Helvetica,Arial,sans-serif;
+    margin-bottom: 0px;
+}
+
+.box, .row-fluid .box 
+{
+    text-align: left;
+}
+
+table 
+{
+    border-collapse: collapse;
+    border-spacing: 0px;
+    background-color: transparent;
+    max-width: 100%;
+}
+
+#contents 
+{
+    color: #000;
+    font: 12px "Open Sans",Helvetica,Arial,sans-serif;
+}
+
+.box, .row-fluid .box 
+{
+    text-align: left;
+}
+
+table 
+{
+    border-collapse: collapse;
+    border-spacing: 0px;
+}
+
+#contents 
+{
+    color: #000;
+    font: 12px "Open Sans",Helvetica,Arial,sans-serif;
+}
+
+.box, .row-fluid .box 
+{
+    text-align: left;
+}
+
+          
+
+#contents 
+{
+    color: #000;
+    font: 12px "Open Sans",Helvetica,Arial,sans-serif;
+}
+
+
+
+td 
+{
+    font: 10pt/130% "Open Sans",Helvetica,Arial,sans-serif;
+}
+
+#contents 
+{
+    color: #000;
+}
+
+.box, .row-fluid .box 
+{
+    text-align: left;
+}
+
+element 
+{
+    margin-top: 3px;
+}
+
+
+
+table 
+{
+    border-collapse: collapse;
+    border-spacing: 0px;
+}
+
+element 
+{
+    margin-top: 3px;
+}
+
+
+
+
+
+td.tdVertical 
+{
+    font: 12px "Open Sans",Helvetica,Arial,sans-serif;
+    color: #000;
+    vertical-align: top;
+    width: 120px;
+    background: none repeat scroll 0% 0% #F4F4F4;
+}
+
+.editTable td 
+{
+    border: medium none;
+    padding: 6px 8px;
+}
+
+p.note 
+{
+    margin-top: 0px;
+    margin-bottom: 8px;
+    width: 100%;
+    font: bold 12px/120% Verdana,Tahoma,sans-serif;
+    background-color: #F5F5F5;
+    border: 1px solid #DDD;
+    border-radius: 4px 0px;
+    color: #666;
+    left: 0px;
+    padding: 3px 0px;
+    position: relative;
+    top: -1px;
+}
+
+input[type="submit"]
+{
+    cursor: pointer;
+}
+input[type="submit"]
+{
+    width: auto;
+}
+
+h2 
+{
+    color: #666;
+    font: bold 18px "Open Sans",Helvetica,Arial,sans-serif;
+    margin-bottom: 0px;
+    margin-top: 0px;
+}
+.button 
+{
+    height: 20px;
+    color: #333;
+    font-size: 12px;
+    padding-left: 8px;
+    padding-right: 8px;
+    background: url('images/button_bg.gif') repeat-x scroll 0% 0% #F0F0F0;
+    border: 1px solid #A4A4A4;
+}
+
+input
+{
+    margin-left: 0px;
+}
+
+input
+{
+    font-weight: normal;
+    line-height: 20px;
+    vertical-align: middle;
+}
+
+.editTable td 
+{
+    border: medium none;
+    padding: 6px 8px;
+}
+
+td 
+{
+    font: 10pt/130% "Open Sans",Helvetica,Arial,sans-serif;
+}
+
+table 
+{
+    border-collapse: collapse;
+    border-spacing: 0px;
+}
+
+.box
+{
+    text-align: left;
+}
+
+ 
+</style>
+
+
+
+            <table>
+                <tbody><tr>
+                    <td width="3%">
+                        <img src="images/contact.gif" alt="Contacts" style="margin-top: 3px;" border="0" height="24" width="24">&nbsp;
+                    </td>
+                    <td><h2>Candidates: View E-mail</h2></td>
+                </tr>
+            </tbody></table>
+
+            <p class="note">View Candidates E-mail</p>
+
+            <script type="text/javascript">
+                jQuery(document).ready(function ()
+        {
+            ckedit=CKEDITOR.replace( 'emailBody' );
+        });
+            function load_template(obj)
+            {
+                if(jQuery("#titleSelect").val())
+                {
+                    var title=json_email_template[jQuery("#titleSelect").val()]["title"];
+                    var text=json_email_template[jQuery("#titleSelect").val()]["text"];
+                }
+                else
+                {
+                    var text="";
+                }
+                ckedit.insertText(text);
+            }
+                </script>
+            <script type="text/javascript">
+            var json_email_template={"20":{"title":"Status Changed (Sent to Candidate)","text":"* Auto generated message. Please DO NOT reply *\r\n11-12-2014\r\n\r\nDear  ,\r\n\r\nThis E-Mail is a notification that your status in our database has been changed for the position %JBODTITLE% (%JBODCLIENT%).\r\n\r\nYour previous status was <B>%CANDPREVSTATUS%<\/B>.\r\nYour new status is <B>%CANDSTATUS%<\/B>.\r\n\r\nTake care,\r\n%USERFULLNAME%\r\n%SITENAME%"},"28":{"title":"Candidate Assigned (Sent to Assigned Recruiter)","text":"11-12-2014\r\n\r\nDear %CANDOWNER%,\r\n\r\nThis E-Mail is a notification that a Candidate has been assigned to you.\r\n\r\nCandidate Name:  \r\nCandidate URL: %CANDCATSURL%\r\n\r\nTake care,\r\nCATS \r\n%SITENAME%"},"27":{"title":"Job Order Assigned (Sent to Assigned Recruiter)","text":"11-12-2014\r\n\r\nDear %JBODOWNER%,\r\n\r\nThis E-Mail is a notification that a Job Order has been assigned to you.\r\n\r\nJob Order Title: %JBODTITLE%\r\nJob Order Client: %JBODCLIENT%\r\nJob Order ID: %JBODID%\r\nJob Order URL: %JBODCATSURL%\r\n\r\nTake care,\r\nCATS \r\n%SITENAME%"},"26":{"title":"Contact Assigned (Sent to Assigned Recruiter)","text":"11-12-2014\r\n\r\nDear %CONTOWNER%,\r\n\r\nThis E-Mail is a notification that a Contact has been assigned to you.\r\n\r\nContact Name: %CONTFULLNAME%\r\nContact Client: %CONTCLIENTNAME%\r\nContact URL: %CONTCATSURL%\r\n\r\nTake care,\r\nCATS \r\n%SITENAME%"},"25":{"title":"Client Assigned (Sent to Assigned Recruiter)","text":"11-12-2014\r\n\r\nDear %CLNTOWNER%,\r\n\r\nThis E-Mail is a notification that a Client has been assigned to you.\r\n\r\nClient Name: %CLNTNAME%\r\nClient URL %CLNTCATSURL%\r\n\r\nTake care,\r\nCATS \r\n%SITENAME%"},"30":{"title":"Candidate Application Received (Sent to Candidate using Career Portal)","text":"* This is an auto-generated message. Please do not reply. *\r\n11-12-2014\r\n\r\nDear  ,\r\n\r\nThank you for applying to the %JBODTITLE% position with our online career portal! Your application has been entered into our system and someone will review it shortly.\r\n\r\n--\r\n%SITENAME%"},"31":{"title":"Candidate Application Received (Sent to Owner of Job Order from Career Portal)","text":"11-12-2014\r\n\r\nDear %JBODOWNER%,\r\n\r\nThis e-mail is a notification that a candidate has applied to your job order through the online candidate portal.\r\n\r\nJob Order: %JBODTITLE%\r\nCandidate Name:  \r\nCandidate URL: %CANDCATSURL%\r\nJob Order URL: %JBODCATSURL%\r\n\r\n--\r\nCATS\r\n%SITENAME%"},"32":{"title":"Unsuccesful","text":"Dear  ,\r\nThank you for your interest in the  {Job Title} position at  {Company}.  We have carefully reviewed your application and we regret to inform you that it was not selected for further consideration.\r\nWe wish you every success with your job search. Thank you, again, for your interest in our company.\r\nSincerely,\r\n%SITENAME%"},"34":{"title":"Test New","text":""},"35":{"title":"Test New One","text":"Hi test"}};
+                       
+                </script>
+            <table class="editTable" width="100%">
+                <tbody><tr>
+                    <td>
+                        <form name="emailForm" id="emailForm" action="index.php?m=contacts&amp;a=emailContacts" method="post" onsubmit="return checkEmailForm(document.emailForm);" autocomplete="off" enctype="multipart/form-data">
+                        <input name="postback" id="postback" value="postback" type="hidden">
+                        <input name="idlist" id="idlist" value="%7B%22%22%3A%7B%22id%22%3A%222090%22%2C%22email%22%3A%5Bfalse%5D%7D%7D" type="hidden">
+                        <table>
+                            <tbody>
+                            <tr>
+                                <td class="tdVertical" style="text-align: right;">
+                                    To
+                                </td>
+                                <td class="tdData">
+                                    {$this->recipient}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="tdVertical" style="text-align: right;">
+                                    <label id="emailSubjectLabel" for="emailSubject">Subject</label>
+                                </td>
+                                <td class="tdData">
+                                    {$this->subject}
+                                </td>
+                            </tr>              
+                            <tr>
+                                <td class="tdVertical" style="text-align: right;">
+                                    <label id="emailBodyLabel" for="emailBody">Body</label>
+                                </td>
+                                <td class="tdData">
+                                    {$this->message}
+                                </td>
+                            </tr>
+                            <!--<tr>
+                                <td colspan="2" align="right" valign="top">
+                                    <input tabindex="3" class="button" value="Send E-Mail" type="submit">&nbsp;
+                                    <input tabindex="4" class="button" value="Reset" type="reset">&nbsp;
+                                </td>
+                            </tr>  -->
+                        </tbody></table>
+
+                        </form>
+                                      <a href="javascript:history.back();"> Back </a>
+                        <script type="text/javascript">
+                        document.emailForm.emailSubject.focus();
+                        </script>
+                    </td>
+                </tr>
+            </tbody></table>
+ 
