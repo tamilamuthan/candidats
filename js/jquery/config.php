@@ -1,0 +1,29 @@
+<?php
+$jquery_theme="base";
+$arrJS=array
+(
+    array("source"=>"jquery-1.11.1.js","destination"=>"jquery.js"),
+    array("source"=>"ui/minified/jquery-ui.min.js","destination"=>"jquery-ui.min.js"),
+);
+$arrCSS=array
+(
+    array("source"=>"themes/{$jquery_theme}/jquery-ui.css","destination"=>"jquery-ui.css")
+);
+$arrImage=array
+(
+    array("source"=>"themes/{$jquery_theme}/images/ui-bg_flat_0_aaaaaa_40x100.png","destination"=>"images/ui-bg_flat_0_aaaaaa_40x100.png"),
+    array("source"=>"themes/{$jquery_theme}/images/ui-bg_flat_75_ffffff_40x100.png","destination"=>"images/ui-bg_flat_75_ffffff_40x100.png"),
+    array("source"=>"themes/{$jquery_theme}/images/ui-bg_glass_55_fbf9ee_1x400.png","destination"=>"images/ui-bg_glass_55_fbf9ee_1x400.png"),
+    array("source"=>"themes/{$jquery_theme}/images/ui-bg_glass_65_ffffff_1x400.png","destination"=>"images/ui-bg_glass_65_ffffff_1x400.png"),
+    array("source"=>"themes/{$jquery_theme}/images/ui-bg_glass_75_dadada_1x400.png","destination"=>"images/ui-bg_glass_75_dadada_1x400.png"),
+    array("source"=>"themes/{$jquery_theme}/images/ui-bg_glass_75_e6e6e6_1x400.png","destination"=>"images/ui-bg_glass_75_e6e6e6_1x400.png"),
+    array("source"=>"themes/{$jquery_theme}/images/ui-bg_glass_95_fef1ec_1x400.png","destination"=>"images/ui-bg_glass_95_fef1ec_1x400.png"),
+    array("source"=>"themes/{$jquery_theme}/images/ui-bg_highlight-soft_75_cccccc_1x100.png","destination"=>"images/ui-bg_highlight-soft_75_cccccc_1x100.png"),
+    array("source"=>"themes/{$jquery_theme}/images/ui-icons_222222_256x240.png","destination"=>"images/ui-icons_222222_256x240.png"),
+    array("source"=>"themes/{$jquery_theme}/images/ui-icons_2e83ff_256x240.png","destination"=>"images/ui-icons_2e83ff_256x240.png"),
+    array("source"=>"themes/{$jquery_theme}/images/ui-icons_454545_256x240.png","destination"=>"images/ui-icons_454545_256x240.png"),
+    array("source"=>"themes/{$jquery_theme}/images/ui-icons_888888_256x240.png","destination"=>"images/ui-icons_888888_256x240.png"),
+    array("source"=>"themes/{$jquery_theme}/images/ui-icons_cd0a0a_256x240.png","destination"=>"images/ui-icons_cd0a0a_256x240.png")
+);
+$priority=-1;
+?>
