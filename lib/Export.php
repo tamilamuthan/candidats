@@ -97,26 +97,13 @@ class ExportUtility
                 $candidateIDs
             );
         }
-        $arrList=Projects::getActiveList();
-        $link="";
-        if($arrList)
-        {
-            $link=' | ';
-            $link .= "<select name='projectid' id='projectid'>";
-            $link .= "<option value=''>- Add New -</option>";
-            foreach($arrList as $id=>$projectName)
-            {
-                $link .= "<option value='{$id}'>{$projectName}</option>";
-            }
-            $link .= "</select>".' <a href="#" id="addToProjectBoxLink" onclick="addToProject(); return false;">Add To Project</a>';
-        }
         $menu =
               '<div style="float: left; margin-left: 4px; margin-right: ' . $linkOffset . 'px;">'
             . '<form name="selectAll" action="#">'
             . '<input type="checkbox" name="allBox" title="Select All" onclick="toggleChecksAll();" />'
             . '</form>'
             . '</div>'
-            . '<a href="#" id="exportBoxLink" onclick="showBox(\'ExportBox\'); return false;">Export</a> | <a href="#" id="deleteBoxLink" onclick="deleteSelected(); return false;">Delete</a>'.$link;
+            . '<a href="#" id="exportBoxLink" onclick="showBox(\'ExportBox\'); return false;">Export</a> | <a href="#" id="deleteBoxLink" onclick="deleteSelected(); return false;">Delete</a>';
         if($_REQUEST["m"]=="candidates")
         {
             $menu = $menu . ' | <a href="#" id="addToJoborderBoxLink" onclick="showBox(\'JoborderBox\'); return false;">Add to joborder</a>';
