@@ -19,7 +19,7 @@ class ClsJobOrdersFilter extends ClsNaanalFilter
     }
     public function getFilter()
     {
-        return $this->getNaanalFilter("joborders","index.php");
+        return $this->getNaanalFilter("joborder","index.php");
     }
     protected function on_column_display($field)
     {
