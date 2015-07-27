@@ -172,7 +172,7 @@ function getPagination($href,$totalItems,$currentPage=1,$itemsPerPage=20,$param=
 	$pagination=$first." ".$prev." "."(".$currentPage." of ".$numPage.")"." ".$next." ".$last;
 	return $pagination;
 }
-function getLangVar($_AUIEO_FIELD_NAME,$_AUIEO_FIELD_MODULE)
+function getLangVar($_AUIEO_FIELD_NAME,$_AUIEO_FIELD_MODULE=false)
 {
     static $arrData=array();
     //trace($_AUIEO_FIELD_NAME);
@@ -184,9 +184,9 @@ function getLangVar($_AUIEO_FIELD_NAME,$_AUIEO_FIELD_MODULE)
     if(!$language) $language ="default";
     
     //if($arraData($_AUIEO_FIELD_NAME)=="")
-    include "lang/{$language}/common.php"; //trace($incfile);
+    if(file_exists("lang/{$language}/common.php")) include "lang/{$language}/common.php"; //trace($incfile);
     
-    if(isset($_AUIEO_FIELD_MODULE) && file_exists("modules/{$_AUIEO_FIELD_MODULE}/lang/{$language}/common.php")) include "modules/{$_AUIEO_FIELD_MODULE}/lang/{$language}/common.php";
+    if(!empty(($_AUIEO_FIELD_MODULE)) && file_exists("modules/{$_AUIEO_FIELD_MODULE}/lang/{$language}/common.php")) include "modules/{$_AUIEO_FIELD_MODULE}/lang/{$language}/common.php";
 
     if(isset($$_AUIEO_FIELD_NAME))
     {
