@@ -1,6 +1,6 @@
 <?php
 include_once __DIR__."/PRGUtility.php";
-include_once __DIR__."/PRGUser.php";
+//include_once __DIR__."/PRGUser.php";
 class PRGManagement
 {
     private $objUser=null;

@@ -12,11 +12,11 @@ define("NAANAL_PATH_LIB",$libpath);
 $jslibspath=dirname(__FILE__)."/js/";
 $csslibpath=dirname(__FILE__)."/css/";
 
-include_once(NAANAL_PATH_LIB."ClsNaanalPage.php");
-include_once(NAANAL_PATH_LIB."ClsNaanalValidate.php");
-include_once NAANAL_PATH_LIB."ClsNaanalModule.php";
-include_once NAANAL_PATH_LIB."ClsAuieoModule.php"; 
-include_once NAANAL_PATH_LIB."Config.php"; 
+//include_once(NAANAL_PATH_LIB."ClsNaanalPage.php");
+//include_once(NAANAL_PATH_LIB."ClsNaanalValidate.php");
+//include_once NAANAL_PATH_LIB."ClsNaanalModule.php";
+//include_once NAANAL_PATH_LIB."ClsAuieoModule.php"; 
+//include_once NAANAL_PATH_LIB."Config.php"; 
 define("IS_NAANAL_ADMIN",false);
 
 class ClsNaanalApplication
