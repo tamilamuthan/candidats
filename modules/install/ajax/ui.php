@@ -454,12 +454,9 @@ switch ($action)
         echo '<script type="text/javascript">';
 
         /* Detect date format preferences. */
-        $rs = MySQLQuery('SELECT date_format_ddmmyy FROM site', true);
-        if ($rs)
-        {
-            $record = mysql_fetch_assoc($rs);
-        }
-        else
+        $objDB=DatabaseConnection::getInstance();
+        $record = $objDB->getAssoc('SELECT date_format_ddmmyy FROM site');
+        if (empty($record))
         {
             $record = array();
         }
@@ -793,18 +790,36 @@ switch ($action)
             $schema = file_get_contents('db/upgrade-0.6.x-0.7.0.sql');
             MySQLQueryMultiple($schema);
         }
-        
-        $schema = file_get_contents('db/upgrade-0.7.0-1.3.2.sql');
-        MySQLQueryMultiple($schema);
-        
-        $schema = file_get_contents('db/upgrade-1.3.2-1.4.0.sql');
-        MySQLQueryMultiple($schema);
-        
-        $schema = file_get_contents('db/auieo_fields.sql');
-        MySQLQueryMultiple($schema);
+        $arrEmailMeta=$objDB->getColumnsMeta("SELECT * FROM     email_history");
+        $fieldsEmail = array();
+        foreach ($arrEmailMeta as $meta)
+        {
+            if ($meta)
+            {
+                $fieldsEmail[$meta["name"]] = true;
+            }
+        }
+        if(!isset($fieldsEmail["for_module"]))
+        {
+            $schema = file_get_contents('db/upgrade_0.7.0-1.3.2.sql');
+            MySQLQueryMultiple($schema);
+        }
+        if (!isset($tables['auieo_fields']))
+        {
+            $schema = file_get_contents('db/upgrade-1.3.2-1.4.0.sql');
+            MySQLQueryMultiple($schema);
+            $schema = file_get_contents('db/auieo_fields.sql');
+            MySQLQueryMultiple($schema);
+        }
         
         $schema = file_get_contents('db/upgrade_1.4.0-2.1.0.sql');
         MySQLQueryMultiple($schema);
+        
+        if(file_exists("db/customization/customize-patch_1.4.0-2.1.0.sql"))
+        {
+            $schema = file_get_contents('db/customization/customize-patch_1.4.0-2.1.0.sql');
+            MySQLQueryMultiple($schema);
+        }
         
         if(file_exists("db/customization/customize_1.4.0-2.1.0.sql"))
         {
@@ -955,6 +970,11 @@ switch ($action)
         if(!isset($tables["auieo_uitype"]))
         {
             $schema = file_get_contents('db/upgrade_1.4.0-2.1.0.sql');
+            MySQLQueryMultiple($schema);
+        }
+        if(file_exists("db/customization/customize-patch_1.4.0-2.1.0.sql"))
+        {
+            $schema = file_get_contents('db/customization/customize-patch_1.4.0-2.1.0.sql');
             MySQLQueryMultiple($schema);
         }
         if(file_exists("db/customization/customize_1.4.0-2.1.0.sql"))
