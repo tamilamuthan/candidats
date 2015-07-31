@@ -972,9 +972,9 @@ switch ($action)
             $schema = file_get_contents('db/upgrade_1.4.0-2.1.0.sql');
             MySQLQueryMultiple($schema);
         }
-        if(file_exists("db/customization/customize-patch_1.4.0-2.1.0.sql"))
+        if(file_exists("db/upgrade-patch_1.4.0-2.1.0.sql"))
         {
-            $schema = file_get_contents('db/customization/customize-patch_1.4.0-2.1.0.sql');
+            $schema = file_get_contents('db/upgrade-patch_1.4.0-2.1.0.sql');
             MySQLQueryMultiple($schema);
         }
         if(file_exists("db/customization/customize_1.4.0-2.1.0.sql"))
