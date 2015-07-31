@@ -186,7 +186,7 @@ function getLangVar($_AUIEO_FIELD_NAME,$_AUIEO_FIELD_MODULE=false)
     //if($arraData($_AUIEO_FIELD_NAME)=="")
     if(file_exists("lang/{$language}/common.php")) include "lang/{$language}/common.php"; //trace($incfile);
     
-    if(!empty(($_AUIEO_FIELD_MODULE)) && file_exists("modules/{$_AUIEO_FIELD_MODULE}/lang/{$language}/common.php")) include "modules/{$_AUIEO_FIELD_MODULE}/lang/{$language}/common.php";
+    if(!empty($_AUIEO_FIELD_MODULE) && file_exists("modules/{$_AUIEO_FIELD_MODULE}/lang/{$language}/common.php")) include "modules/{$_AUIEO_FIELD_MODULE}/lang/{$language}/common.php";
 
     if(isset($$_AUIEO_FIELD_NAME))
     {

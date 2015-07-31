@@ -76,9 +76,11 @@ class Site
         $siteID=$this->_db->getLastInsertID();
         
         $date_created=date("Y-m-d H:i:s");
-        $sql="insert into extra_field_settings (field_name,site_id,date_created,data_item_type,extra_field_type,extra_field_options,position) (select field_name,{$siteID},'{$date_created}',data_item_type,extra_field_type,extra_field_options,position from extra_field_settings where site_id={$modelSite})";
-        $this->_db->query($sql);
-        
+		if(is_numeric($modelSite))
+		{
+			$sql="insert into extra_field_settings (field_name,site_id,date_created,data_item_type,extra_field_type,extra_field_options,position) (select field_name,{$siteID},'{$date_created}',data_item_type,extra_field_type,extra_field_options,position from extra_field_settings where site_id={$modelSite})";
+			$this->_db->query($sql);
+        }
         $objUser=new Users($siteID);
         $objUser->add("Administrator", "CandidATS", "", "admin", "candidats", 500);
 
