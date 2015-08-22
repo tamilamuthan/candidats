@@ -1,0 +1,1 @@
+<?php echo $AUIEO_TEMPLATE_CONTENT; ?>

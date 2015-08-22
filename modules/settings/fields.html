@@ -1,0 +1,98 @@
+{$_(
+"
+* CandidATS
+* Sites Management
+*
+* Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+* 
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/.
+")}
+<script type="text/javascript">
+var data_item_type=100
+jQuery(document).ready(function ()
+{
+    loadFields();
+});
+// Overall viewmodel for this screen, along with initial state
+function DetailViewModel() {
+    this.data={$AUIEO_JSON_RENDER};
+    this.display = this.data[100];
+    this.loadDisplay=function (dataitemtype)
+    {
+        this.display=this.data[dataitemtype];
+    };
+}
+function loadFieldsModule()
+{
+    var objModule={$AUIEO_JSON_FIELD_MODULE};
+    data_item_type=jQuery("#module").val();
+    window.location.href = "index.php?m=settings&a=fields&fieldmodule="+objModule[data_item_type];
+}
+function loadFields()
+{
+    data_item_type=jQuery("#module").val();
+    var objModel = new DetailViewModel();
+    objModel.loadDisplay(data_item_type);
+    var table='<table style="width:100%;" class="detailsInside" id="preview">\
+    <thead>\
+    <tr>\
+            <th style="width:30%;">Field Name</th>\
+            <th class="data">Show</th>\
+            <th class="data">Read Only</th>\
+            <th class="data">Move Up</th>\
+            <th class="data">Move Down</th>\
+            <th class="data">Delete</th>\
+        </tr>\
+        </thead>\
+<tbody data-bind="foreach: display">\
+        <tr>\
+            <td style="width:30%;" class="vertical" data-bind="text: col0">Column 1</td>\
+            <td style="text-align:center;" class="data" data-bind="html: col1">Column 2</td>\
+            <td style="text-align:center;" style="text-align:center;" class="data" data-bind="html: col2">Column 3</td>\
+            <td style="text-align:center;" class="data" data-bind="html: col3">Column 4</td>\
+            <td style="text-align:center;" class="data" data-bind="html: col4">Column 5</td>\
+            <td style="text-align:center;" class="data" data-bind="html: col5">Column 6</td>\
+        </tr>\
+    </tbody>\
+</table>';
+        jQuery("#container").html(table);
+        ko.applyBindings(objModel,document.getElementById("preview"));
+}
+function updateField(modulename,fieldName,obj)
+{
+    if(obj.checked)
+    {
+        jQuery.get("index.php?m=settings&modulename="+modulename+"&a=updateField&checked=1&field_name="+fieldName);
+    }
+    else
+    {
+        jQuery.get("index.php?m=settings&modulename="+modulename+"&a=updateField&checked=0&field_name="+fieldName);
+    }
+}
+function updateFieldReadonly(modulename,fieldName,obj)
+{
+    if(obj.checked)
+    {
+        jQuery.get("index.php?m=settings&modulename="+modulename+"&a=updateFieldReadonly&checked=1&field_name="+fieldName);
+    }
+    else
+    {
+        jQuery.get("index.php?m=settings&modulename="+modulename+"&a=updateFieldReadonly&checked=0&field_name="+fieldName);
+    }
+}
+function showaddnew()
+{
+    jQuery("<form action='index.php?m=settings&a=fields'>\
+            <input type='hidden' name='data_item_type' value='"+jQuery("#module").val()+"' /><input type='hidden' name='m' value='settings' /><input type='hidden' name='a' value='fields' /><input type='hidden' name='s' value='addnewfield' /><table>\
+    <tr><td>Field Name</td><td><input type='text' name='fieldname' /></td><td>At least 3 characters</td></tr>\
+    <tr><td>Field Type</td><td><select name='uitype'>{$AUIEO_NEW_FIELD}</select></td><td></td></tr>\
+     <tr><td colspan='3' style='text-align:center'><input type='submit' value='Add Field' /></td></tr>\
+       </table></form>").dialog({modal: true,minWidth: 400});
+}
+</script>
+<table><tr><td><b>Field Module</b>: {$AUIEO_FIELD_MODULE}</td><td> | </td><td><input type="button" onclick="showaddnew();" value="+" /></td></tr></table>
+<hr style="height:1px;" />
+<div id="container">
+</div>
