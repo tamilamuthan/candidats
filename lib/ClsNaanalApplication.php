@@ -181,6 +181,7 @@ class ClsNaanalApplication
     public static function getControllerName($module)
     {
         static $arrNaanalController=array();
+        Logger::getLogger("AuieoATS")->info("ClsNaanalApplication:getControllerName entry");
         if(!isset($arrNaanalController[$module]))
         {
             $naanal_module_controller=_AuieoHook("module_controller_name");
@@ -193,7 +194,9 @@ class ClsNaanalApplication
                 $arrNaanalController[$module]="Cls".ucfirst($module);
             }
         }
-        return $arrNaanalController[$module];
+        $objController = $arrNaanalController[$module];
+        Logger::getLogger("AuieoATS")->info("ClsNaanalApplication:getControllerName exit");
+        return $objController;
     }
     public static function getWrapperName($module)
     {
@@ -201,6 +204,7 @@ class ClsNaanalApplication
     }
     public static function loadController($module)
     {
+        Logger::getLogger("AuieoATS")->info("ClsNaanalApplication:loadController entry");
         static $arrControllerLoaded=array();
         if(!isset($arrControllerLoaded[$module]))
         {
@@ -236,10 +240,13 @@ class ClsNaanalApplication
                 include_once $arrControllerLoaded[$module];
             }
         }
-        if(isset($arrControllerLoaded[$module]))
+        if(isset($controller))
         {
-            return new $controller();
+            $objController = new $controller();
+            Logger::getLogger("AuieoATS")->info("ClsNaanalApplication:loadController exit on module controller not loaded");
+            return $objController;
         }
+        Logger::getLogger("AuieoATS")->info("ClsNaanalApplication:loadController exit");
     }
     public static function loadClass($class)
     {
@@ -593,6 +600,7 @@ class ClsNaanalApplication
     }
     public static function getAbsModulePath($module,$action="create")
     {
+        Logger::getLogger("AuieoATS")->info("ClsNaanalApplication:getAbsModulePath entry");
         $modulePath=self::__renderModulePath($module);
         $controller=self::getControllerName($module);
         $wrapper=self::getWrapperName($module);
@@ -624,6 +632,7 @@ class ClsNaanalApplication
         {
             $modulePath=false;
         }
+        Logger::getLogger("AuieoATS")->info("ClsNaanalApplication:getAbsModulePath exit");
         return $modulePath;
     }
     public static function getThemePath($theme=false)

@@ -7,23 +7,28 @@ class PRGManagement
     private $permission=null;
     public function __construct() 
     {
+        Logger::getLogger("AuieoATS")->info("PRGManagement:__construct entry");
         $this->objUser=Users::getInstance();
         if($this->objUser->getUserInfo("user_id")>0)
         {
             $this->permission=$this->objUser->getPermission();
         }
+        Logger::getLogger("AuieoATS")->info("PRGManagement:__construct exit");
     }
     public static function getInstance($isRefresh=false)
     {
+         Logger::getLogger("AuieoATS")->info("PRGManagement:getInstance entry");
         static $objManagement=null;
         if(is_null($objManagement) || $isRefresh)
         {
             $objManagement=new PRGManagement();
         }
+        Logger::getLogger("AuieoATS")->info("PRGManagement:getInstance exit");
         return $objManagement;
     }
     public function isModulePermitted($module=false)
     {
+        Logger::getLogger("AuieoATS")->info("PRGManagement:isModulePermitted entry");
         if($module===false && isset($_REQUEST["m"]))
         {
             $module=$_REQUEST["m"];
@@ -31,7 +36,11 @@ class PRGManagement
         /**
          * if module not set, it is home module. It is allowed
          */
-        if($module===false) return true;
+        if($module===false) 
+        {
+            Logger::getLogger("AuieoATS")->info("PRGManagement:isModulePermitted exit on module false");
+            return true;
+        }
         $data_item_type=0;
         $actionMapping=array();
         
@@ -89,7 +98,11 @@ class PRGManagement
         /**
          * if $data_item_type is 0, it indicates other modules. so it is allowed
          */
-        if($data_item_type<=0) return true;
+        if($data_item_type<=0) 
+        {
+            Logger::getLogger("AuieoATS")->info("PRGManagement:isModulePermitted exit on data_item_type less than 0");
+            return true;
+        }
         //insert into auieo_profiles2permissions (`profileid`,`data_item_type`,`operation`,`permissions`,`site_id`) values ('3','400','4','0','180');
         /*$permissions = array(
             "listByView"=>4,
@@ -99,7 +112,11 @@ class PRGManagement
             "delete"=>3,
             "default"=>"listByView"
         );*/
-        if(!isset($this->permission[$data_item_type])) return false;
+        if(!isset($this->permission[$data_item_type])) 
+        {
+            Logger::getLogger("AuieoATS")->info("PRGManagement:isModulePermitted exit on data_item_type not set in permission");
+            return false;
+        }
         $modulePermission=$this->permission[$data_item_type];
         /**
          * checks whether any one operation is allowed
@@ -111,6 +128,7 @@ class PRGManagement
             {
                 if($permission>0) 
                 {
+                    Logger::getLogger("AuieoATS")->info("PRGManagement:isModulePermitted exit on permission greater than 0");
                     return true;
                 }
             }
@@ -118,10 +136,12 @@ class PRGManagement
         /**
          * since all the operation is not allowed, don't allow
          */
+       Logger::getLogger("AuieoATS")->info("PRGManagement:isModulePermitted exit");
         return false;
     }
     public function isModuleActionPermitted($module=false,$action=false)
     {
+        Logger::getLogger("AuieoATS")->info("PRGManagement:isModuleActionPermitted entry");
         if($module===false && isset($_REQUEST["m"]))
         {
             $module=$_REQUEST["m"];
@@ -199,6 +219,7 @@ class PRGManagement
         /**
          * if the action allowed
          */
+        Logger::getLogger("AuieoATS")->info("PRGManagement:isModuleActionPermitted exit");
         if(isset($modulePermission[$operation]) && $modulePermission[$operation]>0) return true;
         return false;
     }

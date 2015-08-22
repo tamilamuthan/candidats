@@ -549,6 +549,9 @@ class JobOrders extends Modules
     
     public function load($jobOrderID)
     {
+        $arrExtra=$this->getExtraFieldInfoForLoad();
+        $selectExtraField=$arrExtra["sql"];
+        $arrExtraField=$arrExtra["fields"];
         $sql = sprintf(
             "SELECT
                 joborder.joborder_id,
@@ -619,6 +622,7 @@ class JobOrders extends Modules
                         site_id = %s
                 ) AS submitted,
                 company.name AS companyName
+                {$selectExtraField}
             FROM
                 joborder
             LEFT JOIN company
@@ -652,12 +656,11 @@ class JobOrders extends Modules
         {
             $this->record["candidate_mapping"]=  json_decode($this->record["candidate_mapping"]);
         }
-        $sql="select * from extra_field where data_item_type=100 and data_item_id='{$jobOrderID}'";
-        $arrAssoc = $this->_db->getAllAssoc($sql);
+
         $this->extraRecord=array();
-        foreach($arrAssoc as $ind=>$row)
+        foreach($arrExtraField as $ind=>$field)
         {
-            $this->extraRecord[$row["field_name"]]=$row["value"];
+            $this->extraRecord[$field]=$this->record[$field];
         }
     }
 

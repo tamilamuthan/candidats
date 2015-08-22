@@ -2,16 +2,6 @@
 
 ob_start();
  ?>
-
-    <table>
-        <tr>
-            <td width="3%">
-                <img src="images/reports.gif" width="24" height="24" border="0" alt="Reports" style="margin-top: 3px;" />&nbsp;
-            </td>
-            <td><h2><?php $this->_($this->reportTitle); ?></h2></td>
-        </tr>
-    </table>
-
     <p class="note">Placements</p>
 
     <?php foreach ($this->placementsJobOrdersRS as $rowNumber => $placementsJobOrdersData): ?>

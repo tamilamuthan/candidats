@@ -98,7 +98,7 @@ ob_start();
                                             <?php endif; ?>
                                             <?php foreach ($this->reportsToRS as $index => $contact): ?>
                                                 <?php if ($contact['contactID'] != $this->contactID): ?>
-                                                    <option value="<?php $this->_($contact['contactID']); ?>" <?php if ($contact['contactID'] == $this->data['reportsTo']): ?>selected<?php endif; ?>><?php $this->_($contact['firstName'] . ' ' . $contact['lastName']); ?></option>
+                                                    <option value="<?php $this->_($contact['contactID']); ?>" <?php if ($contact['contactID'] == $this->data['reports_to']): ?>selected<?php endif; ?>><?php $this->_($contact['firstName'] . ' ' . $contact['lastName']); ?></option>
                                                 <?php endif; ?>
                                             <?php endforeach; ?>
                                         </select>

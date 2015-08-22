@@ -273,8 +273,11 @@ function pageTitle($title=false)
 }
 function getCurrentModuleController()
 {
+    Logger::getLogger("AuieoATS")->info("utils:getCurrentModuleController entry");
     $module=isset($_REQUEST["m"])?$_REQUEST["m"]:"home";
-    return ClsNaanalApplication::loadController($module);
+    $ret = ClsNaanalApplication::loadController($module);
+    Logger::getLogger("AuieoATS")->info("utils:getCurrentModuleController exit");
+    return $ret;
 }
 function getModuleWrapperName($module)
 {

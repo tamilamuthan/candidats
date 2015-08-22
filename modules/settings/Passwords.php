@@ -5,18 +5,7 @@ pageHeaderInclude('modules/settings/validator.js');
 pageTitle('Settings');
 
 ob_start();
- ?>
-
-        <div id="contents">
-            <table>
-                <tr>
-                    <td width="3%">
-                        <img src="images/settings.gif" width="24" height="24" border="0" alt="Settings" style="margin-top: 3px;" />&nbsp;
-                    </td>
-                    <td><h2>Settings: Administration</h2></td>
-                </tr>
-            </table>
-<?php if(isset($_REQUEST["msg"])) echo "<span style='color:red;'>".$_REQUEST["msg"]."</span>";  ?>
+  if(isset($_REQUEST["msg"])) echo "<span style='color:red;'>".$_REQUEST["msg"]."</span>";  ?>
             <p class="note">Passwords</p>
 
             <table class="searchTable" width="100%">
@@ -36,7 +25,6 @@ ob_start();
                     </td>
                 </tr>
             </table>
-        </div>
     <?php 
 $AUIEO_CONTENT=ob_get_clean();
 			?>

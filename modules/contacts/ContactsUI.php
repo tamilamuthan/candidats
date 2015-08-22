@@ -1092,7 +1092,7 @@ class ContactsUI extends UserInterface
         $this->_template->assign('wildCardCompanyName', $wildCardCompanyName);
         $this->_template->assign('wildCardContactTitle', $wildCardContactTitle);
         $this->_template->assign('mode', $mode);
-        $this->_template->display('./modules/contacts/Search.tpl');
+        $this->_template->display('./modules/contacts/Search.php');
     }
 
     /*

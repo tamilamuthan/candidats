@@ -25,8 +25,8 @@
 <link rel="stylesheet" href="js/jquery-ui/jquery-ui.min.css" />
 <link rel="stylesheet" href="datagrid.css" />
 <script src="js/jquery-ui/jquery-ui.min.js"></script>
-<script src="js/knockout.js"></script>
-<script src="js/knockout.mapping.js"></script>
+<!--<script src="js/knockout.js"></script>
+<script src="js/knockout.mapping.js"></script>-->
 <script src="js/angular/angular.js"></script>
 
 <script type="text/javascript" src="js/lib.js{$javascriptAntiCache}"></script>
@@ -87,18 +87,20 @@
             <div id='MRUBlock'>
                 {$AUIEO_RECENT}
             </div>
-
+        <div id='quickSearchBlock'>
             <form id='quickSearchForm' action='{$indexName}' method='get' onsubmit='return checkQuickSearchForm(document.quickSearchForm);'>
-                <div id='quickSearchBlock'>
-                    <div style="float:left;color:#777777;font-weight: bold;font-size: 1.5em;padding-left: 1em;margin: 0px;">
-                        {$AUIEO_MODULE_ICON} {$AUIEO_MODULE_CAPTION}</div><div style="float:right;">
+               
+                    <div style="float:right;">
                     {$AUIEO_HAS_USER_CATEGORY}
                     <input name="quickSearchFor" id="quickSearchFor" class="quickSearchBox" value="{$wildCardString}" />&nbsp;
                     <input type="submit" name="quickSearch" class="button" value="Go" /></div>
-                </div>
+               
             </form>
         </div>
+        </div>
+            <div style="background:#E2E2E2;font-weight: bold;font-size: 1.5em;padding-left: 1em;margin: 0px;"> {$AUIEO_MODULE_ICON} {$AUIEO_MODULE_CAPTION}</div>
         <div id="contents">
+                
             {$AUIEO_ERROR_MSG}<br />
             {$out}
         </div>

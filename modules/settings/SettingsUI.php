@@ -509,6 +509,134 @@ class SettingsUI extends UserInterface
         $this->_template->assign('rs', $rs);
         $this->_template->display('./modules/settings/duplicate.php');
     }
+    public function fields()
+    {
+        if(isset($_REQUEST["s"]) && $_REQUEST["s"]=="addnewfield")
+        {
+            $_siteID = $_SESSION['CATS']->getSiteID();
+            $fieldCaption=$_REQUEST["fieldname"];
+            $data_item_type=$_REQUEST["data_item_type"];
+            $arrExp=explode("_",$fieldCaption);
+            $fieldName=  strtolower($fieldCaption);
+            $fieldName= preg_replace("/\W|_/", " ", $fieldName);
+            $fieldName= preg_replace("/[ ]{2,}/", " ", $fieldName);
+            $fieldName= preg_replace("/\s/", "_", $fieldName);
+            $fieldName=trim($fieldName);
+            if(strlen($fieldName)>=3)
+            {
+                $db=  DatabaseConnection::getInstance();
+                $sql="select * from auieo_fields where fieldname='{$fieldName}' and site_id={$_siteID} and data_item_type={$data_item_type}";
+                $record=$db->getAssoc($sql);
+                if(empty($record))
+                {
+                    /**
+                     * get uitype details
+                     */
+                    $sql="select * from auieo_uitype where id={$_REQUEST["uitype"]}";
+                    $record=$db->getAssoc($sql);
+                    $fieldinfo=$record["fieldinfo"];
+                    $length=$record["length"];
+                    $arrFieldInfo=  getFieldInfoByUIType($fieldinfo);
+                    $datatype=$arrFieldInfo["datatype"];
+                    $tableInfo=getTableInfoByDataItemType($data_item_type);
+                    $fieldmodule=$tableInfo["module"];
+                    $tableName=$tableInfo["table"];
+                    
+                    $sql="select max(sequence) as seq from auieo_fields where site_id={$_siteID} and data_item_type={$data_item_type}";
+                    $recordSeq=$db->getAssoc($sql);
+                    $next_sequence=$recordSeq["seq"]+1;
+                    /**
+                     * create field in the table
+                     */
+                    $sql="alter table `{$tableName}` add {$fieldName} {$datatype}($length) NOT NULL";
+                    $db->query($sql);
+                    /**
+                     * insert into auieo_fields
+                     */
+                    $sql="insert into auieo_fields (fieldname,fieldlabel,sequence,site_id,data_item_type,is_extra) values('{$fieldName}','{$fieldCaption}','{$next_sequence}',{$_siteID},{$data_item_type},1)";
+                    $db->query($sql);
+                }
+            }
+            header("Location:index.php?m=settings&a=fields&fieldmodule={$fieldmodule}");exit;
+        }
+    }
+    
+    public function moveDown()
+    {
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $sql="select * from auieo_fields where id={$_REQUEST["field_id"]} and site_id={$_siteID}";
+        $db=DatabaseConnection::getInstance();
+        $record=$db->getAssoc($sql);
+        if(empty($record)) die("Unknown field ID");
+ 
+        $sql="select * from auieo_fields where sequence=".($record["sequence"]+1)." and data_item_type={$record["data_item_type"]} and site_id={$_siteID}";
+        $prevRecord=$db->getAssoc($sql);
+        $prevID=$prevRecord["id"];
+        $sql="update auieo_fields set sequence=".$record["sequence"]." where id={$prevID}";
+        $db->query($sql);
+        $sql="update auieo_fields set sequence=".($record["sequence"]+1)." where id={$_REQUEST["field_id"]}";
+        $db->query($sql);
+        
+        header("Location:index.php?m=settings&a=fields&fieldmodule={$_REQUEST["modulename"]}");
+    }
+    
+    public function moveUp()
+    {
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $sql="select * from auieo_fields where id={$_REQUEST["field_id"]} and site_id={$_siteID}";
+        $db=DatabaseConnection::getInstance();
+        $record=$db->getAssoc($sql);
+        if(empty($record)) die("Unknown field ID");
+ 
+        $sqlprev="select * from auieo_fields where sequence=".($record["sequence"]-1)." and data_item_type={$record["data_item_type"]} and site_id={$_siteID}";
+        $prevRecord=$db->getAssoc($sqlprev);
+        $prevID=$prevRecord["id"];
+        $sql="update auieo_fields set sequence=".$record["sequence"]." where id={$prevID}";
+        $db->query($sql);
+        $sql="update auieo_fields set sequence=".($record["sequence"]-1)." where id={$_REQUEST["field_id"]}";
+        $db->query($sql);
+        
+        header("Location:index.php?m=settings&a=fields&fieldmodule={$_REQUEST["modulename"]}");
+    }
+    
+    public function delete()
+    {
+        $moduleInfo=getTableInfoByModule($_REQUEST["modulename"]);
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $db=DatabaseConnection::getInstance();
+        
+        $sql="select * from auieo_fields where data_item_type={$moduleInfo["data_item_type"]} and id='{$_REQUEST["field_id"]}' and site_id={$_siteID} and is_extra=1";
+        $record=$db->getAssoc($sql);
+        if(!empty($record))
+        {
+            $sql="delete from auieo_fields where data_item_type={$moduleInfo["data_item_type"]} and id='{$_REQUEST["field_id"]}' and site_id={$_siteID}";
+            $db->query($sql);
+
+            $sql="ALTER TABLE `{$moduleInfo["table"]}` DROP `{$record["fieldname"]}`";
+            $db->query($sql);
+        }
+        header("Location:index.php?m=settings&a=fields&fieldmodule={$_REQUEST["modulename"]}");exit;
+    }
+    
+    public function updateField()
+    {
+        $moduleInfo=getTableInfoByModule($_REQUEST["modulename"]);
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $sql="update auieo_fields set displaytype={$_REQUEST["checked"]} where data_item_type={$moduleInfo["data_item_type"]} and fieldname='{$_REQUEST["field_name"]}' and site_id={$_siteID}";
+        $db=DatabaseConnection::getInstance();
+        $db->query($sql);
+        exit;
+    }
+    
+    public function updateFieldReadonly()
+    {
+        $moduleInfo=getTableInfoByModule($_REQUEST["modulename"]);
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $sql="update auieo_fields set readonly={$_REQUEST["checked"]} where data_item_type={$moduleInfo["data_item_type"]} and fieldname='{$_REQUEST["field_name"]}' and site_id={$_siteID}";
+        $db=DatabaseConnection::getInstance();
+        $db->query($sql);
+        exit;
+    }
     
     private function getRootID()
     {
@@ -2857,6 +2985,11 @@ class SettingsUI extends UserInterface
 
         foreach ($attachmentsRS as $index => $data)
         {
+            if(!file_exists($data['retrievalURLLocal']) && strpos($data['retrievalURLLocal'], ".bak"))
+            {
+                $arr=explode(".bak",$data['retrievalURLLocal']);
+                $data['retrievalURLLocal']=$arr[0].".sql";
+            }
             $attachmentsRS[$index]['fileSize'] = fileUtility::sizeToHuman(
                 filesize($data['retrievalURLLocal']), 2, 1
             );
@@ -3169,7 +3302,7 @@ class SettingsUI extends UserInterface
                     $this->_template->assign('installationDirectory', $installationDirectory);
                     $this->_template->assign('OSType', $OSType);
                     $this->_template->assign('schemaVersions', $schemaVersions);
-                    $templateFile = './modules/settings/SystemInformation.tpl';
+                    $templateFile = './modules/settings/SystemInformation.php';
                     break;
 
                 default:

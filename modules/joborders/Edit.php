@@ -125,7 +125,7 @@ ob_start();
 
                                 <?php foreach ($this->contactsRS as $rowNumber => $contactsData): ?>
                                     <?php if ($this->data['contact_id'] == $contactsData['contactID']): ?>
-                                        <option selected value="<?php $this->_($contactsData['contact_id']) ?>"><?php $this->_($contactsData['last_name']) ?>, <?php $this->_($contactsData['first_name']) ?></option>
+                                        <option selected value="<?php $this->_($contactsData['contactID']) ?>"><?php $this->_($contactsData['lastName']) ?>, <?php $this->_($contactsData['firstName']) ?></option>
                                     <?php else: ?>
                                         <option value="<?php $this->_($contactsData['contactID']) ?>"><?php $this->_($contactsData['lastName']) ?>, <?php $this->_($contactsData['firstName']) ?></option>
                                     <?php endif; ?>

@@ -10,7 +10,7 @@ ob_start();
             <p class="note">Job Order Details</p>
 
             <?php /*if ($this->data['is_admin_hidden'] == 1): ?>
-                <p class="warning">This Job Order is hidden.  Only CATS Administrators can view it or search for it.  To make it visible by the site users, click <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&amp;a=administrativeHideShow&amp;jobOrderID=<?php echo($this->jobOrderID); ?>&amp;state=0" style="font-weight:bold;">Here.</a></p>
+                <p class="warning">This Job Order is hidden.  Only CATS Administrators can view it or search for it.  To make it visible by the site users, click <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&a=administrativeHideShow&jobOrderID=<?php echo($this->jobOrderID); ?>&state=0" style="font-weight:bold;">Here.</a></p>
             <?php endif;*/ ?>
 
             <?php
@@ -21,7 +21,7 @@ ob_start();
                         <td class="tdVertical" style="width:100%;">
                             This Job Order is <?php $this->_($this->data['status']); ?> and can not be modified.
                            <?php if ($this->accessLevel >= ACCESS_LEVEL_EDIT): ?>
-                               <a id="edit_link" href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&amp;a=edit&amp;jobOrderID=<?php echo($this->jobOrderID); ?>">
+                               <a id="edit_link" href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&a=edit&jobOrderID=<?php echo($this->jobOrderID); ?>">
                                    <img src="images/actions/edit.gif" width="16" height="16" class="absmiddle" alt="edit" border="0" />&nbsp;Edit
                                </a>
                                the Job Order to make it Active.&nbsp;&nbsp;
@@ -47,7 +47,7 @@ ob_start();
                             <tr>
                                 <td class="vertical">Company Name:</td>
                                 <td class="data">
-                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=companies&amp;a=show&amp;companyID=<?php echo($this->data['company_id']); ?>">
+                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=companies&a=show&companyID=<?php echo($this->data['company_id']); ?>">
                                         <?php echo($this->data['companyName']); ?>
                                     </a>
                                 </td>
@@ -74,7 +74,7 @@ ob_start();
                             <tr>
                                 <td class="vertical">Contact Name:</td>
                                 <td class="data">
-                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=contacts&amp;a=show&amp;contactID=<?php echo($this->data['contact_id']); ?>">
+                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=contacts&a=show&contactID=<?php echo($this->data['contact_id']); ?>">
                                         <?php echo($this->data['contactFullName']); ?>
                                     </a>
                                 </td>
@@ -235,7 +235,7 @@ ob_start();
                                                 <td>
                                                     <?php if (!isset($this->isPopup)): ?>
                                                         <?php if ($this->accessLevel >= ACCESS_LEVEL_DELETE): ?>
-                                                            <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&amp;a=deleteAttachment&amp;jobOrderID=<?php echo($this->jobOrderID); ?>&amp;attachmentID=<?php $this->_($attachmentsData['attachmentID']) ?>"  title="Delete" onclick="javascript:return confirm('Delete this attachment?');">
+                                                            <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&a=deleteAttachment&jobOrderID=<?php echo($this->jobOrderID); ?>&attachmentID=<?php $this->_($attachmentsData['attachmentID']) ?>"  title="Delete" onclick="javascript:return confirm('Delete this attachment?');">
                                                                 <img src="images/actions/delete.gif" alt="" width="16" height="16" border="0" />
                                                             </a>
                                                         <?php endif; ?>
@@ -249,7 +249,7 @@ ob_start();
                                             <?php if (isset($this->attachmentLinkHTML)): ?>
                                                 <?php echo($this->attachmentLinkHTML); ?>
                                             <?php else: ?>
-                                                <a href="#" onclick="showPopWin('<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&amp;a=createAttachment&amp;jobOrderID=<?php echo($this->jobOrderID); ?>', 400, 125, null); return false;">
+                                                <a href="#" onclick="showPopWin('<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&a=createAttachment&jobOrderID=<?php echo($this->jobOrderID); ?>', 400, 125, null); return false;">
                                             <?php endif; ?>
                                                 <img src="images/paperclip_add.gif" width="16" height="16" border="0" alt="add attachment" class="absmiddle" />&nbsp;Add Attachment
                                             </a>
@@ -299,24 +299,24 @@ if (!isset($this->isPopup)): ?>
             <div id="actionbar">
                 <span style="float:left;">
                     <?php if ($allowEdit && $this->accessLevel >= ACCESS_LEVEL_EDIT): ?>
-                        <a id="edit_link" href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&amp;a=edit&amp;jobOrderID=<?php echo($this->jobOrderID); ?>">
+                        <a id="edit_link" href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&a=edit&jobOrderID=<?php echo($this->jobOrderID); ?>">
                             <img src="images/actions/edit.gif" width="16" height="16" class="absmiddle" alt="edit" border="0" />&nbsp;Edit
                         </a>
                         &nbsp;&nbsp;&nbsp;&nbsp;
                     <?php endif; ?>
                     <?php if ($allowDelete && $this->accessLevel >= ACCESS_LEVEL_DELETE): ?>
-                        <a id="delete_link" href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&amp;a=delete&amp;jobOrderID=<?php echo($this->jobOrderID); ?>" onclick="javascript:return confirm('Delete this job order?');">
+                        <a id="delete_link" href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&a=delete&jobOrderID=<?php echo($this->jobOrderID); ?>" onclick="javascript:return confirm('Delete this job order?');">
                             <img src="images/actions/delete.gif" width="16" height="16" class="absmiddle" alt="delete" border="0" />&nbsp;Delete
                         </a>
                         &nbsp;&nbsp;&nbsp;&nbsp;
                     <?php endif; ?>
                     <?php if ($this->accessLevel >= ACCESS_LEVEL_MULTI_SA): ?>
                         <?php if ($this->data['is_admin_hidden'] == 1): ?>
-                            <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&amp;a=administrativeHideShow&amp;jobOrderID=<?php echo($this->jobOrderID); ?>&amp;state=0">
+                            <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&a=administrativeHideShow&jobOrderID=<?php echo($this->jobOrderID); ?>&state=0">
                                 <img src="images/resume_preview_inline.gif" width="16" height="16" class="absmiddle" alt="delete" border="0" />&nbsp;Administrative Show
                             </a>
                             <?php else: ?>
-                            <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&amp;a=administrativeHideShow&amp;jobOrderID=<?php echo($this->jobOrderID); ?>&amp;state=1">
+                            <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&a=administrativeHideShow&jobOrderID=<?php echo($this->jobOrderID); ?>&state=1">
                                 <img src="images/resume_preview_inline.gif" width="16" height="16" class="absmiddle" alt="delete" border="0" />&nbsp;Administrative Hide
                             </a>
                         <?php endif; ?>
@@ -325,18 +325,18 @@ if (!isset($this->isPopup)): ?>
                 </span>
                 <span style="float:right;">
                     <?php if (!empty($this->data['public']) && $this->careerPortalEnabled): ?>
-                        <a id="public_link" href="<?php echo(CATSUtility::getAbsoluteURI()); ?>careers/<?php echo(CATSUtility::getIndexName()); ?>?p=showJob&amp;ID=<?php echo($this->jobOrderID); ?>">
+                        <a id="public_link" href="<?php echo(CATSUtility::getAbsoluteURI()); ?>careers/<?php echo(CATSUtility::getIndexName()); ?>?p=showJob&ID=<?php echo($this->jobOrderID); ?>">
                             <img src="images/public.gif" width="16" height="16" class="absmiddle" alt="Online Application" border="0" />&nbsp;Online Application
                         </a>
                         &nbsp;&nbsp;&nbsp;&nbsp;
                     <?php endif; ?>
                     <?php /* TODO: Make report available for every site. */ ?>
-                    <a id="report_link" href="<?php echo(CATSUtility::getIndexName()); ?>?m=reports&amp;a=customizeJobOrderReport&amp;jobOrderID=<?php echo($this->jobOrderID); ?>">
+                    <a id="report_link" href="<?php echo(CATSUtility::getIndexName()); ?>?m=reports&a=customizeJobOrderReport&jobOrderID=<?php echo($this->jobOrderID); ?>">
                         <img src="images/reportsSmall.gif" width="16" height="16" class="absmiddle" alt="report" border="0" />&nbsp;Generate Report
                     </a>
                     <?php if ($this->privledgedUser): ?>
                         &nbsp;&nbsp;&nbsp;&nbsp;
-                        <a id="history_link" href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=viewItemHistory&amp;dataItemType=400&amp;dataItemID=<?php echo($this->jobOrderID); ?>">
+                        <a id="history_link" href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&a=viewItemHistory&dataItemType=400&dataItemID=<?php echo($this->jobOrderID); ?>">
                             <img src="images/icon_clock.gif" width="16" height="16" class="absmiddle"  border="0" />&nbsp;View History
                         </a>
                     <?php endif; ?>
@@ -369,7 +369,7 @@ if (!isset($this->isPopup)): ?>
 
 <?php if (!isset($this->isPopup)): ?>
             <?php if ($this->accessLevel >= ACCESS_LEVEL_EDIT && empty($this->frozen)): ?>
-                <a href="#" onclick="showPopWin('<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&amp;a=considerCandidateSearch&amp;jobOrderID=<?php echo($this->jobOrderID); ?>', 820, 550, null); return false;">
+                <a href="#" onclick="showPopWin('<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&a=considerCandidateSearch&jobOrderID=<?php echo($this->jobOrderID); ?>', 820, 550, null); return false;">
                     <img src="images/consider.gif" width="16" height="16" class="absmiddle" alt="add candidate" border="0" />&nbsp;Add Candidate to This Job Order Pipeline
                 </a>
             <?php endif; ?>

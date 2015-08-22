@@ -42,7 +42,9 @@ class SystemInfo
 
     public function __construct()
     {
+        Logger::getLogger("AuieoATS")->info("SystemInfo:__construct entry");
         $this->_db = DatabaseConnection::getInstance();
+        Logger::getLogger("AuieoATS")->info("SystemInfo:__construct exit");
     }
 
 
@@ -53,6 +55,7 @@ class SystemInfo
      */
     public function getSystemInfo()
     {
+        Logger::getLogger("AuieoATS")->info("SystemInfo:getSystemInfo entry");
         //FIXME: SELECT INDIVIDUAL COLS!
         $sql = sprintf(
             "SELECT
@@ -63,7 +66,9 @@ class SystemInfo
                 system_id = 0"
         );
 
-        return $this->_db->getAssoc($sql);
+        $ret = $this->_db->getAssoc($sql);
+        Logger::getLogger("AuieoATS")->info("SystemInfo:getSystemInfo exit");
+        return $ret;
     }
 
     /**

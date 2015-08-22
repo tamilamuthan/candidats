@@ -21,6 +21,69 @@ class Modules
             $this->_siteID=$siteID;
         $this->_db = DatabaseConnection::getInstance();
     }
+    
+    public function getExtraFieldInfoForLoad()
+    {
+        $moduleInfo=getModuleInfo("modulename");
+        $sql="select * from auieo_fields where data_item_type={$moduleInfo[$this->module]["data_item_type_id"]} and is_extra=1 and site_id={$this->_siteID}";
+        $arrAssocExtra = $this->_db->getAllAssoc($sql);
+        $arrExtraField=array();
+        if($arrAssocExtra)
+        {
+            foreach($arrAssocExtra as $assoc)
+            {
+                $arrExtraField[]=$assoc["fieldname"];
+            }
+        }
+        $extraFieldCount=count($arrExtraField);
+        $selectExtraField="";
+        if($extraFieldCount>0)
+        {
+            if($extraFieldCount>1)
+            {
+                $selectExtraField='`,`'.implode(",",$arrExtraField);
+            }
+            else
+            {
+                $selectExtraField=',`'.$arrExtraField[0].'`';
+            }
+        }
+        return array("sql"=>$selectExtraField,"fields"=>$arrExtraField);
+    }
+    
+    public function getExportSQL()
+    {
+        $sql = sprintf(
+            "SELECT
+                {$this->module_table}.{$this->module_id} AS {$this->module_id}ID,
+                {$this->module_table}.title AS Title,
+                {$this->module_table}.city AS City,
+                {$this->module_table}.state AS State
+            FROM
+                joborder
+            WHERE
+                joborder.site_id = %s
+                %s
+            ",
+            $this->_siteID,
+            $criterion
+        );
+    }
+    
+    /**
+     * produce output link for other consuming module. if $arrData is false the function return the html.
+     * if the $arrData has data, the record will be linked with this object's module
+     * possible values are
+     * 1) modulename
+     * 2) array of sub module's id
+     * @param type $arrData
+     */
+    public static function subModuleChildLink($arrData=false)
+    {
+        $subModule=isset($arrData["subModule"])?$arrData["module"]:"Projects";
+        $subAction=isset($arrData["subAction"])?$arrData["action"]:"getActiveList";
+        return $subModule::$subAction();
+    }
     /**
      * mapping of action with 0 to 4
      * by default, 0 indicates add

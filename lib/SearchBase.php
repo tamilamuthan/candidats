@@ -70,7 +70,7 @@ class SearchBase
     {
         ///search $ per hour regular expression : \$[\s]*([0-9]+)[\s]*\/[\s]*([a-zA-Z]*)
         $arrWhere=array();
-        if(isset($_REQUEST["fldfilter"]))
+        if(isset($_REQUEST["fldfilter"]) && !empty($_REQUEST["fldfilter"]))
         {
             foreach($_REQUEST["fldfilter"] as $ind=>$fldFilter)
             {

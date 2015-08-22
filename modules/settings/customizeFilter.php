@@ -11,18 +11,6 @@ if(isset($this->active))
     TemplateUtility::printTabs($this->active, $this->subActive); 
 }
 ?>
-    
-
-        <div id="contents">
-            <table>
-                <tr>
-                    <td width="3%">
-                        <img src="images/settings.gif" width="24" height="24" border="0" alt="Settings" style="margin-top: 3px;" />&nbsp;
-                    </td>
-                    <td><h2>Settings: Customize Filter</h2></td>
-                </tr>
-            </table>
-
             <p class="note">Show Grouping</p>
 
             <form name="showgrouping" id="showgrouping" action="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=filtergrouping" method="post">
@@ -67,8 +55,6 @@ if(isset($this->active))
                     </tr>
                 </table>
             </form>
-
-        </div>
     <?php 
 $AUIEO_CONTENT=ob_get_clean();
 			?>

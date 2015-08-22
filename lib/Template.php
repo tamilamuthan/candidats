@@ -113,11 +113,11 @@ class Template
         if($__AUIEO__OTHER__VAR!==false)
         {
             extract($__AUIEO__OTHER__VAR);
-        }
+        }                                         
         include $__AUIEO__TEMPLATE__FILE;
-        $arrVar=get_defined_vars();
+        $arrVar=get_defined_vars();                  
         unset($arrVar[$__AUIEO__TEMPLATE__FILE]);
-        $arrVarNew=array();
+        $arrVarNew=array();                  
         foreach($arrVar as $var=>$data)
         {
             $tmpVar = strtoupper($var);
@@ -126,7 +126,7 @@ class Template
             {
                 $arrVarNew[$tmpVar]=$data;
             }
-        }
+        }                    
         return $arrVarNew;
     }
 
@@ -139,13 +139,13 @@ class Template
      * @return void
      */
     public function display($template,$objView=false)
-    {
+    {                           
         $this->isRendered=true;
         $arrAuieoTplVar=array();
         if($objView!==false)
         {
             $arrAuieoTplVar=$objView->render();
-        }
+        }                                     
             /* File existence checking. */
             $file = realpath('./' . $template);
             if (!$file)
@@ -153,7 +153,7 @@ class Template
                 echo 'Template error: File \'', $template, '\' not found.', "\n\n";
                 return;
             }
-
+                                      
             $this->_templateFile = $file;
 
             /* We don't want any variable name conflicts here. */
@@ -166,15 +166,15 @@ class Template
            {
                return "";
            };
-
+                                              
             /* Include the template, with output buffering on, and echo it. */
             $arrPathInfo=pathinfo($this->_templateFile);
             if($arrPathInfo["extension"]=="php" && (file_exists("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.html") || file_exists("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.htm")))
-            {
+            {                             
                $otherVar = $arrAuieoTplVar;
-               $arrTplVar=$this->loadTemplateVars($this->_templateFile,$otherVar);
+               $arrTplVar=$this->loadTemplateVars($this->_templateFile,$otherVar);    
                extract($arrTplVar);
-               
+                                      
                 if(file_exists("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.html"))
                     $_AUIEO_TEMPLATE_CONTENT=file_get_contents("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.html");
                 else
@@ -188,18 +188,18 @@ class Template
 EOT;
 ');
                     $html = ob_get_clean();
-                }
+                }                 
                 catch(Exception $e)
                 {
                     trace($e);
                 }
             }
             else
-            {
+            {                       
                 ob_start();
                 include($this->_templateFile);
                 $html = ob_get_clean();
-            }
+            }                         
             if (strpos($html, '<!-- NOSPACEFILTER -->') === false && strpos($html, 'textarea') === false)
             {
                 $html = preg_replace('/^\s+/m', '', $html);
@@ -209,14 +209,19 @@ EOT;
             {
                 eval($filter);
             }
-        echo $this->loadTheme(array("out"=>$html,"AUIEO_MODULE_CONTENT"=>""));
+        echo $this->loadTheme(array("out"=>$html,"AUIEO_MODULE_CONTENT"=>"","AUIEO_VIEW_OBJECT"=>$objView));
     }
     
     private function loadTheme($_AUIEO_ARR_THEME_VAR)
     {
+        Logger::getLogger("AuieoATS")->info("Template:loadTheme entry");
         if($_SERVER["REQUEST_URI"]=="/demo/careers/")
         {
             $AUIEO_THEME_MODULE="careers";
+        }
+        else if(defined("AUIEO_CAREER_PAGE"))
+        {
+            $AUIEO_THEME_MODULE="careers";            
         }
         else if(isset($_REQUEST["m"]) && $_REQUEST["m"]=="careers")
         {
@@ -320,7 +325,7 @@ EOT;
            }
 
            /* Inactive Tab? */
-           if (!isset($this->active) || empty($this->active) || $moduleName != $this->active->getModuleName())
+           if ( !isset($this->active) || empty($this->active) || $moduleName != $this->active->getModuleName())
            {
                if ($moduleName == $forceHighlight)
                {
@@ -477,7 +482,14 @@ EOT;
         }
 
         $_AUIEO_TABS=  ob_get_clean();
-
+$MRU = $_SESSION['CATS']->getMRU()->getFormatted();
+                $indexName = CATSUtility::getIndexName();
+        
+        $AUIEO_PREFIX="";
+        if(isset($_REQUEST["m"]) && $_REQUEST["m"]=="careers")
+        {
+            $AUIEO_PREFIX="../";
+        }
         $systemInfo = new SystemInfo();
         $systemInfoData = $systemInfo->getSystemInfo();
         $AUIEO_DOWNLOAD_LATEST="";
@@ -492,7 +504,7 @@ EOT;
         $AUIEO_RECENT="";
         if (!empty($MRU))
         {
-            $AUIEO_RECENT = '<span class="MRUTitle">Recent:&nbsp;</span>&nbsp;{$MRU}';
+            $AUIEO_RECENT = "<span class='MRUTitle'>Recent:&nbsp;</span>&nbsp;{$MRU}";
         }
         else
         {
@@ -516,14 +528,6 @@ EOT;
 
         $wildCardString = '';
         /* Get the formatted MRU list from Session. */
-                $MRU = $_SESSION['CATS']->getMRU()->getFormatted();
-                $indexName = CATSUtility::getIndexName();
-        
-        $AUIEO_PREFIX="";
-        if(isset($_REQUEST["m"]) && $_REQUEST["m"]=="careers")
-        {
-            $AUIEO_PREFIX="../";
-        }
         
         $pageTitle = pageTitle();
         $headIncludes = pageHeaderInclude();
@@ -621,6 +625,7 @@ EOT;
 EOT;
 ');
         $html = ob_get_clean();
+        Logger::getLogger("AuieoATS")->info("Template:loadTheme exit");
         return $html;
     }
 }

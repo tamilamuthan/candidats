@@ -1069,6 +1069,14 @@ class DataGrid
         /* Get SELECT and JOIN paramaters for each column we want to collect data on. */
         foreach ($this->_currentColumns as $index => $data)
         {
+            if (isset($data['data']['join']) && !empty($data['data']['join']) && strpos($data['data']['join'],"extra_field"))
+            {
+            	$this->_currentColumns[$index]['data']['select']="`{$data['name']}`";
+            	$this->_currentColumns[$index]['data']['sortableColumn']="`{$data['name']}`";
+            	$this->_currentColumns[$index]['data']['pagerRender'] = 'return $rsData["'.$data['name'].'"];';
+            	unset($this->_currentColumns[$index]['data']['join']);
+            }
+            
             if (isset($data['data']['select']) && !empty($data['data']['select']))
             {
                 $selectSQL[md5($data['data']['select'])] = $data['data']['select'];
@@ -1347,6 +1355,14 @@ class DataGrid
         //if($dgModule=="candidates" || $dgModule=="companies" || $dgModule=="contacts" || $dgModule=="joborders")
         //{
             $whereSQL=getPermittedRecordWhere($dgModule);
+            $arrFilterWhere=getReportFilter();
+            if($arrFilterWhere)
+            {
+                foreach($arrFilterWhere as $wSQL)
+                {
+                    $whereSQL[]=$wSQL;
+                }
+            }
         //}
         //trace($whereSQL);
         if($whereSQL)

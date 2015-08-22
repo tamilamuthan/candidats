@@ -22,6 +22,25 @@ function getModuleFieldsInfo($data_item_type)
     }
     return $arrModuleField[$data_item_type];
 }
+function getReportFilter()
+{
+    /**
+     * array of where condition
+     */
+    $arrWhere=array();
+    if(isset($_REQUEST["filterby"]))
+    {
+        foreach($_REQUEST["filterby"] as $filterby)
+        {
+            $fieldModule=$filterby["fieldmodule"];
+            $fieldname=$filterby["fieldname"];
+            $fielddata=$filterby["fielddata"];
+            $fieldcondition=isset($filterby["fieldcondition"])?$filterby["fieldcondition"]:"=";
+            $arrWhere[]="`{$fieldModule}`.`{$fieldname}`{$fieldcondition}'{$fielddata}'";
+        }
+    }
+    return $arrWhere;
+}
 function getModuleFields($data_item_type)
 {
     static $arrModuleField=array();
@@ -75,6 +94,74 @@ function getAliasNameFromField($field)
     }
     return $field;
 }
+
+function makePeriodCriterion($dateField, $period,$fromDate=false,$toDate=false)
+{
+    Logger::getLogger("AuieoATS")->info("utils:makePeriodCriterion entry");
+    /* Note: we add a bogus "AND date > '1900-01-01'" condition to the
+     * WHERE clause to force MySQL to use an index containing the date
+     * column. MySQL can then build the entire result set without scanning
+     * any rows.
+     */
+    $criteria = '';
+    switch ($period)
+    {
+        case "today":
+            $criteria = sprintf(
+                '%s > \'1900-01-01\' AND DATE(%s) = CURDATE())',
+                $dateField,
+                $dateField
+            );
+            break;
+
+        case "week":
+            $criteria = sprintf(
+                '%s > \'1900-01-01\' AND YEARWEEK(%s) = YEARWEEK(NOW()))',
+                $dateField,
+                $dateField
+            );
+            break;
+        
+        case "month":
+            $criteria = sprintf(
+                '%s > \'1900-01-01\' AND EXTRACT(YEAR_MONTH FROM %s) = EXTRACT(YEAR_MONTH FROM CURDATE()))',
+                $dateField,
+                $dateField
+            );
+            break;
+        
+        case "range":
+            $criteria = sprintf(
+                '%s > \'1900-01-01\' AND %s > DATE(\'%s\') AND %s < DATE(\'%s\') )',
+                $dateField,
+                $dateField,
+                date("Y-m-d h:i:s",strtotime($fromDate)),
+                $dateField,
+                date("Y-m-d h:i:s",strtotime($toDate))
+            );
+            break;
+
+        case "year":
+        default:
+            $criteria = sprintf(
+                '%s > \'1900-01-01\' AND YEAR(%s) = YEAR(NOW()))',
+                $dateField,
+                $dateField
+            );
+            break;
+    }
+
+    $timeZoneOffset=$_SESSION['CATS']->getTimeZoneOffset();
+    if ($timeZoneOffset != 0)
+    {
+        $criteria = str_replace('CURDATE()', 'DATE_ADD(CURDATE(), INTERVAL ' . $timeZoneOffset. ' HOUR)', $criteria);
+        $criteria = str_replace('NOW()', 'DATE_ADD(NOW(), INTERVAL ' . $timeZoneOffset . ' HOUR)', $criteria);
+        $criteria = str_replace($dateField, 'DATE_ADD(' . $dateField . ', INTERVAL ' . $timeZoneOffset . ' HOUR)', $criteria);
+    }
+    Logger::getLogger("AuieoATS")->info("utils:makePeriodCriterion exit");
+    return $criteria;
+}
+
 function getAlternatingRowClass($rowNumber)
 {
     /* Is the row number even? */
@@ -324,7 +411,11 @@ function getAVFields($data_item_type,$record=false)
  * 03 = MULTISELECT
  * 04 = CHECKBOX
  * 05 = RADIO
- * 06 = READONLY
+ * 06 = DATE
+ * 07 = OWNER
+ * 08 = RADIOLIST
+ * 09 = CHECKBOXLIST
+ * 10 = READONLY
  * thrid last two digit, fourth last two digit and fifth last two digits indicates the binary word for input character type
  * 26 type of character representation possible
  * 0 = any characters
@@ -367,7 +458,7 @@ function getFieldInfoByUIType($fieldinfoint)
         );
         $arrUIControl=array
         (
-            "0"=>"TEXTBOX","1"=>"TEXTAREA","2"=>"SELECT","3"=>"MULTISELECT","4"=>"CHECKBOX","5"=>"RADIO","6"=>"CALENDAR","7"=>"OWNER"
+            "0"=>"TEXTBOX","1"=>"TEXTAREA","2"=>"SELECT","3"=>"MULTISELECT","4"=>"CHECKBOX","5"=>"RADIO","6"=>"CALENDAR","7"=>"OWNER","8"=>"RADIOLIST","9"=>"CHECKBOXLIST","10"=>"READONLY"
         );
         /**
          * get last two digit

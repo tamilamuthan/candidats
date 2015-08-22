@@ -83,7 +83,6 @@ spl_autoload_register(function ($class) {
 });
 define("AUIEO_FRAMEWORK_PATH", "");
 define("AUIEO_APP_PATH", "");
-//require_once("E:\\auieo\\project\\naanal\\testing.php");
 include_once("lib/ClsNaanalController.php");
 include_once("lib/ClsNaanalApplication.php");
 include_once("lib/ClsLInputValidator.php");
@@ -103,7 +102,6 @@ include_once("lib/ClsAuieoViewerBase.php");
 include_once("lib/PRGManagement.php");
 include_once("lib/PRGGroup.php");
 include_once("mvc/viewers/ClsAuieoView.php");
-//ClsAuieoTestGen::render("http://127.0.0.1/candidats/");
 /* Do we need to run the installer? */
 if (!file_exists('INSTALL_BLOCK') && !isset($_POST['performMaintenence']))
 {
@@ -144,17 +142,7 @@ include_once("./modules/install/extra.php");
 /* Give the session a unique name to avoid conflicts and start the session. */
 @session_name(CATS_SESSION_NAME);
 session_start();
-function cleanToVariableName($string) {
-   $string = str_replace(' ', '_', $string); // Replaces all spaces with hyphens.
-   $string = preg_replace('/[^A-Za-z0-9\_]/', '', $string); // Removes special chars.
-
-   return preg_replace('/_+/', '_', $string); // Replaces multiple hyphens with single one.
-}
-
-
-//$arrSQL=loadAuieoExtraField();
-//echo implode(";<br />",$arrSQL);exit;
-
+//include_once("migrateextrafield.php");
 /* Try to prevent caching. */
 header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
@@ -268,14 +256,19 @@ else if ($_SESSION['CATS']->isLoggedIn() &&
     (!isset($_REQUEST['m']) || ModuleUtility::moduleRequiresAuthentication($_REQUEST['m'])) &&
     $_SESSION['CATS']->checkForceLogout())
 {
+    Logger::getLogger("AuieoATS")->info("index:before session logout");
     // FIXME: Unset session / etc.?
     $_SESSION['CATS']->logout();
+    Logger::getLogger("AuieoATS")->info("index:after session logout");
+    Logger::getLogger("AuieoATS")->info("index:before loading login module");
     ModuleUtility::loadModule('login');
+    Logger::getLogger("AuieoATS")->info("index:after loading login module");
 }
 
 /* If user specified a module, load it; otherwise, load the home module. */
 else if (!isset($_REQUEST['m']) || empty($_REQUEST['m']))
 {
+    Logger::getLogger("AuieoATS")->info("index:if module not set or empty start");
     if ($_SESSION['CATS']->isLoggedIn())
     {
         $_SESSION['CATS']->logPageView();
@@ -289,11 +282,13 @@ else if (!isset($_REQUEST['m']) || empty($_REQUEST['m']))
         $_SESSION['CATS']->logout();
         ModuleUtility::loadModule('login');
     }
+    Logger::getLogger("AuieoATS")->info("index:if module not set or empty end");
 }
 else
 {
     if ($_REQUEST['m'] == 'logout')
     {
+        Logger::getLogger("AuieoATS")->info("index:if module is logout start");
         /* There isn't really a logout module. It's just a few lines. */
         $unixName = $_SESSION['CATS']->getUnixName();
 
@@ -327,24 +322,31 @@ else
         {
             CATSUtility::transferRelativeURI($URI);
         }
+        Logger::getLogger("AuieoATS")->info("index:if module is logout end");
     }
     else if (!ModuleUtility::moduleRequiresAuthentication($_REQUEST['m']))
     {
+        Logger::getLogger("AuieoATS")->info("index:if module require authentication start");
         /* No authentication required; load the module. */
         ModuleUtility::loadModule($_REQUEST['m']);
+        Logger::getLogger("AuieoATS")->info("index:if module require authentication end");
     }
     else if (!$_SESSION['CATS']->isLoggedIn())
     {
+        Logger::getLogger("AuieoATS")->info("index:if session logged in start");
         /* User isn't logged in and authentication is required; send the user
          * to the login page.
          */
         ModuleUtility::loadModule('login');
+        Logger::getLogger("AuieoATS")->info("index:if session logged in end");
     }
     else
     {
+        Logger::getLogger("AuieoATS")->info("index:if before pageview and load module start");
         /* Everything's good; load the requested module. */
         $_SESSION['CATS']->logPageView();
         ModuleUtility::loadModule($_REQUEST['m']);
+        Logger::getLogger("AuieoATS")->info("index:if before pageview and load module end");
     }
 }
 

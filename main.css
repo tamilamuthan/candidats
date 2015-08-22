@@ -114,9 +114,9 @@ a:hover
     clear: both;
     padding-top: 1.6em; /* Affects the height of the sub-tab bar; was 2em. */
     width: 98%;
-    min-height: 400px;
+    min-height: 600px;
     height: auto !important;
-    height: 400px;
+    height: 600px;
 }
 
 /* Main page body / tab contents div. */
@@ -125,9 +125,9 @@ a:hover
     background: #fff;
     color: #000;
     padding: 0px 15px 10px 15px;
-    min-height: 400px;
+    min-height: 600px;
     height: auto !important;
-    height: 400px;
+    height: 600px;
     font: normal normal normal 12px Arial, Tahoma, sans-serif;
     margin-bottom: 0px;
 }

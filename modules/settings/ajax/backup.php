@@ -173,7 +173,7 @@ if ($action == 'backup')
             'database',
             $SQLDumpPath
         );
-        @unlink($SQLDumpPath);
+        //@unlink($SQLDumpPath);
 
         /* Fail out if we were't successful writing the file to the zip. */
         if (!$status)

@@ -473,6 +473,9 @@ class Contacts extends Modules
     
     public function load($contactID)
     {
+        $arrExtra=$this->getExtraFieldInfoForLoad();
+        $selectExtraField=$arrExtra["sql"];
+        $arrExtraField=$arrExtra["fields"];
         $sql = sprintf(
             "SELECT
                 contact.contact_id,
@@ -505,6 +508,7 @@ class Contacts extends Modules
                     contact.date_modified, '%%m-%%d-%%y (%%h:%%i %%p)'
                 ) AS dateModified,
                 owner_user.email AS owner_email
+                {$selectExtraField}
             FROM
                 contact
             LEFT JOIN company
@@ -529,13 +533,18 @@ class Contacts extends Modules
         );
 
         $this->record = $this->_db->getAssoc($sql);
-        $sql="select * from extra_field where data_item_type=300 and data_item_id='{$contactID}'";
+        $this->extraRecord=array();
+        foreach($arrExtraField as $ind=>$field)
+        {
+            $this->extraRecord[$field]=$this->record[$field];
+        }
+        /*$sql="select * from extra_field where data_item_type=300 and data_item_id='{$contactID}'";
         $arrAssoc = $this->_db->getAllAssoc($sql);
         $this->extraRecord=array();
         foreach($arrAssoc as $ind=>$row)
         {
             $this->extraRecord[$row["field_name"]]=$row["value"];
-        }
+        }*/
     }
 
     /**

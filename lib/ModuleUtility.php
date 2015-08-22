@@ -51,10 +51,12 @@ class ModuleUtility
      */
     public static function loadModule($moduleName)
     {
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule entry");
         $modules = self::getModules();
 
         if (!isset($modules[$moduleName]))
         {
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if module not set entry");
             if (class_exists('CommonErrors'))
             {
                 CommonErrors::fatal(COMMONERROR_INVALIDMODULE, NULL, $moduleName);
@@ -65,17 +67,21 @@ class ModuleUtility
                      . '\'.<br />Is the module installed?!');
                 die();
             }
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if module not set end");
         }
 
         $moduleClass = $modules[$moduleName][0];
         if($_SESSION["CATS"]->getSiteID()>0)
         {
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if siteid greater than 0 start");
             $objPRGManagement=PRGManagement::getInstance();
             $permit=$objPRGManagement->isModuleActionPermitted();
             if($permit===false)
             {
-                header("Location:index.php");exit;
+                Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if siteid not permitted");
+                CommonErrors::fatal(COMMONERROR_PERMISSION, $this, 'You have no permission to access this.');
             }
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if siteid greater than 0 end");
         }
         include_once(
             'modules/' . $moduleName . '/'
@@ -116,7 +122,9 @@ class ModuleUtility
          */
         if(!class_exists($moduleActionModelClass) && file_exists("modules/{$moduleName}/{$moduleActionModelClass}.php"))
         {
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if module controller not exist and module template file exist start");
             include_once "modules/{$moduleName}/{$moduleActionModelClass}.php";
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if module controller not exist and module template file exist end");
         }
         $objModel=null;
         if(class_exists($moduleActionModelClass))
@@ -129,11 +137,14 @@ class ModuleUtility
          */
         if(!class_exists($moduleActionViewClass) && file_exists("modules/{$moduleName}/{$moduleActionViewClass}.php"))
         {
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if module view not exist and module view template file exist start");
             include_once "modules/{$moduleName}/{$moduleActionViewClass}.php";
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if module view not exist and module view template file exist end");
         }
         $objView=null;
         if(class_exists($moduleActionViewClass))
         {
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if module view exist start");
             if(is_null($objModel))
                 $objView=new $moduleActionViewClass();
             else
@@ -142,9 +153,11 @@ class ModuleUtility
             {
                 $objModuleController->setView($objView);
             }
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if module view exist end");
         }
         if(defined("AUIEO_API"))
         {
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if request from API start");
             include_once("lib/api.php");
             $api = new API();
             $suceess=$api->processApi();
@@ -157,28 +170,38 @@ class ModuleUtility
                 if(method_exists($objModuleController, $webserviceMethod))
                 {
                     $ret=$objModuleController->$webserviceMethod($api);
+                    Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if request from API end");
                     exit;
                 }
             }
             else
             {
+                Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if request from API end");
                 exit;
             }
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if request from API end");
         }
-        else if(method_exists($objModuleController, $actionMethod))
+        ob_start();
+        if(method_exists($objModuleController, $actionMethod))
         {
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if action method exist in controller start");
             $ret=$objModuleController->$actionMethod();
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if action method exist in controller end");
         }
         else if(method_exists($objModuleController, $action))
         {
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if action exist in controller start");
             $ret=$objModuleController->$action();
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if action exist in controller end");
         }
         else
         {
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if render or handleRequest method exist in controller start");
             if(method_exists($objModuleController, "render"))
                 $ret=$objModuleController->render();
             else
                 $ret=$objModuleController->handleRequest();
+            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if handleRequest method exist in controller end");
         }
         /**
          * if it is werservice and if the method exist, the control should not come here.
@@ -224,6 +247,22 @@ class ModuleUtility
                 $objTemplate->display($tplfile);
             }
         }
+        $AUIEO_TEMPLATE_CONTENT=ob_get_clean();
+        if(defined("AUIEO_API"))
+        {
+            echo $AUIEO_TEMPLATE_CONTENT;
+        }
+        if(file_exists("./modules/{$moduleName}/module_template.php"))
+        {
+            ob_start();
+            include "./modules/{$moduleName}/module_template.php";
+            echo ob_get_clean();
+        }
+        else
+        {
+            echo $AUIEO_TEMPLATE_CONTENT;
+        }
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule exit");
     }
 
     /**
@@ -232,6 +271,7 @@ class ModuleUtility
      */
     public static function registerModuleTasks()
     {
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:registerModuleTasks entry");
         $modules = self::getModules();
 
         foreach ($modules as $moduleName => $moduleData)
@@ -245,6 +285,7 @@ class ModuleUtility
                 include_once($taskFile);
             }
         }
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:registerModuleTasks exit");
     }
 
     /**
@@ -255,6 +296,7 @@ class ModuleUtility
      */
     public static function moduleRequiresAuthentication($moduleName)
     {
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:registerModumoduleRequiresAuthenticationleTasks entry");
         $modules = self::getModules();
 
         if (!isset($modules[$moduleName]))
@@ -283,7 +325,9 @@ class ModuleUtility
             return true;
         }
 
-        return $module->requiresAuthentication();
+        $ret = $module->requiresAuthentication();
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:registerModumoduleRequiresAuthenticationleTasks exit");
+        return $ret;
     }
 
     /**
@@ -293,6 +337,7 @@ class ModuleUtility
      */
     public static function getModules()
     {
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:getModules entry");
         /* Should already be in the session, if not rescan modules dir and add to
          * current session.
          */
@@ -308,6 +353,7 @@ class ModuleUtility
             self::_fatal('No modules found.');
         }
 
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:getModules exit");
         return $_SESSION['modules'];
     }
 
@@ -319,6 +365,7 @@ class ModuleUtility
      */
     public static function moduleExists($moduleName)
     {
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:moduleExists entry");
         $modules = self::getModules();
 
         foreach ($modules as $name => $data)
@@ -328,7 +375,7 @@ class ModuleUtility
                 return true;
             }
         }
-
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:moduleExists exit");
         return false;
     }
 
@@ -339,6 +386,7 @@ class ModuleUtility
      */
     private static function _refreshModuleList()
     {
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:_refreshModuleList entry");
         /* Modules array looks like this:
          *
          * $modules = array(
@@ -455,7 +503,7 @@ class ModuleUtility
             $modulesCache->hooks = $hooks;
             @file_put_contents('modules.cache', serialize($modulesCache));
         }
-
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:_refreshModuleList exit");
         return $modules;
     }
 
@@ -467,6 +515,7 @@ class ModuleUtility
      */
     private static function _checkCoreModules($modules)
     {
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:_checkCoreModules entry");
         $missing = array();
 
         foreach ($GLOBALS['coreModules'] as $key => $value)
@@ -488,6 +537,7 @@ class ModuleUtility
 
             self::_fatal($error);
         }
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:_checkCoreModules exit");
     }
 
     /**
@@ -498,6 +548,7 @@ class ModuleUtility
      */
     private static function _fatal($error)
     {
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:_fatal entry");
         $template = new Template();
 
         $template->assign('errorMessage', $error);
@@ -508,7 +559,7 @@ class ModuleUtility
              str_replace("\n", " ", 'Fatal Error raised: ' . $error)
          );
         echo '-->';
-
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:_fatal exit");
         die();
     }
 
@@ -528,6 +579,7 @@ class ModuleUtility
      */
     private static function _sortModules($a, $b)
     {
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:_sortModules entry");
         if (!eval(Hooks::get('SORT_MODULES_RETURN_POS'))) return 1;
         if (!eval(Hooks::get('SORT_MODULES_RETURN_NEG'))) return -1;
 
@@ -550,7 +602,7 @@ class ModuleUtility
 
             return -1;
         }
-
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:_sortModules exit");
         return 1;
     }
 
@@ -563,6 +615,7 @@ class ModuleUtility
      */
     public static function getModuleSchemaVersions()
     {
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:getModuleSchemaVersions entry");
         $db = DatabaseConnection::getInstance();
 
         $sql = sprintf(
@@ -574,7 +627,7 @@ class ModuleUtility
             ORDER BY
                 name ASC"
         );
-        
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:getModuleSchemaVersions exit");
         return $db->getAllAssoc($sql);
     }
 
@@ -589,6 +642,7 @@ class ModuleUtility
      */
     private static function processModuleSchema($moduleName, $schema)
     {
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:processModuleSchema entry");
         set_time_limit(0);
 
 		$executedQuery = false;
@@ -709,6 +763,7 @@ class ModuleUtility
 
             $currentVersion = $version;
         }
+        Logger::getLogger("AuieoATS")->info("ModuleUtility:processModuleSchema exit");
     }
 }
 

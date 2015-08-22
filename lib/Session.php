@@ -302,7 +302,10 @@ class CATSSession
 
     public function isHrMode()
     {
-        return $this->_isHrMode;
+        Logger::getLogger("AuieoATS")->info("Session:isHrMode entry");
+        $ret = $this->_isHrMode;
+        Logger::getLogger("AuieoATS")->info("Session:isHrMode exit");
+        return $ret;
     }
 
     /**

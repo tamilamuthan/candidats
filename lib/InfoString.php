@@ -97,8 +97,8 @@ class InfoString
 
         $infoString = sprintf(
             '<span class="bold">Contact:</span>&nbsp;%s %s',
-            htmlspecialchars($infoRS['firstName']),
-            htmlspecialchars($infoRS['lastName'])
+            htmlspecialchars($infoRS['first_name']),
+            htmlspecialchars($infoRS['last_name'])
         );
 
         if (!empty($infoRS['title']))

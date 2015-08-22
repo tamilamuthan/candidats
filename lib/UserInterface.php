@@ -142,7 +142,10 @@ class UserInterface extends ClsNaanalController
      */
     public function getModuleName()
     {
-        return $this->_moduleName;
+        Logger::getLogger("AuieoATS")->info("UserInterface:getModuleName entry");
+        $ret = $this->_moduleName;
+        Logger::getLogger("AuieoATS")->info("UserInterface:getModuleName exit");
+        return $ret;
     }
     
     public function &getTemplateObject()
@@ -218,13 +221,16 @@ class UserInterface extends ClsNaanalController
      */
     public function getSubTabs($modules = array())
     {
+        Logger::getLogger("AuieoATS")->info("UserInterface:getSubTabs entry");
         if (empty($modules))
         {
             return $this->_subTabs;
         }
 
         $subTabsExternal = $this->getThisSubTabsExternal($modules);
-        return array_merge($this->_subTabs, $subTabsExternal);
+        $ret = array_merge($this->_subTabs, $subTabsExternal);
+        Logger::getLogger("AuieoATS")->info("UserInterface:getSubTabs exit");
+        return $ret;
     }
 
     /**
@@ -234,11 +240,12 @@ class UserInterface extends ClsNaanalController
      */
     public function getSubTabsExternal()
     {
+        Logger::getLogger("AuieoATS")->info("UserInterface:getSubTabsExternal entry");
         if (isset($this->_subTabsExternal))
         {
             return $this->_subTabsExternal;
         }
-
+        Logger::getLogger("AuieoATS")->info("UserInterface:getSubTabsExternal exit");
         return false;
     }
 
@@ -470,7 +477,7 @@ class UserInterface extends ClsNaanalController
         {
             return true;
         }
-
+        if($key=="owner" && strpos($request[$key], ":")) return true; 
         return false;
     }
 

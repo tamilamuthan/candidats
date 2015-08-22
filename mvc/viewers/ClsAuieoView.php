@@ -17,6 +17,63 @@ class ClsAuieoView
     {
         echo $value;
     }
+     protected function processField($fieldData,$defaultValue,$additionalValue=0)
+    {
+         $fieldName=$fieldData["fieldname"];
+        $isCustomDropdown=false;
+        if($fieldData["uitype"]>10000)
+        {
+            $customDropdownID=$fieldData["uitype"]-10000;
+            $sql="select * from auieo_dropdown where id={$customDropdownID}";
+            $objDB=DatabaseConnection::getInstance();
+            $record=$objDB->getAssoc($sql);
+            if($record)
+            {
+                $isCustomDropdown=true;
+                $sql="select * from auieo_dropdowndata where dropdown_id={$customDropdownID}";
+                $records=$objDB->getAllAssoc($sql);
+                if($records)
+                {
+                     $AUIEO_CAPTION=$fieldData["fieldlabel"];
+                     ob_start();
+                    ?>
+
+                    <select id="<?php echo $fieldName; ?>" name="<?php echo $fieldName; ?>" class="inputbox" style="width: 150px;">
+                        <?php foreach ($records as $record)
+                            {
+                                $selected="";
+                                if($record["id"]==$defaultValue) $selected=" selected";
+                                echo "<option value='{$record['id']}' {$selected}>{$record['data']}</option>";
+                            } ?>
+                    </select>
+                    <?php
+                    $AUIEO_DATA=ob_get_clean();
+                }
+                else {
+                     $arrRenderSerialize[]="-None-";
+                }
+            }
+        }
+        if($isCustomDropdown===false)
+        {
+            $fieldInfo=getFieldInfoByUIType($fieldData["fieldinfo"]);
+            if($fieldData["displaytype"]<=0) return false;
+            $AUIEO_CAPTION=$fieldData["fieldlabel"];
+            if($fieldInfo["uicontrol"]=="OWNER")
+            {
+                $AUIEO_DATA=$this->getOwnerUI($defaultValue,$additionalValue);
+            }
+            else if($fieldInfo["uicontrol"]=="CALENDAR")
+            {
+                $AUIEO_DATA=$this->getDateUI($fieldName,$defaultValue);
+            }
+            else
+            {
+                $AUIEO_DATA="<input name='{$fieldName}' type='textbox' value='{$defaultValue}' />";
+            }
+        }
+        return array("caption"=>$AUIEO_CAPTION,"data"=>$AUIEO_DATA);
+    }
     public function setID($id)
     {
         $this->id=$id;
@@ -61,8 +118,7 @@ class ClsAuieoView
     {
         ob_start();
 ?>
-<select id="owner" name="owner" class="inputbox" style="width: 150px;">
-    <option value="-1">None</option>
+<select id="assignedto" name="assignedto" class="inputbox" style="width: 150px;">
     <optgroup label="User">
     <?php foreach ($this->usersRS as $rowNumber => $usersData)
         {

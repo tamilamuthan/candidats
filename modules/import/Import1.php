@@ -2,19 +2,7 @@
 pageHeaderInclude('modules/import/import.js');
 pageTitle('Import');
 ob_start();
-?>
-
-        <div id="contents">
-            <table>
-                <tr>
-                    <td width="3%">
-                        <img src="images/reports.gif" width="24" height="24" border="0" alt="Import" style="margin-top: 3px;" />&nbsp;
-                    </td>
-                    <td><h2>Import Data</h2></td>
-                </tr>
-            </table>
-
-            <?php if (isset($this->errorMessage)): ?>
+if (isset($this->errorMessage)): ?>
 
                 <p class="warning" id="importHide0">Error!</p>
 
@@ -83,6 +71,7 @@ ob_start();
                         <input type="radio" name="typeOfImport" value="Candidates">&nbsp;<img src="images/candidate_inline.gif">&nbsp;Candidates<br />
                         <input type="radio" name="typeOfImport" value="Companies" >&nbsp;<img src="images/mru/company.gif">&nbsp;Companies<br />
                         <input type="radio" name="typeOfImport" value="Contacts" >&nbsp;<img src="images/mru/contact.gif">&nbsp;Contacts<br />
+                        <input type="radio" name="typeOfImport" value="Joborders" >&nbsp;<img src="images/mru/joborders.gif">&nbsp;Joborders<br />
                         <br />
                         <input class="button" type="submit" value="Next">
                         </td>
@@ -113,6 +102,4 @@ ob_start();
             <?php endif; ?>
 
             <br />
-
-        </div>
 <?php $AUIEO_CONTENT=ob_get_clean(); ?>

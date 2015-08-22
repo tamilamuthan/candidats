@@ -97,13 +97,14 @@ class ExportUtility
                 $candidateIDs
             );
         }
+        $link="";
         $menu =
               '<div style="float: left; margin-left: 4px; margin-right: ' . $linkOffset . 'px;">'
             . '<form name="selectAll" action="#">'
             . '<input type="checkbox" name="allBox" title="Select All" onclick="toggleChecksAll();" />'
             . '</form>'
             . '</div>'
-            . '<a href="#" id="exportBoxLink" onclick="showBox(\'ExportBox\'); return false;">Export</a> | <a href="#" id="deleteBoxLink" onclick="deleteSelected(); return false;">Delete</a>';
+            . '<a href="#" id="exportBoxLink" onclick="showBox(\'ExportBox\'); return false;">Export</a> | <a href="#" id="deleteBoxLink" onclick="deleteSelected(); return false;">Delete</a>'.$link;
         if($_REQUEST["m"]=="candidates")
         {
             $menu = $menu . ' | <a href="#" id="addToJoborderBoxLink" onclick="showBox(\'JoborderBox\'); return false;">Add to joborder</a>';
@@ -112,7 +113,7 @@ class ExportUtility
             . '<div class="exportPopup" id="ExportBox" align="left" onmouseover="showBox(\'ExportBox\');" onmouseout="hideBox(\'ExportBox\');">'
             . '<a href="' . $allRecordsURL . '">Export All Records</a><br />'
             . '<a href="' . $currentPageURL . '">Export Current Page</a><br />'
-            . '<a href="#" onclick="checkSelected(); return false;">Export Selected Records</a>'
+            . '<a href="#" onclick="checkSelected(); return false;">Export Selected Records</a><br />'
             . '</div>';
         if($_REQUEST["m"]=="candidates")
         {
@@ -173,7 +174,11 @@ class Export
             case DATA_ITEM_JOBORDER:
                 $dataItem = new JobOrders($this->_siteID);
                 break;
-                
+           
+             case DATA_ITEM_COMPANY:
+                $dataItem = new Companies($this->_siteID);
+                break;
+            
             default:
                 return false;
                 break;

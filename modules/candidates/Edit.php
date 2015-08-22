@@ -248,8 +248,8 @@ ob_start();
                                 <td class="tdData">
                                     <select id="gender" name="gender" class="inputbox" style="width:200px;">
                                         <option value="">----</option>
-                                        <option value="m" <?php if (strtolower($this->data['eeoGender']) == 'm') echo('selected'); ?>>Male</option>
-                                        <option value="f" <?php if (strtolower($this->data['eeoGender']) == 'f') echo('selected'); ?>>Female</option>
+                                        <option value="m" <?php if (isset($this->data['eeoGender']) && strtolower($this->data['eeoGender']) == 'm') echo('selected'); ?>>Male</option>
+                                        <option value="f" <?php if (isset($this->data['eeoGender']) && strtolower($this->data['eeoGender']) == 'f') echo('selected'); ?>>Female</option>
                                     </select>
                                 </td>
                              </tr>
@@ -262,11 +262,11 @@ ob_start();
                                 <td class="tdData">
                                     <select id="race" name="race" class="inputbox" style="width:200px;">
                                         <option value="">----</option>
-                                        <option value="1" <?php if ($this->data['eeoEthnicTypeID'] == 1) echo('selected'); ?>>American Indian</option>
-                                        <option value="2" <?php if ($this->data['eeoEthnicTypeID'] == 2) echo('selected'); ?>>Asian or Pacific Islander</option>
-                                        <option value="3" <?php if ($this->data['eeoEthnicTypeID'] == 3) echo('selected'); ?>>Hispanic or Latino</option>
-                                        <option value="4" <?php if ($this->data['eeoEthnicTypeID'] == 4) echo('selected'); ?>>Non-Hispanic Black</option>
-                                        <option value="5" <?php if ($this->data['eeoEthnicTypeID'] == 5) echo('selected'); ?>>Non-Hispanic White</option>
+                                        <option value="1" <?php if (isset($this->data['eeoEthnicTypeID']) && $this->data['eeoEthnicTypeID'] == 1) echo('selected'); ?>>American Indian</option>
+                                        <option value="2" <?php if (isset($this->data['eeoEthnicTypeID']) && $this->data['eeoEthnicTypeID'] == 2) echo('selected'); ?>>Asian or Pacific Islander</option>
+                                        <option value="3" <?php if (isset($this->data['eeoEthnicTypeID']) && $this->data['eeoEthnicTypeID'] == 3) echo('selected'); ?>>Hispanic or Latino</option>
+                                        <option value="4" <?php if (isset($this->data['eeoEthnicTypeID']) && $this->data['eeoEthnicTypeID'] == 4) echo('selected'); ?>>Non-Hispanic Black</option>
+                                        <option value="5" <?php if (isset($this->data['eeoEthnicTypeID']) && $this->data['eeoEthnicTypeID'] == 5) echo('selected'); ?>>Non-Hispanic White</option>
                                     </select>
                                 </td>
                              </tr>
@@ -279,10 +279,10 @@ ob_start();
                                 <td class="tdData">
                                     <select id="veteran" name="veteran" class="inputbox" style="width:200px;">
                                         <option value="">----</option>
-                                        <option value="1" <?php if ($this->data['eeoVeteranTypeID'] == 1) echo('selected'); ?>>No</option>
-                                        <option value="2" <?php if ($this->data['eeoVeteranTypeID'] == 2) echo('selected'); ?>>Eligible Veteran</option>
-                                        <option value="3" <?php if ($this->data['eeoVeteranTypeID'] == 3) echo('selected'); ?>>Disabled Veteran</option>
-                                        <option value="4" <?php if ($this->data['eeoVeteranTypeID'] == 4) echo('selected'); ?>>Eligible and Disabled</option>
+                                        <option value="1" <?php if (isset($this->data['eeoVeteranTypeID']) && $this->data['eeoVeteranTypeID'] == 1) echo('selected'); ?>>No</option>
+                                        <option value="2" <?php if (isset($this->data['eeoVeteranTypeID']) && $this->data['eeoVeteranTypeID'] == 2) echo('selected'); ?>>Eligible Veteran</option>
+                                        <option value="3" <?php if (isset($this->data['eeoVeteranTypeID']) && $this->data['eeoVeteranTypeID'] == 3) echo('selected'); ?>>Disabled Veteran</option>
+                                        <option value="4" <?php if (isset($this->data['eeoVeteranTypeID']) && $this->data['eeoVeteranTypeID'] == 4) echo('selected'); ?>>Eligible and Disabled</option>
                                     </select>
                                 </td>
                              </tr>
@@ -295,8 +295,8 @@ ob_start();
                                 <td class="tdData">
                                     <select id="disability" name="disability" class="inputbox" style="width:200px;">
                                         <option value="">----</option>
-                                        <option value="No" <?php if ($this->data['eeoDisabilityStatus'] == 'No') echo('selected'); ?>>No</option>
-                                        <option value="Yes" <?php if ($this->data['eeoDisabilityStatus'] == 'Yes') echo('selected'); ?>>Yes</option>
+                                        <option value="No" <?php if (isset($this->data['eeoDisabilityStatus'] ) && $this->data['eeoDisabilityStatus'] == 'No') echo('selected'); ?>>No</option>
+                                        <option value="Yes" <?php if (isset($this->data['eeoDisabilityStatus'] ) && $this->data['eeoDisabilityStatus'] == 'Yes') echo('selected'); ?>>Yes</option>
                                     </select>
                                 </td>
                              </tr>

@@ -126,11 +126,11 @@ $interface->outputXMLPage(
     "<data>\n" .
     "    <errorcode>0</errorcode>\n" .
     "    <errormessage></errormessage>\n" .
-    "    <type>"            . $activityEntry['type'] . "</type>\n" .
-    "    <typedescription>" . $activityEntry['typeDescription'] . "</typedescription>\n" .
+    "    <type>"            . (isset($activityEntry['type'])?$activityEntry['type']:"") . "</type>\n" .
+    "    <typedescription>" . (isset($activityEntry['typeDescription'])?$activityEntry['typeDescription']:"") . "</typedescription>\n" .
     "    <notes>"           . htmlspecialchars($activityEntry['notes']) . "</notes>\n" .
-    "    <regarding>"       . htmlspecialchars($activityEntry['regarding']) . "</regarding>\n" .
-    "    <date>"            . htmlspecialchars($activityEntry['dateCreated']) . "</date>\n" .
+    "    <regarding>"       . (isset($activityEntry['regarding'])?htmlspecialchars($activityEntry['regarding']):"") . "</regarding>\n" .
+    "    <date>"            . (isset($activityEntry['dateCreated'])?htmlspecialchars($activityEntry['dateCreated']) :""). "</date>\n" .
     "</data>\n"
 );
 

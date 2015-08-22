@@ -83,9 +83,9 @@ class JobOrdersUI extends UserInterface
         $this->_moduleName = 'joborders';
         $this->_moduleTabText = 'Job Orders';
         $this->_subTabs = array(
-            //'Add Job Order'     => CATSUtility::getIndexName() . '?m=joborders&amp;a=add*al='.ACCESS_LEVEL_EDIT,
-            'Add Job Order' => 'javascript:void(0);*js=showPopWin(\''.CATSUtility::getIndexName().'?m=joborders&amp;a=addJobOrderPopup\', 400, 250, null);*al='.ACCESS_LEVEL_EDIT,
-            'Search Job Orders' => CATSUtility::getIndexName() . '?m=joborders&amp;a=search'
+            //'Add Job Order'     => CATSUtility::getIndexName() . '?m=joborders&a=add*al='.ACCESS_LEVEL_EDIT,
+            'Add Job Order' => 'javascript:void(0);*js=showPopWin(\''.CATSUtility::getIndexName().'?m=joborders&a=addJobOrderPopup\', 400, 250, null);*al='.ACCESS_LEVEL_EDIT,
+            'Search Job Orders' => CATSUtility::getIndexName() . '?m=joborders&a=search'
         );
     }
 
@@ -454,7 +454,7 @@ class JobOrdersUI extends UserInterface
         $adminHidden="";
         if ($data['is_admin_hidden'] == 1)
         {
-            $adminHidden = "<p class='warning'>This Job Order is hidden.  Only CATS Administrators can view it or search for it.  To make it visible by the site users, click <a href='index.php?m=joborders&amp;a=administrativeHideShow&amp;jobOrderID={$jobOrderID}&amp;state=0' style='font-weight:bold;'>Here.</a></p>";
+            $adminHidden = "<p class='warning'>This Job Order is hidden.  Only CATS Administrators can view it or search for it.  To make it visible by the site users, click <a href='index.php?m=joborders&a=administrativeHideShow&jobOrderID={$jobOrderID}&state=0' style='font-weight:bold;'>Here.</a></p>";
         }
         
         $strFrozen="";
@@ -468,7 +468,7 @@ class JobOrdersUI extends UserInterface
             if ($this->accessLevel >= ACCESS_LEVEL_EDIT)
             {
                 $strFrozen = $strFrozen . "
-                           <a id='edit_link' href='index.php?m=joborders&amp;a=edit&amp;jobOrderID={$this->jobOrderID}'>
+                           <a id='edit_link' href='index.php?m=joborders&a=edit&jobOrderID={$this->jobOrderID}'>
                                <img src='images/actions/edit.gif' width='16' height='16' class='absmiddle' alt='edit' border='0' />&nbsp;Edit
                            </a>
                            the Job Order to make it Active.&nbsp;&nbsp;
@@ -530,14 +530,14 @@ class JobOrdersUI extends UserInterface
         $ACCESS_LEVEL_EDIT_BUTTON="";
         if ($this->_accessLevel >= ACCESS_LEVEL_EDIT)
         { 
-            $ACCESS_LEVEL_EDIT_BUTTON = "<a id='edit_link' href='index.php?m=joborders&amp;a=edit&amp;jobOrderID={$jobOrderID}'>
+            $ACCESS_LEVEL_EDIT_BUTTON = "<a id='edit_link' href='index.php?m=joborders&a=edit&jobOrderID={$jobOrderID}'>
                 <img src='images/actions/edit.gif' width='16' height='16' class='absmiddle' alt='edit' border='0' />&nbsp;Edit
             </a>";
         }
         $ACCESS_LEVEL_DELETE_BUTTON="";
         if ($this->_accessLevel >= ACCESS_LEVEL_DELETE)
         { 
-            $ACCESS_LEVEL_DELETE_BUTTON = "<a id='delete_link' href='index.php?m=joborders&amp;a=delete&amp;jobOrderID={$jobOrderID}' onclick=\"javascript:return confirm('Delete this job order?');\">
+            $ACCESS_LEVEL_DELETE_BUTTON = "<a id='delete_link' href='index.php?m=joborders&a=delete&jobOrderID={$jobOrderID}' onclick=\"javascript:return confirm('Delete this job order?');\">
                 <img src='images/actions/delete.gif' width='16' height='16' class='absmiddle' alt='delete' border='0' />&nbsp;Delete
             </a>";
         }
@@ -546,13 +546,13 @@ class JobOrdersUI extends UserInterface
         {
             if ($data['is_admin_hidden'] == 1)
             {
-                $ACCESS_LEVEL_MULTI_SA_BUTTON = "<a href='index.php?m=joborders&amp;a=administrativeHideShow&amp;jobOrderID={$jobOrderID}&amp;state=0'>
+                $ACCESS_LEVEL_MULTI_SA_BUTTON = "<a href='index.php?m=joborders&a=administrativeHideShow&jobOrderID={$jobOrderID}&state=0'>
                     <img src='images/resume_preview_inline.gif' width='16' height='16' class='absmiddle' alt='delete' border='0' />&nbsp;Administrative Show
                 </a>";
             }
             else
             {
-                $ACCESS_LEVEL_MULTI_SA_BUTTON = "<a href='index.php?m=joborders&amp;a=administrativeHideShow&amp;jobOrderID={$jobOrderID}&amp;state=1'>
+                $ACCESS_LEVEL_MULTI_SA_BUTTON = "<a href='index.php?m=joborders&a=administrativeHideShow&jobOrderID={$jobOrderID}&state=1'>
                 <img src='images/resume_preview_inline.gif' width='16' height='16' class='absmiddle' alt='delete' border='0' />&nbsp;Administrative Hide
             </a>";
             }
@@ -560,7 +560,7 @@ class JobOrdersUI extends UserInterface
         $ACCESS_LEVEL_EDIT_CONSIDER="";
         if ($this->_accessLevel >= ACCESS_LEVEL_EDIT)
         { 
-            $ACCESS_LEVEL_EDIT_CONSIDER = "<a href='#' onclick=\"showPopWin('index.php?m=joborders&amp;a=considerCandidateSearch&amp;jobOrderID={$jobOrderID}', 820, 550, null); return false;\">
+            $ACCESS_LEVEL_EDIT_CONSIDER = "<a href='#' onclick=\"showPopWin('index.php?m=joborders&a=considerCandidateSearch&jobOrderID={$jobOrderID}', 820, 550, null); return false;\">
                 <img src='images/consider.gif' width='16' height='16' class='absmiddle' alt='add candidate' border='0' />&nbsp;Add Candidate to This Job Order Pipeline
             </a>";
         }
@@ -989,7 +989,7 @@ class JobOrdersUI extends UserInterface
         if ($careerPortalEnabled && $data['public'])
         {
             $isPublic = true;
-            if ($data['questionnaireID'])
+            if (isset($data['questionnaireID']) && $data['questionnaireID'])
             {
                 $questionnaire = new Questionnaire($this->_siteID);
                 $q = $questionnaire->get($data['questionnaireID']);
@@ -1170,8 +1170,8 @@ class JobOrdersUI extends UserInterface
                     $jobOrderDetails['title'],
                     $jobOrderDetails['companyName'],
                     $jobOrderID,
-                    '<a href="http://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '?')) . '?m=joborders&amp;a=show&amp;jobOrderID=' . $jobOrderID . '">'.
-                        'http://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '?')) . '?m=joborders&amp;a=show&amp;jobOrderID=' . $jobOrderID . '</a>'
+                    '<a href="http://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '?')) . '?m=joborders&a=show&jobOrderID=' . $jobOrderID . '">'.
+                        'http://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '?')) . '?m=joborders&a=show&jobOrderID=' . $jobOrderID . '</a>'
                 );
                 $statusChangeTemplate = str_replace(
                     $stringsToFind,
@@ -1301,6 +1301,7 @@ class JobOrdersUI extends UserInterface
         $objJoborder->load($jobOrderID);
         $arrExtraFieldData=array();
         $arrExtraFieldDataTmp=$objJoborder->extraFields->getValues($jobOrderID);
+        if($arrExtraFieldDataTmp);
         foreach($arrExtraFieldDataTmp as $arrData)
         {
             $arrExtraFieldData[$arrData["fieldName"]]=$arrData;
@@ -1308,6 +1309,7 @@ class JobOrdersUI extends UserInterface
         /* Execute the search. */
         $search = new SearchCandidates($this->_siteID);
         $arrMappingData=array();
+        if($objJoborder->candidate_mapping)
         foreach($objJoborder->candidate_mapping as $mapping)
         {
             if(isset($arrExtraFieldData[$mapping]["value"]))

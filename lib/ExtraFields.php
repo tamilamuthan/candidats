@@ -506,11 +506,13 @@ class ExtraFields
             "SELECT
                 *
             FROM
-                {$arrTableInfo["table"]}
+                auieo_fields
             WHERE
-                {$arrTableInfo["table"]}.{$arrTableInfo["primary_key"]} = %s
+            data_item_type={$this->_dataItemType}
+               AND
+            is_extra=1
             AND
-                {$arrTableInfo["table"]}.site_id = %s",
+               site_id = %s",
             $this->_db->makeQueryInteger($record_id),
             $this->_siteID
             
@@ -567,63 +569,8 @@ class ExtraFields
      */
     public function setValue($field, $value, $moduleID)
     {
-        $objSQL=new ClsNaanalSQL();
-        $objSQL->addTable("auieo_fields");
-        $objSQL->addWhereNew("auieo_fields","data_item_type", $this->_dataItemType);
-        $objSQL->addWhereNew("auieo_fields","fieldname", $field);
-        $objSQL->addWhereNew("auieo_fields","site_id", $this->_siteID);
-        $sql=$objSQL->render();
-        $row=$this->_db->getAssoc($sql);
-        if(empty($row)) return false;
-        /* Delete old entries. */
-        $sql = sprintf(
-            "DELETE FROM
-                extra_field
-            WHERE
-                extra_field.fieldname = %s
-            AND
-                extra_field.data_item_id = %s
-            AND
-                extra_field.site_id = %s
-            AND
-                extra_field.data_item_type = %s",
-            $this->_db->makeQueryString($field),
-            $this->_db->makeQueryInteger($moduleID),
-            $this->_siteID,
-            $this->_dataItemType
-        );
-        $this->_db->query($sql);
-
-        /* Don't set empty values at all. 0 is okay. */
-        if (empty($value) && $value !== 0 && $value !== '0')
-        {
-            return false;
-        }
-
-        $sql = sprintf(
-            "INSERT INTO extra_field (
-                data_item_id,
-                fieldname,
-                value,
-                import_id,
-                site_id,
-                data_item_type
-            )
-            VALUES (
-                %s,
-                %s,
-                %s,
-                0,
-                %s,
-                %s
-            )",
-            $this->_db->makeQueryInteger($moduleID),
-            $this->_db->makeQueryString($field),
-            $this->_db->makeQueryString($value),
-            $this->_siteID,
-            $this->_dataItemType
-        );
-
+        $moduleInfo=getModuleInfo("data_item_type");
+        $sql="update {$moduleInfo[$this->_dataItemType]["tablename"]} set `{$field}`='{$value}' where {$moduleInfo[$this->_dataItemType]["primarykey"]}={$moduleID}";
         return (boolean) $this->_db->query($sql);
     }
     
@@ -635,7 +582,7 @@ class ExtraFields
      */
     public function deleteValueByDataItemID($dataItemID)
     {
-        $sql = sprintf(
+        /*$sql = sprintf(
             "DELETE FROM
                 extra_field
             WHERE
@@ -649,7 +596,7 @@ class ExtraFields
             $this->_dataItemType
         );
 
-        return (boolean) $this->_db->query($sql);
+        return (boolean) $this->_db->query($sql);*/
     }
     
     /**
@@ -858,24 +805,18 @@ class ExtraFields
         switch ($data['extraFieldType'])
         {
             case EXTRA_FIELD_CHECKBOX:
-               return array('select'       => 'extra_field'.$uniqueIndex.'.value AS extra_field_value'.$uniqueIndex,
-                          'join'         => 'LEFT JOIN extra_field AS extra_field' . $uniqueIndex . ' '.
-                                            'ON '.$column.' = extra_field' . $uniqueIndex . '.data_item_id '.
-                                            'AND extra_field' . $uniqueIndex . '.fieldname = ' . $db->makeQueryString($data['fieldName']) . ' '.
-                                            'AND extra_field' . $uniqueIndex . '.data_item_type = ' . $this->_dataItemType,
+               return array('select'       => '`'.$data['fieldName'].'` AS `'.$data['fieldName'].'`',
+                          'join'         => ' ',
                           'pagerRender'          => 'return ($rsData[\'extra_field_value' . $uniqueIndex . '\'] == \'Yes\' ? \'Yes\' : \'No\');',
                           'exportRender'          => 'return ($rsData[\'extra_field_value' . $uniqueIndex . '\'] == \'Yes\' ? \'Yes\' : \'No\');',
-                          'sortableColumn'         => 'extra_field_value' . $uniqueIndex,
+                          'sortableColumn'         => '`'.$data['fieldName'].'`',
                           'pagerWidth'  => 45,
-                          'filter' => 'IF (extra_field'.$uniqueIndex.'.value = "Yes", "Yes", "No")');
+                          'filter' => 'IF (`'.$data['fieldName'].'`.value = "Yes", "Yes", "No")');
             break;
             
             case EXTRA_FIELD_DATE:
-                return array('select'  => 'extra_field'.$uniqueIndex.'.value AS extra_field_value'.$uniqueIndex,
-                          'join'    => 'LEFT JOIN extra_field AS extra_field' . $uniqueIndex . ' '.
-                                       'ON '.$column.' = extra_field' . $uniqueIndex . '.data_item_id '.
-                                       'AND extra_field' . $uniqueIndex . '.fieldname = ' . $db->makeQueryString($data['fieldName']) . ' '.
-                                       'AND extra_field' . $uniqueIndex . '.data_item_type = ' . $this->_dataItemType,
+                return array('select'  =>'`'.$data['fieldName'].'` AS `'.$data['fieldName'].'`',
+                          'join'    => '',
                           'pagerRender'     => 'if (isset($_SESSION[\'CATS\']) && $_SESSION[\'CATS\']->isLoggedIn() && $_SESSION[\'CATS\']->isDateDMY())
                                         {
                                               $dateParts = explode(\'-\',  $rsData[\'extra_field_value' . $uniqueIndex . '\']);
@@ -908,21 +849,17 @@ class ExtraFields
                                         {
                                              return $rsData[\'extra_field_value' . $uniqueIndex . '\'];
                                         }',
-                          'sortableColumn'       => 'extra_field_value' . $uniqueIndex,
+                          'sortableColumn'       => '`'.$data['fieldName'].'`',
                           'pagerWidth' => 110,
-                          'filter' => 'extra_field'.$uniqueIndex.'.value');
+                          'filter' => '`'.$data['fieldName'].'`');
             
             case EXTRA_FIELD_TEXT:
             default:
-                return array('select'  => 'extra_field'.$uniqueIndex.'.value AS extra_field_value'.$uniqueIndex,
-                          'join'    => 'LEFT JOIN extra_field AS extra_field' . $uniqueIndex . ' '.
-                                       'ON '.$column.' = extra_field' . $uniqueIndex . '.data_item_id '.
-                                       'AND extra_field' . $uniqueIndex . '.fieldname = ' . $db->makeQueryString($data['fieldName']) . ' '.
-                                       'AND extra_field' . $uniqueIndex . '.data_item_type = ' . $this->_dataItemType,
-                          'pagerRender'     => 'return htmlspecialchars($rsData[\'extra_field_value' . $uniqueIndex . '\']);',
-                          'sortableColumn'    => 'extra_field_value' . $uniqueIndex,
+                return array('select'  =>'`'.$data['fieldName'].'` AS `'.$data['fieldName'].'`',
+                          'join'    => '',
+                          'sortableColumn'    => '`'.$data['fieldName'].'`',
                           'pagerWidth'   => 110,
-                          'filter' => 'extra_field'.$uniqueIndex.'.value',
+                          'filter' => '`'.$data['fieldName'].'`',
                           'filterTypes'   => '===>=<=~');
             break;
         }

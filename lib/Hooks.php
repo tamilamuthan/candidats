@@ -51,8 +51,10 @@ class Hooks
      */
     public static function get($hookName)
     {
+        Logger::getLogger("AuieoATS")->info("Hooks:get entry");
         if (!isset($_SESSION['hooks'])) 
         {
+            Logger::getLogger("AuieoATS")->info("Hooks:get exit on hooks not set in session");
             return 'return true;';
         }        
         
@@ -68,12 +70,16 @@ class Hooks
             }
         }
 
-        return $hookCommands . ' return true;';
+        $ret = $hookCommands . ' return true;';
+        Logger::getLogger("AuieoATS")->info("Hooks:get entry");
+        return $ret;
     }
     
     public static function processFileHook($hookName)
     {
+        Logger::getLogger("AuieoATS")->info("Hooks:processFileHook entry");
         include("hooks.php");
+        Logger::getLogger("AuieoATS")->info("Hooks:processFileHook exit");
     }
 }
 

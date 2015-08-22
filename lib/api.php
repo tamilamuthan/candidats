@@ -96,6 +96,11 @@
 			$this->response('',204);	// If no records "No Content" status
 		}
                 
+                private function updateRole2()
+                {
+                            $this->response('',204);	// "No Content" status
+                }
+                
                 private function updateRole()
                 {
                     $objDB=DatabaseConnection::getInstance();

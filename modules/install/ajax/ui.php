@@ -554,6 +554,7 @@ switch ($action)
         $tables = array();
         $objDB=  DatabaseConnection::getInstance();
         $result = $objDB->getAllRow(sprintf("SHOW TABLES FROM %s", DATABASE_NAME));
+        if($result)
         foreach ($result as $row)
         {
             $tables[$row[0]] = true;
@@ -801,7 +802,7 @@ switch ($action)
         }
         if(!isset($fieldsEmail["for_module"]))
         {
-            $schema = file_get_contents('db/upgrade_0.7.0-1.3.2.sql');
+            $schema = file_get_contents('db/upgrade-0.7.0-1.3.2.sql');
             MySQLQueryMultiple($schema);
         }
         if (!isset($tables['auieo_fields']))
@@ -957,7 +958,7 @@ switch ($action)
         }
         if(!isset($fieldsEmail["for_module"]))
         {
-            $schema = file_get_contents('db/upgrade_0.7.0-1.3.2.sql');
+            $schema = file_get_contents('db/upgrade-0.7.0-1.3.2.sql');
             MySQLQueryMultiple($schema);
         }
         if (!isset($tables['auieo_fields']))

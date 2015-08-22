@@ -202,9 +202,21 @@ class Import
      */
     public function revert($tableName, $importID)
     {
+        $sql="SELECT * FROM auieo_fields WHERE import_id={$importID} AND site_id={$this->_siteID}";
+        $arrRow=$this->_db->getAllAssoc($sql);
+        if($arrRow)
+        foreach($arrRow as $row)
+        {
+            if($row["import_id"]==$importID)
+            {
+                $arrModueInfo=getModuleInfo("data_item_type");
+                $sql="ALTER TABLE {$arrModueInfo["tablename"]} DROP COLUMN `{$arrModueInfo[$row["fieldname"]]}`";
+                $this->_db->query($sql);
+            }
+        }
         $sql = sprintf(
             "DELETE FROM
-                extra_field_settings
+                auieo_fields
             WHERE
                 import_id = %s
             AND
@@ -222,18 +234,6 @@ class Import
             AND
                 site_id = %s",
             $this->_db->escapeString($tableName),
-            $importID,
-            $this->_siteID
-        );
-        $this->_db->query($sql);
-
-        $sql = sprintf(
-            "DELETE FROM
-                extra_field
-            WHERE
-                import_id = %s
-             AND
-                site_id = %s",
             $importID,
             $this->_siteID
         );

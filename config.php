@@ -32,9 +32,9 @@
 
 /* Database configuration. */
 define('DATABASE_USER', 'root');
-define('DATABASE_PASS', '');
+define('DATABASE_PASS', 'root');
 define('DATABASE_HOST', 'localhost');
-define('DATABASE_NAME', 'candidats');
+define('DATABASE_NAME', 'ats');
 
 /* Resfly.com Resume Import Services Enabled */
 define('PARSING_ENABLED', true);
@@ -158,7 +158,7 @@ define('ENABLE_DEMO_MODE', false);
 define('OFFSET_GMT', 5.5);
 
 /* Should we enforce only one session per user (excluding demo)? */
-define('ENABLE_SINGLE_SESSION', true);
+define('ENABLE_SINGLE_SESSION', false);
 
 /* Automated testing. This is only useful for the CATS core team at the moment;
  * don't worry about this yet.
@@ -198,7 +198,7 @@ define('MAIL_SMTP_HOST', "mail.auieo.in");
 define('MAIL_SMTP_PORT', 25);
 define('MAIL_SMTP_AUTH', true);
 define('MAIL_SMTP_USER', "info@auieo.in");
-define('MAIL_SMTP_PASS', "xxxxxxxxxxxxx");
+define('MAIL_SMTP_PASS', "xxxxxxxxxxxxxx");
 
 /* Event reminder E-Mail Template. */
 $GLOBALS['eventReminderEmail'] = <<<EOF

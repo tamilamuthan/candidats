@@ -74,7 +74,7 @@ class ClsAuieoSQLWhere
     private $isEnd=false;
     private $groupType="default";
     private $arrWhere=array();
-    public function __construct(&$from,$field=false,$data=false)
+    public function __construct(&$from=false,$field=false,$data=false)
     {
         $this->from=$from;
         $this->field=$field;
@@ -243,7 +243,7 @@ class ClsAuieoSQLWhere
             }
             if($data===false)
             {
-                return array("where"=>$this->field,"boolean"=>$boolean);
+                return array("where"=>"(".$this->field,"boolean"=>$boolean);
             }
             if(strtolower($this->condition)=="like")
             {
@@ -777,7 +777,7 @@ class ClsAuieoSQL
     {
         $this->arrWhere=array();
     }
-    function &addWhere(&$from,$field,$data=false)
+    function &addWhere(&$from=false,$field=false,$data=false)
     {
         $this->arrWhere[]=new ClsAuieoSQLWhere($from,$field,$data);
         if(count($this->arrWhere)>=2)
@@ -1061,7 +1061,7 @@ class ClsAuieoSQL
             if($firstBoolean===false) $firstBoolean=$awhr["boolean"];
             if($ind===0)
             {
-                $where=$where." {$firstBoolean} (".$awhr["where"];
+                $where=$where." {$firstBoolean}  ".$awhr["where"];
             }
             else
             {
@@ -1416,6 +1416,10 @@ class ClsAuieoSQL
     function addCustomWhere($custom_field,$data,$condition="=",$boolean="AND")
     {
         $this->arrWhere[]=array("table"=>false,"field"=>$custom_field,"data"=>$data,"condition"=>$condition,"boolean"=>$boolean);
+    }
+    function addCustomHaving($custom_field,$data,$condition="=",$boolean="AND")
+    {
+        $this->arrHaving[]=array("table"=>false,"field"=>$custom_field,"data"=>$data,"condition"=>$condition,"boolean"=>$boolean);
     }
     /**
      * add where data structure.

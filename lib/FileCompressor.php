@@ -434,7 +434,7 @@ class ZipFileCreator
          * optimized for minimal RAM usage, which presents a design challenge.
          */
 
-        $data = @file_get_contents($filename);
+        $data = file_get_contents($filename);
 
         /* Do we still have a valid file handle? */
         if (!$this->_fileHandle)

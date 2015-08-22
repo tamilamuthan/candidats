@@ -41,13 +41,13 @@ include_once('./lib/vendor/autoload.php');
 Logger::configure('logger.xml');
 Logger::getLogger("AuieoATS")->info("Start....");
 if(!class_exists("ClsNaanalPDO"))include_once("./lib/ClsNaanalPDO.php");
+include_once("lib/ClsAuieoSQL.php");
 include_once("lib/ClsLInputValidator.php");
 include_once('./lib/DatabaseConnection.php');
 include_once("./lib/Modules.php");
 include_once('./lib/Session.php'); /* Depends: MRU, Users, DatabaseConnection. */
 include_once('./lib/AJAXInterface.php');
 include_once('./lib/CATSUtility.php');
-
 
 header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');

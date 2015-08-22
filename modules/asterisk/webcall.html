@@ -1,0 +1,60 @@
+<style type="text/css">
+        #call-form {
+            text-align: left;
+            font: normal 12px Verdana, cursive;
+        }
+ 
+        #sender, #receiver {
+            border: 0;
+        }
+ 
+        #loading {position: absolute; display: none; z-index: 100500; width: 100%; height: 100%; text-align: center; top: 0; left: 0; background: silver;}
+    </style>
+<div class="grid_10">
+    <div class="box round first grid">
+    
+    <script type="text/javascript">
+ 
+sendCall = function () {
+    var ids = new Array ("#sender", "#receiver");
+    // check every field on emptines
+    for (var i = 0; i < ids.length; i++)
+        if ($(ids [i]).val ().length == 0) {
+            alert ("Some fields were not filled...");
+            $(ids [i]).focus ();
+            return;
+        }
+ 
+    // check number
+    /*for (i = 0; i < ids.length; i++)
+        if ($(ids[i]).val ().match (/[^0-9+]/)) {
+            alert ("Invalid number...");
+            $(ids [i]).focus ();
+            return;
+        }*/
+ 
+    $("div#loading").css ("display", "block");
+ 
+    $.get ("index.php?module=asterisk&action=call",
+    {
+        sender: $(ids [0]).val (),
+        receiver: $(ids [1]).val ()
+    },
+    function () {
+        $("div.tpl-contact div.loading").html ("Now you'll hear the call...");
+        setTimeout ("$(\"div#loading\").fadeOut (\"fast\");", 1500);
+    });
+}
+    </script>
+        <div id="call-form">
+            <label>Your number:</label><input id="sender" type="text" /><br />
+            <label>Whom to call:</label><input id="receiver" type="text" /><br />
+            <div id="process">
+                    <input type="hidden" name="module" value="asterisk" />
+                    <input type="hidden" name="action" value="call" />
+                <input id="submit" type="button" onclick="sendCall();" value="Jeronimo!!!" />
+                <div id="loading" style>
+                    <img src="stuff/loading.gif" alt="Calling..." />
+                </div>
+            </div>
+        </div></div></div>

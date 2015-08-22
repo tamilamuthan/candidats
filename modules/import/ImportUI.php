@@ -210,7 +210,7 @@ class ImportUI extends UserInterface
 
             $this->_template->assign('data', $data);
             $this->_template->assign('active', $this);
-            $this->_template->display('./modules/import/ImportRecent.tpl');
+            $this->_template->display('./modules/import/ImportRecent.php');
         }
 
         return;
@@ -270,12 +270,16 @@ class ImportUI extends UserInterface
             'Notes',            'notes',
             'Fax Number',       'fax_number'
         );
+        $this->jobordersTypes = array(
+            'Name',             'name'
+        );
 
         if (!eval(Hooks::get('IMPORT_TYPES_2'))) return;
 
         $companies = new Companies($this->_siteID);
         $candidates = new Candidates($this->_siteID);
         $contacts = new Contacts($this->_siteID);
+        $joborders = new JobOrders($this->_siteID);
 
         $rs = $companies->extraFields->getSettings();
         foreach ($rs as $data)
@@ -292,6 +296,12 @@ class ImportUI extends UserInterface
         }
 
         $rs = $contacts->extraFields->getSettings();
+        foreach ($rs as $data)
+        {
+            $this->contactsTypes[] = $data['fieldName'];
+            $this->contactsTypes[] = '#' . $data['fieldName'];
+        }
+        $rs = $joborders->extraFields->getSettings();
         foreach ($rs as $data)
         {
             $this->contactsTypes[] = $data['fieldName'];
@@ -364,7 +374,7 @@ class ImportUI extends UserInterface
 
            if (!eval(Hooks::get('IMPORT_UPLOAD'))) return;
 
-           $this->_template->display('./modules/import/Import2.tpl');
+           $this->_template->display('./modules/import/Import2.php');
        }
    }
 
@@ -372,7 +382,7 @@ class ImportUI extends UserInterface
     * 3rd page for CSV data (After uploading a file).  Sets environment to behave like old style import.
     */
    public function importUploadFile()
-   {
+   {trace($_POST);
        /* Change passed in settings to settings the old importer knows how to handle. */
        $_POST['dataType'] = 'Text File';
        $_POST['importInto'] = $this->getTrimmedInput('typeOfImport', $_POST);
@@ -626,6 +636,10 @@ class ImportUI extends UserInterface
             case 'Companies':
                 $types = $this->companiesTypes;
                 break;
+            
+            case 'Joborders':
+                $types = $this->jobordersTypes;
+                break;
 
             default:
                 $this->_template->assign(
@@ -704,7 +718,7 @@ class ImportUI extends UserInterface
         $this->_template->assign('matchingFields', $matchingFields);
         $this->_template->assign('importTypes', $types);
         $this->_template->assign('active', $this);
-        $this->_template->display('./modules/import/Import.tpl');
+        $this->_template->display('./modules/import/importfile.php');
     }
 
     /*
@@ -783,6 +797,11 @@ class ImportUI extends UserInterface
             case 'Contacts':
                 $types = $this->contactsTypes;
                 $importID = $import->add('contact');
+                break;
+            
+            case 'Joborders':
+                $types = $this->jobodersTypes;
+                $importID = $import->add('joborder');
                 break;
 
             default:
@@ -1578,7 +1597,7 @@ class ImportUI extends UserInterface
 
         // Show the main template (the container with the large status sections)
         $this->_template->assign('subTemplateContents', $subTemplateContents);
-        $this->_template->display('./modules/import/MassImport.tpl');
+        $this->_template->display('./modules/import/MassImport.php');
     }
 
     public function getMassImportCandidates()

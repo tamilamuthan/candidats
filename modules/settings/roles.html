@@ -238,6 +238,11 @@
         {
             var profileid=value["profileid"];
             var matchingIndex=getMatchingIndex(profileid,\$scope.SelectedListItems[\$scope.selectFaIndex]);
+            if(\$scope.AvailableListItems.length==0)
+            {
+                \$scope.AvailableListItems={};
+                \$scope.AvailableListItems[\$scope.selectFaIndex]=[];
+            }
             \$scope.AvailableListItems[\$scope.selectFaIndex].push(value);
             \$scope.SelectedListItems[\$scope.selectFaIndex].splice(matchingIndex,1);
             arrSelected.push(profileid);

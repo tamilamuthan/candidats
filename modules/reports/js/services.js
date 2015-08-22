@@ -1,8 +1,11 @@
 var objService=['$http', function($http) {
-    var serviceBase = 'api.php?m=settings&a='
+    var serviceBase = 'api.php?m=reports&a=getFields&modulename='
     var obj = {};
-    obj.getRoles = function(){
-        return $http.get(serviceBase + 'roles');
+    obj.getFields = function(modulename,callbk){
+       $http.post(serviceBase + modulename).then(function (returnData)
+        {
+            callbk(returnData["data"]["data"]);
+        });
     }
     obj.getRole = function(roleID){
         return $http.get(serviceBase + 'role&id=' + roleID);

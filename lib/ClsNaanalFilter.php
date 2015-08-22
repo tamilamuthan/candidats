@@ -221,9 +221,10 @@ function onFldfilterChange(obj)
         }
         ///end
         
-        $arrFilter=isset($_REQUEST["fldfilter"])?$_REQUEST["fldfilter"]:array();
+        $arrFilter=(isset($_REQUEST["fldfilter"]) && !empty($_REQUEST["fldfilter"]))?$_REQUEST["fldfilter"]:array();
         if(count($arrFilter)>0)
         {
+            $arrDynamicOption=array();
             $arrData=$_REQUEST["data"];
             $arrCondition=$_REQUEST["condition"];
             $arrBoolean=$_REQUEST["boolean"];
@@ -242,7 +243,6 @@ function onFldfilterChange(obj)
                 }
                 ///generate filter dropdown
                 $arrNewOption=array();
-                $arrDynamicOption=array();
                 $selectedFilter="";
                 foreach($arrRow as $row)
                 {

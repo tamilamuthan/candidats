@@ -539,6 +539,9 @@ class Candidates extends Modules
 
     public function load($candidateID)
     {
+        $arrExtra=$this->getExtraFieldInfoForLoad();
+        $selectExtraField=$arrExtra["sql"];
+        $arrExtraField=$arrExtra["fields"];
         $sql = sprintf(
             "SELECT
                 candidate.candidate_id,
@@ -573,6 +576,7 @@ class Candidates extends Modules
                 eeo_veteran_type_id,
                 eeo_disability_status,
                 eeo_gender
+                {$selectExtraField}
             FROM
                 candidate
             WHERE
@@ -585,13 +589,19 @@ class Candidates extends Modules
         );
 
         $this->record = $this->_db->getAssoc($sql);
-        $sql="select * from extra_field where data_item_type=100 and data_item_id='{$candidateID}'";
+        
+        $this->extraRecord=array();
+        foreach($arrExtraField as $ind=>$field)
+        {
+            $this->extraRecord[$field]=$this->record[$field];
+        }
+        /*$sql="select * from extra_field where data_item_type=100 and data_item_id='{$candidateID}'";
         $arrAssoc = $this->_db->getAllAssoc($sql);
         $this->extraRecord=array();
         foreach($arrAssoc as $ind=>$row)
         {
             $this->extraRecord[$row["field_name"]]=$row["value"];
-        }
+        }*/
     }
     
     /**
@@ -1836,10 +1846,12 @@ class EEOSettings
 
     public function __construct($siteID)
     {
+        Logger::getLogger("AuieoATS")->info("Candidates:__construct entry");
         $this->_siteID = $siteID;
         // FIXME: Factor out Session dependency.
         $this->_userID = $_SESSION['CATS']->getUserID();
         $this->_db = DatabaseConnection::getInstance();
+        Logger::getLogger("AuieoATS")->info("Candidates:__construct exit");
     }
 
 
@@ -1850,6 +1862,7 @@ class EEOSettings
      */
     public function getAll()
     {
+        Logger::getLogger("AuieoATS")->info("Candidates:getAll entry");
         /* Default values. */
         $settings = array(
             'enabled' => '0',
@@ -1890,7 +1903,7 @@ class EEOSettings
         }
 
         $settings['canSeeEEOInfo'] = $_SESSION['CATS']->canSeeEEOInfo();
-
+        Logger::getLogger("AuieoATS")->info("Candidates:getAll exit");
         return $settings;
     }
 

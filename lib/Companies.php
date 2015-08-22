@@ -63,10 +63,12 @@ class Companies extends Modules
     
     public function __construct($siteID)
     {
+        Logger::getLogger("AuieoATS")->info("Companies:__construct entry");
         $this->data_item_type=DATA_ITEM_COMPANY;
         $this->_siteID = $siteID;
         $this->_db = DatabaseConnection::getInstance();
         $this->extraFields = new ExtraFields($siteID, DATA_ITEM_COMPANY);
+        Logger::getLogger("AuieoATS")->info("Companies:__construct exit");
     }
 
     public function __get($var)
@@ -405,6 +407,9 @@ class Companies extends Modules
     
     public function load($companyID)
     {
+        $arrExtra=$this->getExtraFieldInfoForLoad();
+        $selectExtraField=$arrExtra["sql"];
+        $arrExtraField=$arrExtra["fields"];
         $sql = sprintf(
             "SELECT
                 company.company_id,
@@ -424,6 +429,7 @@ class Companies extends Modules
                 company.default_company,
                 billing_contact.contact_id,
                 owner_user.email AS owner_email
+                {$selectExtraField}
             FROM
                 company
             LEFT JOIN user AS entered_by_user
@@ -441,13 +447,19 @@ class Companies extends Modules
         );
 
         $this->record = $this->_db->getAssoc($sql);
-        $sql="select * from extra_field where data_item_type=200 and data_item_id='{$companyID}'";
+        
+        $this->extraRecord=array();
+        foreach($arrExtraField as $ind=>$field)
+        {
+            $this->extraRecord[$field]=$this->record[$field];
+        }
+        /*$sql="select * from extra_field where data_item_type=200 and data_item_id='{$companyID}'";
         $arrAssoc = $this->_db->getAllAssoc($sql);
         $this->extraRecord=array();
         foreach($arrAssoc as $ind=>$row)
         {
             $this->extraRecord[$row["field_name"]]=$row["value"];
-        }
+        }*/
     }
 
     /**
@@ -607,6 +619,7 @@ class Companies extends Modules
      */
     public function getDefaultCompany()
     {
+        Logger::getLogger("AuieoATS")->info("Companies:getDefaultCompany entry");
         $sql = sprintf(
             "SELECT
                 company.company_id AS companyID
@@ -625,7 +638,9 @@ class Companies extends Modules
             return false;
         }
 
-        return $rs['companyID'];
+        $ret = $rs['companyID'];
+        Logger::getLogger("AuieoATS")->info("Companies:getDefaultCompany exit");
+        return $ret;
     }
 
     /**

@@ -4,8 +4,6 @@ pageTitle('Settings');
 ob_start();
 ?>
 
-
-
             <p class="note">Create Site Backup</p>
 
             <table class="searchTable" width="100%">
@@ -28,7 +26,15 @@ ob_start();
                     <span id="progress">
                         Last backup:
                         <table class="attachmentsTable">
-                            <?php foreach ($this->attachmentsRS as $rowNumber => $attachmentsData): ?>
+                            <?php foreach ($this->attachmentsRS as $rowNumber => $attachmentsData): 
+                                if(!file_exists($attachmentsData['retrievalURLLocal']) && strpos($attachmentsData['retrievalURLLocal'], ".bak"))
+                                {
+                                    $arr=explode(".bak",$attachmentsData['retrievalURLLocal']);
+                                    $attachmentsData['retrievalURLLocal']=$arr[0].".sql";
+                                    $arr=explode(".bak",$attachmentsData['originalFilename']);
+                                    $attachmentsData['originalFilename']=$arr[0].".sql";
+                                }
+                                ?>
                                 <tr>
                                     <td>
                                         <a href="<?php echo $attachmentsData['retrievalURL']; ?>">
@@ -74,5 +80,6 @@ ob_start();
                     <iframe id="progressIFrame" style="display:none;"></iframe>
                 </tr>
             </table>
+
 
     <?php $AUIEO_CONTENT=ob_get_clean(); ?>

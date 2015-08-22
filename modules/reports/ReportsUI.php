@@ -98,7 +98,65 @@ class ReportsUI extends UserInterface
     {
         
     }
+    
+    public function reportFields()
+    {
+        $objRequest=ClsNaanalRequest::getInstance();
+        $reportType=$objRequest->getData("modulename");
 
+        $arrModule=array();
+        $arrModuleTable["candidates"]=array("module"=>"candidate","extra"=>"Candidate");
+        $arrModuleTable["joborders"]=array("module"=>"joborder","extra"=>"Joborder");
+        $arrModuleTable["contacts"]=array("module"=>"contact","extra"=>"Contact");
+        $arrModuleTable["companies"]=array("module"=>"company","extra"=>"Company");
+        $arrModuleTable["users"]=array("module"=>"user");
+        $arrTplVar=array();
+
+        $allModules=array("candidates"=>"candidates","joborders"=>"joborders","companies"=>"companies");
+        $site_id=$_SESSION["CATS"]->getSiteID();
+        if($allModules)
+        foreach($allModules as $foreignKey=>$amodule)
+        {
+            $allModuleInfo=  getModuleInfo("modulename");
+            if(isset($allModuleInfo[$amodule]))
+            {
+                $moduleInfo=$allModuleInfo[$amodule];
+                $data_item_type_id=$moduleInfo["data_item_type_id"];
+                $tableName=$moduleInfo["tablename"];
+                //$extraFieldTableName=isset($arrModuleTable[$amodule]["extra"])?$arrModuleTable[$amodule]["extra"]:"";
+                $objDatabase = DatabaseConnection::getInstance();
+                //$sql="SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '".DATABASE_NAME."' AND TABLE_NAME = '{$tableName}' order by COLUMN_NAME";
+                $sql="SELECT * FROM auieo_fields where  `data_item_type`='{$data_item_type_id}' and site_id={$site_id} and is_extra=0 order by fieldlabel";
+                $arrRow=$objDatabase->getAllAssoc($sql);
+                $arrMainColumn=array();
+                if($arrRow)
+                foreach($arrRow as $row)
+                {
+                    $arrTplVar[]=array("field"=>$row["fieldname"],"group"=>$tableName);
+                }
+                $arrExtraColumn=array();
+
+                $sql="SELECT * FROM auieo_fields where  `data_item_type`='{$data_item_type_id}' and site_id={$site_id} and is_extra=1 order by fieldlabel";
+                $arrRow=$objDatabase->getAllAssoc($sql);
+                if($arrRow)
+                foreach($arrRow as $row)
+                {
+                    $arrTplVar[]=array("field"=>$row["field_name"],"group"=>$tableName."_extra");
+                }
+            }
+        }
+        return $arrTplVar;
+    }
+
+    public function webserviceGetFields($api)
+    {
+        $reportType=$_REQUEST["modulename"];
+        $arrField=getModuleFieldsInfo(200);
+        $arrTplVar=$this->reportFields();
+        $success = array('status' => "Success", "msg" => "Retrieved Successfully.", "data" => $arrTplVar);
+        $api->response($api->json($success),200);
+    }
+    
     public function reports()
     {
         /* Grab an instance of Statistics. */
@@ -274,6 +332,201 @@ class ReportsUI extends UserInterface
         $this->_template->display('./modules/reports/SubmissionReport.php');
     }
 
+    public function showReport()
+    {
+        Logger::getLogger("AuieoATS")->info("ReportsUI:showReport entry");
+        $_REQUEST["summerize_by"]='[{"group":"joborder","field":"title"},{"group":"joborder","field":"company_id"}]';
+        $period=$_REQUEST["period"];
+
+        $fromDate=false;
+        $toDate=false;
+        if($period=="range")
+        {
+            $fromDate=$_REQUEST["fromdate"];
+            $toDate=$_REQUEST["todate"];
+            $reportTitle="Report from {$fromDate} to {$toDate}";
+        }
+        else
+        {
+            $reportTitle="Report for {$period}";
+        }
+        $basemodule="candidates";
+        $periodSQL=makePeriodCriterion("candidate_joborder_status_history.date", $period,$fromDate,$toDate);
+
+        $arrModule=getModuleInfo("modulename");
+        $moduleInfo=$arrModule[$basemodule];
+        $basetable=$moduleInfo["tablename"];
+        $arrFieldSelectedTemp=json_decode($_REQUEST["jsonSelected"],true);
+        $arrFieldSelected=array();
+        foreach($arrFieldSelectedTemp as $fieldSelected)
+        {
+            $arrFieldSelected[$fieldSelected["group"]][]=$fieldSelected["field"];
+        }
+        
+        $arrFieldSummerizeTemp=json_decode($_REQUEST["summerize_by"],true);
+        $arrFieldSummerize=array();
+        foreach($arrFieldSummerizeTemp as $fieldSelected)
+        {
+            $arrFieldSummerize[$fieldSelected["group"]][]=$fieldSelected["field"];
+        }
+        if(isset($arrFieldSelected["joborder"]))
+        {
+            /**
+             * to eliminate duplicate fields
+             */
+            foreach($arrFieldSelected["joborder"] as $fieldSelectedTemp)
+            {
+                if(!in_array($fieldSelectedTemp,  $arrFieldSummerize["joborder"]))
+                {
+                    $arrFieldSummerize["joborder"][]=$fieldSelectedTemp;
+                }
+            }
+            unset($arrFieldSelected["joborder"]);
+        }
+        $arrFromJoinID=array();
+        $objSQL=new ClsAuieoSQL();
+        $objFrom=new ClsAuieoSQLFrom();
+        $objFrom=array();
+        $objFromBaseTable=$objSQL->addFrom("candidate_joborder_status_history");
+        $objSQL->addSelect($objFromBaseTable, "date", "status_history_date");
+        $joinBaseTableJoborderID=$objFromBaseTable->addJoinField("joborder_id");
+        $joinBaseTableCandidateID=$objFromBaseTable->addJoinField("candidate_id");
+        
+        $objFromJoborder=$objSQL->addFrom("joborder");
+        $joinJoborderID=$objFromJoborder->addJoinField("joborder_id");
+        $joinJoborderOwner=$objFromJoborder->addJoinField("owner");
+        $joinJoborderOwnertype=$objFromJoborder->addJoinField("ownertype");
+        $joinJoborderCompanyID=$objFromJoborder->addJoinField("company_id");
+        
+        $objFromCandidate=$objSQL->addFrom("candidate");
+        $joinCandidateID=$objFromCandidate->addJoinField("candidate_id");
+        
+        $objFromOwner=$objSQL->addCustomFrom("SELECT user_id as id, '0' as ownertype, CONCAT(`first_name`,' ',`last_name`) as name FROM `user` UNION SELECT id, '1' as ownertype, groupname as name FROM `auieo_groups`", "joborder_owner");
+        $joinOwner=$objFromOwner->addJoinField("id");
+        $joinOwnerType=$objFromOwner->addJoinField("ownertype");
+        
+        $objFromCompany=$objSQL->addFrom("company");
+        $joinCompanyID=$objFromCompany->addJoinField("company_id");
+        
+        $objFromJoborder->setJoinWith($objFromBaseTable, $joinBaseTableJoborderID, $joinJoborderID);
+        $objFromCandidate->setJoinWith($objFromBaseTable, $joinBaseTableCandidateID, $joinCandidateID);
+        $objFromCompany->setJoinWith($objFromJoborder, $joinJoborderCompanyID, $joinCompanyID);
+        
+        $objFromOwner->setJoinWith($objFromJoborder,$joinJoborderOwner,$joinOwner);
+        $objFromOwner->setJoinWith($objFromJoborder,$joinJoborderOwnertype,$joinOwnerType);
+        //trace($objSQL->render());
+        //trace($arrFieldSelected);
+         foreach($arrFieldSelected as $table=>$fieldSelected)
+        {
+            foreach($fieldSelected as $field)
+            {
+                $objFrom="objFrom".  ucfirst($table);
+                $objSQL->addSelect($$objFrom, $field,"{$table}_{$field}");
+            }
+        }
+        $summerizeTable="";
+        $summerizeField="";
+        /**
+         * load summerize table
+         */
+        foreach($arrFieldSummerize as $table=>$fieldSummerize)
+        {
+            $objFrom="objFrom".  ucfirst($table);
+            $objSQL->addSelect($$objFrom, "{$table}_id");
+            foreach($fieldSummerize as $ind=>$field)
+            {
+                if($field=="company_id")
+                {
+                    $objFromCompanyVar="objFromCompany";
+                    $objSQL->addSelect($$objFromCompanyVar, "name","company_name");
+                }
+                else
+                {
+                    $objSQL->addSelect($$objFrom, $field,"{$table}_{$field}");
+                    //$summerizeTable=$table;
+                    //$summerizeField=$field;
+                    //$summerizePrimaryKey="{$table}_id";
+                }
+            }
+        }
+        $objSQL->addSelectCustom("CONCAT(candidate.first_name,' ',candidate.last_name)", "candidate_name");
+        //$objSQL->addSelect($objFromCompany, "name","company_name");
+        //$objSQL->addSelect($objFromOwner, "name","owner_name");
+        
+        $objWhere=$objSQL->addWhere($objFromJoborder, "status", "'Active', 'OnHold', 'Full', 'Closed'");
+        $objWhere->setCondition("IN");
+        $objSQL->addWhere($objFromJoborder, "site_id", $this->_siteID);
+        if($_REQUEST["report_type"]=="placement")
+        {
+            $objSQL->addWhere($objFromBaseTable, "status_to", 800);
+        }
+        else
+        {
+            $objSQL->addWhere($objFromBaseTable, "status_to", 400);
+        }
+        $objCustomWhere=$objSQL->addWhere();
+        $objCustomWhere->setField($periodSQL);
+        
+        $sql = $objSQL->render();
+        
+        $objDB=  DatabaseConnection::getInstance();
+        $submissionRS=$objDB->getAllAssoc($sql);
+        //$statistics = new Statistics($this->_siteID);
+        //$submissionJobOrdersRS = $statistics->getSubmissionJobOrders($period);
+        $arrData=array();
+        foreach ($submissionRS as $rowIndex => $submissionData)
+        {
+            //$submissionRS[$rowIndex]=array();
+            foreach($arrFieldSummerize as $table=>$fieldSummerize)
+            {
+                $summerize_key_id_val=$submissionData[$table."_id"];
+                $objFrom="objFrom".  ucfirst($table);
+                $objSQL->addSelect($$objFrom, "{$table}_id");
+                foreach($fieldSummerize as $ind=>$field)
+                {
+                    if($field=="company_id")
+                    {
+                        $objFromCompany="objFromCompany";
+                        $objSQL->addSelect($$objFromCompany, "name","company_name");
+                        $arrData[$summerize_key_id_val]["company_name"]=$submissionData["company_name"];
+                        unset($submissionData["company_name"]);
+                    }
+                    else
+                    {
+                        $objSQL->addSelect($$objFrom, $field,"{$table}_{$field}");
+                        $arrData[$summerize_key_id_val][$table."_".$field]=$submissionData[$table."_".$field];
+                        unset($submissionData[$table."_".$field]);
+                        //$summerizeTable=$table;
+                        //$summerizeField=$field;
+                        //$summerizePrimaryKey="{$table}_id";
+                    }
+                }
+                unset($submissionData["{$table}_id"]);
+                $arrData[$summerize_key_id_val]["submissionsRS"][]=$submissionData;
+                
+            }
+            //$arrData[$summerize_key_id_val]["summerizeData"]=$summerizeData;
+        }
+ /*       trace($arrData);
+        $objDB=  DatabaseConnection::getInstance();
+        $submissionJobOrdersRS=$objDB->getAllAssoc($sql);trace($submissionJobOrdersRS);
+        $statistics = new Statistics($this->_siteID);
+        $submissionJobOrdersRS = $statistics->getSubmissionJobOrders($period);
+        foreach ($submissionJobOrdersRS as $rowIndex => $submissionJobOrdersData)
+        {
+            $submissionJobOrdersRS[$rowIndex]['submissionsRS'] = $statistics->getSubmissionsByJobOrder(
+                $period, $submissionJobOrdersData['jobOrderID'], $this->_siteID
+            );
+        }
+*/
+        if (!eval(Hooks::get('REPORTS_SHOW_SUBMISSION'))) return;
+//trace($arrData);
+        $this->_template->assign('reportTitle', $reportTitle);
+        $this->_template->assign('submissionJobOrdersRS', $arrData);
+        $this->_template->display('./modules/reports/submission.php');
+        Logger::getLogger("AuieoATS")->info("ReportsUI:showReport exit");
+    }
+    
     public function showPlacementReport()
     {
         //FIXME: getTrimmedInput

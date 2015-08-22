@@ -32,7 +32,7 @@
  */
 
 $careerPage = true;
-
+define("AUIEO_CAREER_PAGE",1);
 chdir('..');
 include_once('./lib/CATSUtility.php');
 include_once(CATSUtility::getIndexName());

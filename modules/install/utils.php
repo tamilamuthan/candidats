@@ -71,8 +71,54 @@ function loadAuieoField()
     }
     return $arrSQL;
 }
+/**
+ * 
+ * @param type $data_item_type
+ * @param type $field_name - field name as in the extra field
+ * @param type $site_id
+ * @param type $field_name_modified - cleaned fieldname
+ */
+function loadAuieoExtraFieldData($data_item_type, $field_name, $site_id,$field_name_modified)
+{
+    $con=DatabaseConnection::getInstance();
+    $DB= $con->getConnection();
+    $sql="select * from extra_field where data_item_type={$data_item_type} and field_name='{$field_name} and site_id={$site_id}'";
+    $arrRecord=$DB->getAllAssoc($sql);
+    $arrSQL=array();
+    foreach($arrRecord as $record)
+    {
+        if($data_item_type==100)
+        {
+            $table="candidate";
+            $fldID="candidate_id";
+        }
+        else if($data_item_type==200)
+        {
+            $table="company";
+            $fldID="company_id";
+        }
+        else if($data_item_type==300)
+        {
+            $table="contact";
+            $fldID="contact_id";
+        }
+        else if($data_item_type==400)
+        {
+            $table="joborder";
+            $fldID="joborder_id";
+        }
+        $objSQL=new ClsNaanalSQL("INSERT");
+        $objSQL->addTable($table);
+        $objSQL->addValue($field_name_modified, $record["value"]);
+        $objSQL->addWhere("site_id", $site_id);
+        $objSQL->addWhere($fldID, $record["data_item_id"]);
+        $arrSQL[]=$objSQL->render();
+    }
+    return $arrSQL;
+}
 function loadAuieoExtraField()
 {
+    $arrExtraFieldTypeMapping=array(1=>8,2=>9,3=>10,4=>6,5=>7,6=>11);
     $con=DatabaseConnection::getInstance();
     $DB= $con->getConnection();
     $DB->setQuery("select * from extra_field_settings");
@@ -82,11 +128,9 @@ function loadAuieoExtraField()
     {
         $objSQL=new ClsNaanalSQL("INSERT");
         $objSQL->addTable("auieo_fields");
-        
         $objSQL->addValue("data_item_type", $arrData["data_item_type"]);
-        $objSQL->addValue("uitype", $arrData["extra_field_type"]);
+        $objSQL->addValue("uitype", $arrExtraFieldTypeMapping[$arrData["extra_field_type"]]);
         $field_name = cleanToVariableName($arrData["field_name"]);
-        $field_name = strtolower($field_name);
         $objSQL->addValue("fieldname", $field_name);
         $objSQL->addValue("fieldlabel", $arrData["field_name"]);
         $objSQL->addValue("field_options", $arrData["extra_field_options"]);
@@ -100,27 +144,22 @@ function loadAuieoExtraField()
         }
         else if($arrData["extra_field_type"]==3)
         {
-            $maximumlength=1;
-            $fieldType="INT(1)";
+            $maximumlength=3;
+            $fieldType="INT(3)";
         }
         else if($arrData["extra_field_type"]==4)
         {
             $fieldType="DATETIME";
+        }
+        else if($arrData["extra_field_type"]==5 || $arrData["extra_field_type"]==6)
+        {
+            $fieldType="TEXT";
         }
 
         $objSQL->addValue("maximumlength", $maximumlength);
 
         $objSQL->addValue("site_id",$arrData["site_id"]);
         $arrFieldSQL=$objSQL->render();
-        /**
-         * ALTER IGNORE TABLE `extra_field_settings` ADD COLUMN `is_extra` int(1) default 0;
-ALTER IGNORE TABLE `extra_field_settings` ADD COLUMN `presence` varchar(255) default 0;
-ALTER IGNORE TABLE `extra_field_settings` ADD COLUMN `fieldlabel` varchar(255) default NULL;
-ALTER IGNORE TABLE `extra_field_settings` ADD COLUMN `defaultvalue` TEXT default NULL;
-ALTER IGNORE TABLE `extra_field_settings` ADD COLUMN `maximumlength` INT(11) DEFAULT '0' ;
-ALTER IGNORE TABLE `extra_field_settings` ADD COLUMN `blockid` INT(11) DEFAULT '0' ;
-ALTER IGNORE TABLE `extra_field_settings` ADD COLUMN `helpinfo` TEXT default NULL;
-         */
         $table="";
         if($arrData["data_item_type"]==100)
         {
@@ -139,14 +178,18 @@ ALTER IGNORE TABLE `extra_field_settings` ADD COLUMN `helpinfo` TEXT default NUL
             $table="joborder";
         }
         $arrSQL[]="ALTER IGNORE TABLE `{$table}` ADD COLUMN `{$field_name}` {$fieldType} default NULL";
-        //$arrSQL[]=$arrFieldSQL;
+       $arrTmpSql= loadAuieoExtraFieldData($arrData["data_item_type"], $arrData["field_name"], $site_id,$field_name);
+       foreach($arrTmpSql as $sqltmp)
+       {
+           $arrSQL[]=$sqltmp;
+       }
     }
     return $arrSQL;
 }
 function cleanToVariableName($string) {
-   $string = str_replace(' ', '_', $string); // Replaces all spaces with hyphens.
-   $string = preg_replace('/[^A-Za-z0-9\_]/', '', $string); // Removes special chars.
+  // $string = str_replace(' ', '_', $string); // Replaces all spaces with hyphens.
+   $string = preg_replace('/[^A-Za-z0-9\_ ]/', '', $string); // Removes special chars.
 
-   return preg_replace('/_+/', '_', $string); // Replaces multiple hyphens with single one.
+   return  $string; // Replaces multiple hyphens with single one.
 }
 ?>
