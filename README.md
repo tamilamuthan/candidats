@@ -11,9 +11,9 @@ mysql latest
 Installation:
 Please check doc/INSTALL for installation
 
-The CanididATS 2.0.0 RC1 is not for production. 
+The CanididATS 2.0.0 Alpha is not for production. 
 
-The new features in CandidATS 2.0.0 RC1.
+The new features in CandidATS 2.0.0 Alpha.
 
     1) Profile
     2) Roles
@@ -30,7 +30,7 @@ The new features in CandidATS 2.0.0 RC1.
     
     The user can see his/her group records or the his/her records.
     
-The CandidATS 2.0.0 RC1 Extra Field handling are not tested fully. So take care in using Extra Field
+The CandidATS 2.0.0 Alpha Extra Field handling are not tested fully. So take care in using Extra Field
 
 We will answer your queries regarding the usage at http://candidats.auieo.com
 

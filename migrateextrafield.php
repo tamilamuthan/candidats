@@ -1,4 +1,10 @@
 <?php
+include("config.php");
+include_once('./lib/vendor/autoload.php');
+Logger::configure('logger.xml');
+include_once("lib/ClsNaanalSQL.php");
+include_once("lib/ClsNaanalPDO.php");
+include_once("lib/DatabaseConnection.php");
 function loadAuieoExtraField()
 {
     $arrExtraFieldTypeMapping=array(1=>8,2=>9,3=>10,4=>6,5=>7,6=>11);
@@ -7,6 +13,10 @@ function loadAuieoExtraField()
     $DB->setQuery("select * from extra_field_settings");
     $arrExtraField=$DB->getAllAssoc();
     $arrSQL=array();
+    $arrSQL[]="insert into auieo_uitype ( `name`,`caption`,`fieldinfo`,`length`) values('textbox','Text Box','2','255')";
+    $arrSQL[]="insert into auieo_uitype ( `name`,`caption`,`fieldinfo`,`length`) values('multiline','Multiline Text Box','102','0')";
+    $arrSQL[]="insert into auieo_uitype ( `name`,`caption`,`fieldinfo`,`length`) values('checkbox','Check Box','402','255')";
+    $arrSQL[]="insert into auieo_uitype ( `name`,`caption`,`fieldinfo`,`length`) values('radiolist','Radio Button List','802','255')";
     foreach($arrExtraField as $arrData)
     {
         $objSQL=new ClsNaanalSQL("INSERT");
@@ -92,4 +102,5 @@ function cleanToVariableName($string) {
 }
 $arrSQL=loadAuieoExtraField();
 file_put_contents("extrafield.sql",  implode(";\n",$arrSQL));
+echo "extrafield.sql generation completed";
 ?>

@@ -272,16 +272,21 @@ a:hover
     border: none;
 }
 
+#tagsearch {
+    color: black;
+    font: inherit;
+    margin: 0;
+}
+
 /*** Header / Footer ***/
 #quickSearchBlock
 {
     margin: 0px 0px 0px 0px;
-    padding: 5px 10px 5px 0px;
     background: #fff;
     background-image: url('images/mru_background.gif');
     background-repeat: repeat-x;
     text-align: right;
-    height: 1.8em;
+    height: 1.9em;
 }
 
 #quickSearchBlock span.quickSearchLabel
@@ -302,7 +307,6 @@ a:hover
 
 #MRUBlock
 {
-    position: absolute;
     padding: 5px 0px 0px 10px;
     margin: 0px 0px 0px 0px;
     font: normal normal normal 12px Arial, Tahoma, sans-serif;
@@ -495,8 +499,14 @@ p.fatalError
     -moz-user-select:normal; -khtml-user-select:normal; user-select:normal;
 }
 
+#quickSearchFor
+{
+	color:black;
+}
+
 .quickSearchBox
 {
+    color:black;
     border: #999 1px solid;
     background-color: #fff;
     width: 150px;
@@ -1396,4 +1406,3 @@ td.contentContainerOld {
     background-color: #E5EAF0;
     font: normal normal normal 12px/130% Arial, Tahoma, sans-serif;
 }
-

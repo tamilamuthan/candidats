@@ -5,6 +5,13 @@ function addLog($message="None",$stepBack=0)
     $logger->info($message);
     
 }
+function extract_emails($str){
+    // This regular expression extracts all emails from a string:
+    $regexp = '/([a-z0-9_\.\-])+\@(([a-z0-9\-])+\.)+([a-z0-9]{2,4})+/i';
+    preg_match_all($regexp, $str, $m);
+
+    return isset($m[0]) ? $m[0] : array();
+}
 function getModuleFieldsInfo($data_item_type)
 {
     static $arrModuleField=array();
@@ -21,6 +28,55 @@ function getModuleFieldsInfo($data_item_type)
         $arrModuleField[$data_item_type]=$arrFieldRecord;
     }
     return $arrModuleField[$data_item_type];
+}
+function displayMultiColumnTable($AUIEO_PREVIEW_FIELD,$column=2)
+{
+    foreach($AUIEO_PREVIEW_FIELD as $ind=>$previewField)
+    {
+        if($ind%$column===0)
+        {
+            $tr = "<tr>";
+        }
+        $previewFieldPublic="";
+        $previewFieldOther="";
+        if($AUIEO_PREVIEW_FIELD[$ind]["public"]) $previewFieldPublic=$AUIEO_PREVIEW_FIELD[$ind]["public"];
+         if($AUIEO_PREVIEW_FIELD[$ind]["other"]) $previewFieldOther=$AUIEO_PREVIEW_FIELD[$ind]["other"];
+         $data=$AUIEO_PREVIEW_FIELD[$ind]["data"];
+         if(isset($previewField["editable"]))
+         {
+              $sql=$previewField["sql"];
+              $key=$previewField["key"];
+              if($previewField["editable"]=="editable-bsdate")
+              {
+                  $data="<a href='#' {$previewField["editable"]}='data.{$key}'  onbeforesave='updateData(\$data,\"{$sql}\")'  e-datepicker-popup='dd-MMMM-yyyy'>{{ (data.{$key} | date:'dd/MM/yyyy') || '-'  }}</a>
+     ";
+              }
+              else
+              {
+                    $data="<a href='#' {$previewField["editable"]}='data.{$key}'  e-form='{$key}'  onbeforesave='updateData(\$data,\"{$sql}\")'>{{ data.{$key} }}</a>
+                   <button class='btn btn-default' ng-click='{$key}.\$show()' ng-hide='{$key}.\$visible'>
+    edit
+  </button> ";
+              }
+         }
+         $tr = $tr."<td style='min-width:15%;' class='vertical'>{$AUIEO_PREVIEW_FIELD[$ind]["caption"]}:</td>
+            <td style='min-width:35%' class='data' width='300'>
+                <span class='{$AUIEO_PREVIEW_FIELD[$ind]["class"]}'>{$data}</span>
+                    {$previewFieldPublic}
+                    {$previewFieldOther}
+            </td>";
+         if($ind%$column===($column-1))
+        {
+            $tr = $tr."</tr>";
+            echo $tr;
+        }
+    }
+    ///if the table not closed, close it.
+     if($ind%$column!==($column-1))
+    {
+         $tr = $tr."<td class='vertical'></td><td></td></tr>";
+            echo $tr;
+    }
 }
 function getReportFilter()
 {
@@ -491,6 +547,139 @@ function getFieldInfoByUIType($fieldinfoint)
     }
     return $arrFieldInfo[$fieldinfoint];
 }
+function anonymousws_addCandidate($data,$site_id=1)
+{
+    $candidates = new Candidates($site_id);
+    $id=$candidates->getIDByEmail($data["email1"]);
+    if($id) return 0;
+    else
+        return call_user_func_array(array($candidates,"add"), $data);
+}
+function anonymousws_updateRatingValue($candidateJobOrderID, $value,$site_id=1)
+{
+    $pipelines = new Pipelines($site_id);
+    return $pipelines->updateRatingValue($candidateJobOrderID, -1);
+}
+function anonymousws_addActivityEntry($candidateID,$dataItem,$otherActivity,$activityNote,$userID,$jobOrderID,$site_id=1)
+{
+    $activityEntries = new ActivityEntries($site_id);
+    return $activityEntries->add($candidateID,$dataItem,$otherActivity,$activityNote,$userID,$jobOrderID);
+}
+function anonymousws_getEmailTemplateByTag($site_id=1)
+{
+    $emailTemplates = new EmailTemplates($site_id);
+    return $emailTemplates->getByTag(
+            'EMAIL_TEMPLATE_CANDIDATEPORTALNEW'
+        );
+}
+function anonymousws_sendEMailToJoborder($jobOrderID,$userID,$email,$subject,$emailContents,$site_id=1)
+{
+    $jobOrders = new JobOrders($site_id);
+    if(!$jobOrders->isLoaded())
+    {
+        $jobOrders->load($jobOrderID);
+    }
+    $success = $jobOrders->sendEMail(
+        $userID,
+        $email,
+        $subject,
+        $emailContents
+    );
+    return array("completed"=>true,"result"=>$success,"message"=>$success?"Mail Sent Successfully":"Mail Sent Failed");
+}
+function anonymousws_sendEMailToCandidate($candidateID,$userID,$email,$subject,$emailContents,$site_id=1)
+{
+    $candidates = new Candidates($site_id);
+    if(!$candidates->isLoaded())
+    {
+        $candidates->load($candidateID);
+    }
+    $success = $candidates->sendEMail(
+        $userID,
+        $email,
+        $subject,
+        $emailContents
+    );
+    return array("completed"=>true,"result"=>$success,"message"=>$success?"Mail Sent Successfully":"Mail Sent Failed");
+}
+function anonymousws_candidatesEmailTemplate($type,$site_id=1)
+{
+    $emailTemplates = new EmailTemplates($site_id);
+    $candidatesEmailTemplateRS = $emailTemplates->getByTag(
+        $type
+    );
+    return $candidatesEmailTemplateRS;
+}
+function anonymousws_candidateIDByEmail($email,$site_id=1)
+{
+    $candidates = new Candidates($site_id);
+    return $candidates->getIDByEmail($email);
+}
+function anonymousws_getCareerPortalJobDetail($jobOrderID,$site_id=1)
+{
+    $jobOrders = new JobOrders($site_id);
+    return $jobOrders->get($jobOrderID);
+}
+function anonymousws_addCandidateToPipeline($candidateID, $jobOrderID,$site_id=1)
+{
+    $pipelines = new Pipelines($site_id);
+    return $pipelines->add($candidateID, $jobOrderID);
+}
+function anonymousws_getPipelines($candidateID, $jobOrderID,$site_id=1)
+{
+    $pipelines = new Pipelines($site_id);
+    $activityEntries = new ActivityEntries($site_id);
+    /* Is the candidate already in the pipeline for this job order? */
+    $rs = $pipelines->get($candidateID, $jobOrderID);
+    return $rs;
+}
+function anonymousws_getCareerPortalJobs($site_id=1)
+{
+    $jobOrders = new JobOrders($site_id);
+    return $jobOrders->getAll(JOBORDERS_STATUS_ACTIVE, -1, -1, -1, false, true);
+}
+function webservice_getUpcomingEventsHTML($limit, $flag = UPCOMING_FOR_CALENDAR,$site_id)
+{
+    $calendar = new Calendar($site_id);
+    return $calendar->getUpcomingEventsHTML($limit, $flag);
+}
+function webservice_getAllCalendarSettings($site_id=1)
+{
+    $calendarSettings = new CalendarSettings($site_id);
+    $calendarSettingsRS = $calendarSettings->getAll();
+}
+function webservice_getAllEventTypes($site_id=1)
+{
+    $calendar = new Calendar($site_id);
+    return $calendar->getAllEventTypes();
+}
+function webservice_getEventArray($month, $year,$site_id=1)
+{
+    $calendar = new Calendar($site_id);
+    return $calendar->getEventArray($month, $year);
+}
+function anonymousws_getCareerPortalTemplate($templateName,$site_id=1)
+{
+    $careerPortalSettings = new CareerPortalSettings($site_id);
+    $template = $careerPortalSettings->getTemplate($templateName);
+    return $template;
+}
+function anonymousws_getCareerPortalSettings($site_id=1)
+{
+    $careerPortalSettings = new CareerPortalSettings($site_id);
+    $careerPortalSettingsRS = $careerPortalSettings->getAll();
+    return $careerPortalSettingsRS;
+}
+function webservice_getCareerPortalSettings($site_id=1)
+{
+    $careerPortalSettings = new CareerPortalSettings($site_id);
+    $careerPortalSettingsRS = $careerPortalSettings->getAll();
+    return $careerPortalSettingsRS;
+}
+function webservice_getModuleInfo($keyfield=false,$site_id=1)
+{
+    return getModuleInfo($keyfield,$site_id);
+}
 /**
  * get module details with keyfield as module name and value as module info as associative array
  * @staticvar array $arrDataItemType
@@ -498,13 +687,13 @@ function getFieldInfoByUIType($fieldinfoint)
  * @param type $keyfield
  * @return type
  */
-function getModuleInfo($keyfield=false)
+function getModuleInfo($keyfield=false,$site_id=false)
 {
     static $arrDataItemType=array();
     static $arrDataItemTypeKeyfield=array();
     if(empty($arrDataItemType))
     {
-        $site_id=$_SESSION["CATS"]->getSiteID();
+        if($site_id===false) $site_id=$_SESSION["CATS"]->getSiteID();
         $objDB=DatabaseConnection::getInstance();
         $arrAssoc=$objDB->getAllAssoc("select * from data_item_type where site_id={$site_id}");
         foreach($arrAssoc as $rec)
