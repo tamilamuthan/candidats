@@ -41,8 +41,8 @@ $coreModules = array(
 );
 
 /* CATS Version */
-define('CATS_VERSION', '2.0.0 RC1');
-define('CANDIDATS_VERSION', '2.0.0 RC1');
+define('CATS_VERSION', '2.0.0 Rc2');
+define('CANDIDATS_VERSION', '2.0.0 Rc2');
 define('DEVELOPER_MODE',true);
 
 /* Copyright information at bottom of pages. */
@@ -129,12 +129,12 @@ define('PIPELINE_STATUS_CLIENTDECLINED',     700);
 define('PIPELINE_STATUS_PLACED',             800);
 
 /* Extra field types. */
-define('EXTRA_FIELD_TEXT',     1);
-define('EXTRA_FIELD_TEXTAREA', 2);
-define('EXTRA_FIELD_CHECKBOX', 3);
-define('EXTRA_FIELD_DATE',     4);
-define('EXTRA_FIELD_DROPDOWN', 5);
-define('EXTRA_FIELD_RADIO',    6);
+define('EXTRA_FIELD_TEXT',     8);
+define('EXTRA_FIELD_TEXTAREA', 9);
+define('EXTRA_FIELD_CHECKBOX', 10);
+define('EXTRA_FIELD_DATE',     6);
+define('EXTRA_FIELD_DROPDOWN', 7);
+define('EXTRA_FIELD_RADIO',    11);
 
 /* Date format flags. */
 define('DATE_FORMAT_MMDDYY',   0x1);
