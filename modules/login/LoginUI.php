@@ -179,6 +179,388 @@ class LoginUI extends UserInterface
 
         $this->_template->display('./modules/login/NoCookiesModal.tpl');
     }
+    
+    public function webserviceAttemptLogin()
+    {
+        if(!defined("ACCESS_KEY"))
+        {
+            $api->response("CandidATS is not set for web service",406);return;
+            return;
+        }
+        $objCon=DatabaseConnection::getInstance();
+        $api=API::getInstance();
+        
+        
+            $_SESSION["CATS"]->processCandidateLogin();
+            //return;
+            $sess=$_REQUEST["sessionName"];
+            $arrAssoc=$objCon->getAllAssoc("select * from auieo_webservice where status>9 and session='{$sess}'");
+            if(empty($arrAssoc))
+            {
+                $api->response("Authentication failed", 406);
+            }
+            switch($_REQUEST["operation"])
+            {
+                case "function":
+                {
+                    $query =  json_decode($_REQUEST["query"],true);
+                    $function="webservice_".$query["name"];
+                    $param=$query["param"];
+                    $ret=call_user_func_array($function, $param);
+                     if($ret===false)
+                    {
+                        $arr=array("success"=>0,"result"=>false);
+                        $api->response($arr, 200);
+                    }
+                    else
+                    {
+                        $arr=array("success"=>1,"result"=>$ret);
+                        $api->response($arr, 200);
+                    }
+                    exit;
+                }
+                case "retrieve":
+                {
+                    $site_id=$_SESSION["CATS"]->getSiteID();
+                    $query=$_REQUEST["query"];
+                    $arrQuery=json_decode($query, true);
+                    $module=$arrQuery["module"];
+                    $id=$arrQuery["id"];
+                    $arrModuleInfo=getModuleInfo("modulename");
+                    $moduleInfo=$arrModuleInfo[$module];
+                    if($module=="joborders")
+                    {
+                        $obj=new JobOrders($site_id);
+                        $assoc=$obj->get($id);
+                        $api->response(array("success"=>1,"result"=>$assoc), 200);
+                    }
+                    else if($module=="candidates")
+                    {
+                        $obj=new Candidates($site_id);
+                        $assoc=$obj->get($id);
+                        $api->response(array("success"=>1,"result"=>$assoc), 200);
+                    }
+                    else
+                    {
+                        $api->response(array("success"=>1,"result"=>array("err"=>"unknown request")), 200);
+                    }
+                    exit;
+                }
+                case "query":
+                {
+                    $fromCandidate=new ClsAuieoSQLFrom();
+                    $fromJoborder=new ClsAuieoSQLFrom();
+                    $fromJoborderCandidate= new ClsAuieoSQLFrom();
+                    
+                    $site_id=$_SESSION["CATS"]->getSiteID();
+                    $query=$_REQUEST["query"];
+                    $arrQuery=json_decode($query, true);
+                    $module=$arrQuery["module"];
+                    $arrSelect=isset($arrQuery["select"])?$arrQuery["select"]:array();
+                    $user_id=$_SESSION["CATS"]->getUserID();
+                    $objSQL=new ClsAuieoSQL();
+                    if($module=="candidates")
+                    {
+                        $fromCandidate=$objSQL->addFrom("candidate");
+                        if($arrSelect)
+                        foreach($arrSelect as $select)
+                        {
+                            $objSQL->addSelect($fromCandidate, $select);
+                        }
+                    }
+                    else if($module=="joborders")
+                    {
+                        $fromJoborderCandidate=$objSQL->addFrom("candidate_joborder");
+                        $joinJoborderCandidateJoborderID=$fromJoborderCandidate->addJoinField("joborder_id");
+                        $joinJoborderCandidateCandidateID=$fromJoborderCandidate->addJoinField("candidate_id");
+                        
+                        $fromCandidate=$objSQL->addFrom("candidate");
+                        $joinCandidteID=$fromCandidate->addJoinField("candidate_id");
+                        
+                        $fromJoborder=$objSQL->addFrom("joborder");
+                        $joinJoborderID=$fromJoborder->addJoinField("joborder_id");
+                        
+                       $fromCandidate->setJoinWith($fromJoborderCandidate, $joinJoborderCandidateCandidateID, $joinCandidteID);
+                        $fromJoborder->setJoinWith($fromJoborderCandidate, $joinJoborderCandidateJoborderID, $joinJoborderID);
+                        
+                        if($arrSelect)
+                        foreach($arrSelect as $select)
+                        {
+                            $objSQL->addSelect($fromJoborder, $select);
+                        }
+                    }
+                    else if($module=="activity")
+                    {
+                        $activityEntries = new ActivityEntries($site_id);
+                        $arrAssoc=$activityEntries->getAllByDataItem($user_id, 100);
+                        $modified=date("Y-m-d h:i:s");
+                        $data= urlencode(serialize($_SESSION["CATS"]));
+                        $objCon->query("update auieo_webservice set status=100, data='{$data}', modified='{$modified}' where session='{$_REQUEST["sessionName"]}'");
+                        $api->response(array("success"=>1,"result"=>$arrAssoc), 200);
+                        exit;
+                    }
+                    $objSQL->addWhere($fromCandidate,"site_id",$site_id);
+                    $objSQL->addWhere($fromCandidate,"candidate_id",$user_id);
+                    $arrAssoc=$objCon->getAllAssoc($objSQL->render());
+                    $modified=date("Y-m-d h:i:s");
+                    $data= urlencode(serialize($_SESSION["CATS"]));
+                    $objCon->query("update auieo_webservice set status=100, data='{$data}', modified='{$modified}' where session='{$_REQUEST["sessionName"]}'");
+                     $api->response(array("success"=>1,"result"=>$arrAssoc), 200);
+                    exit;
+                }
+            }return;
+        $siteName = '';
+        if (!isset($_POST['username']) || !isset($_POST['password']))
+        {
+            $message = 'Invalid username or password.';
+
+            if (isset($_GET['reloginVars']))
+            {
+                $this->_template->assign('reloginVars', urlencode($_GET['reloginVars']));
+            }
+            else
+            {
+                $this->_template->assign('reloginVars', '');
+            }
+
+            $site = new Site(-1);
+            $rs = $site->getSiteByUnixName($siteName);
+            if (isset($rs['name']))
+            {
+                $siteNameFull = $rs['name'];
+            }
+            else
+            {
+                $siteNameFull = $siteName;
+            }
+
+            if (!eval(Hooks::get('LOGIN_NO_CREDENTIALS'))) return;
+
+            $this->_template->assign('message', $message);
+            $this->_template->assign('messageSuccess', false);
+            $this->_template->assign('siteName', $siteName);
+            $this->_template->assign('siteNameFull', $siteNameFull);
+            $this->_template->assign('dateString', date('l, F jS, Y'));
+
+            if (ModuleUtility::moduleExists("asp"))
+                $this->_template->display('./modules/asp/AspLogin.tpl');
+            else
+                $this->_template->display('./modules/login/Login.tpl');
+
+            return;
+        }
+
+        $username = $this->getTrimmedInput('username', $_POST);
+        $password = $this->getTrimmedInput('password', $_POST);
+$api->response(array("sss"=>"ssss"), 200);
+        if (($pos=strpos($username, '@')) !== false)
+        {
+            $siteName = substr($username, $pos+1);
+            $username = substr($username, 0, $pos);
+        }
+
+        if ($siteName != '')
+        {
+            $site = new Site(-1);
+            $rs = $site->getSiteByUnixName($siteName);
+            if (isset($rs['siteID']))
+            {
+                $username .= '@' . $rs['siteID'];
+            }
+        }
+
+        /* Make a blind attempt at logging the user in. */
+        $_SESSION['CATS']->processLogin($username, $password);
+
+        /* If unsuccessful, take the user back to the login page. */
+        if (!$_SESSION['CATS']->isLoggedIn())
+        {
+            $message = $_SESSION['CATS']->getLoginError();
+
+            if (isset($_GET['reloginVars']))
+            {
+                $this->_template->assign('reloginVars', urlencode($_GET['reloginVars']));
+            }
+            else
+            {
+                $this->_template->assign('reloginVars', '');
+            }
+
+            $site = new Site(-1);
+            $rs = $site->getSiteByUnixName($siteName);
+            if (isset($rs['name']))
+            {
+                $siteNameFull = $rs['name'];
+            }
+            else
+            {
+                $siteNameFull = $siteName;
+            }
+
+            $this->_template->assign('aspMode', false);
+
+            if (!eval(Hooks::get('LOGIN_UNSUCCESSFUL'))) return;
+
+            $this->_template->assign('message', $message);
+            $this->_template->assign('messageSuccess', false);
+            $this->_template->assign('siteName', $siteName);
+            $this->_template->assign('siteNameFull', $siteNameFull);
+            $this->_template->assign('dateString', date('l, F jS, Y'));
+            if (ModuleUtility::moduleExists("asp"))
+                $this->_template->display('./modules/asp/AspLogin.tpl');
+            else
+                $this->_template->display('./modules/login/Login.tpl');
+
+            return;
+        }
+
+        $systemInfoDb = new SystemInfo();
+
+        $accessLevel = $_SESSION['CATS']->getAccessLevel();
+
+        $mailerSettings = new MailerSettings($_SESSION['CATS']->getSiteID());
+        $mailerSettingsRS = $mailerSettings->getAll();
+
+        /***************************** BEGIN NEW WIZARD *****************************************/
+        /**
+         * Improved setup wizard using the Wizard library. If the user succeeds,
+         * all old-style wizards will no longer be shown.
+         */
+
+        $wizard = new Wizard(CATSUtility::getIndexName() . '?m=home', './js/wizardIntro.js');
+        if ($_SESSION['CATS']->isFirstTimeSetup())
+        {
+            $wizard->addPage('Welcome!', './modules/login/wizard/Intro.php', '', false, true);
+        }
+
+        /*if (!$_SESSION['CATS']->isAgreedToLicense())
+        {
+            $phpeval = '';
+            if (!eval(Hooks::get('LICENSE_TERMS'))) return;
+            $wizard->addPage('License', './modules/login/wizard/License.tpl', $phpeval, true, true);
+        }
+
+        if (!file_exists('modules/asp') || (defined('CATS_TEST_MODE') && CATS_TEST_MODE))
+        {
+            // On-site wizard pages
+            if (!LicenseUtility::isLicenseValid())
+            {
+                if (defined('LICENSE_KEY') && LICENSE_KEY == '')
+                {
+                    $template = 'Register.tpl';
+                    $templateName = 'Register';
+                }
+                else
+                {
+                    $template = 'Reregister.tpl';
+                    $templateName = 'License Expired';
+                }
+                $wizard->addPage($templateName, './modules/login/wizard/' . $template, '', false, true);
+            }
+        }*/
+
+        // if logged in for the first time, change password
+        if (strtolower($username) == 'admin' && $password === DEFAULT_ADMIN_PASSWORD)
+        {
+            $wizard->addPage('Password', './modules/login/wizard/Password.php', '', false, true);
+        }
+
+        // make user set an e-mail address
+        if (trim($_SESSION['CATS']->getEmail()) == '')
+        {
+            $wizard->addPage('E-mail', './modules/login/wizard/Email.php', '', false, true);
+        }
+
+        // if no site name set, make user set site name
+        if ($accessLevel >= ACCESS_LEVEL_SA && $_SESSION['CATS']->getSiteName() === 'default_site')
+        {
+            $wizard->addPage('Site', './modules/login/wizard/SiteName.php', '', false, true);
+        }
+
+        // CATS Hosted Wizard Pages
+        if (!eval(Hooks::get('ASP_WIZARD_PAGES'))) return;
+
+        if ($_SESSION['CATS']->isFirstTimeSetup())
+        {
+            $wizard->addPage('Setup Users', './modules/login/wizard/Users.php', '
+                $users = new Users($siteID);
+                $mp = $users->getAll();
+                $data = $users->getLicenseData();
+
+                $this->_template->assign(\'users\', $mp);
+                $this->_template->assign(\'totalUsers\', $data[\'totalUsers\']);
+                $this->_template->assign(\'userLicenses\', $data[\'userLicenses\']);
+                $this->_template->assign(\'accessLevels\', $users->getAccessLevels());
+            ');
+
+            if (!eval(Hooks::get('ASP_WIZARD_IMPORT'))) return;
+        }
+
+        // The wizard will not display if no pages have been added.
+        $wizard->doModal();
+
+        /******************************* END NEW WIZARD *******************************************/
+
+        /* Session is logged in, do we need to send the user to the wizard?
+         * This should be done only on the first use, indicated by the
+         * admin user's password still being set to the default.
+         */
+
+        /* If we have a specific page to go to, go there. */
+
+        /* These hooks are for important things, like disabling the site based on criteria. */
+        if (!eval(Hooks::get('LOGGED_IN'))) return;
+
+        if (isset($_GET['reloginVars']))
+        {
+            CATSUtility::transferRelativeURI($_GET['reloginVars']);
+        }
+
+        /* LOGGED_IN_MESSAGES hooks are only for messages which show up on initial login (warnings, etc) */
+        if (!eval(Hooks::get('LOGGED_IN_MESSAGES'))) return;
+
+        /* If logged in for the first time, make user change password. * /
+        if (strtolower($username) == 'admin' &&
+            $password === DEFAULT_ADMIN_PASSWORD)
+        {
+            CATSUtility::transferRelativeURI('m=settings&a=newInstallPassword');
+        }
+
+        /* If no site name set, make user set site name. * /
+        else if ($accessLevel >= ACCESS_LEVEL_SA &&
+                 $_SESSION['CATS']->getSiteName() === 'default_site')
+        {
+            CATSUtility::transferRelativeURI('m=settings&a=upgradeSiteName');
+        }
+
+        /* If the default email is set in the configuration, complain to the admin. */
+        else if ($accessLevel >= ACCESS_LEVEL_SA &&
+                 $mailerSettingsRS['configured'] == '0')
+        {
+            NewVersionCheck::checkForUpdate();
+
+            $this->_template->assign('inputType', 'conclusion');
+            $this->_template->assign('title', 'E-Mail Disabled');
+            $this->_template->assign('prompt', 'E-mail features are disabled. In order to enable e-mail features (such as e-mail notifications), please configure your e-mail settings by clicking on the Settings tab and then clicking on Administration.');
+            $this->_template->assign('action', $this->getAction());
+            $this->_template->assign('home', 'home');
+            $this->_template->display('./modules/settings/NewInstallWizard.tpl');
+        }
+
+        /* If no E-Mail set for current user, make user set E-Mail address. * /
+        else if (trim($_SESSION['CATS']->getEmail()) == '')
+        {
+            CATSUtility::transferRelativeURI('m=settings&a=forceEmail');
+        }
+
+        /* If nothing else has stopped us, just go to the home page. */
+        else
+        {
+            if (!eval(Hooks::get('LOGGED_IN_HOME_PAGE'))) return;
+            CATSUtility::transferRelativeURI('m=home');
+        }
+        
+    }
 
     /*
      * Called by render() to handle attempting to log in a user.
