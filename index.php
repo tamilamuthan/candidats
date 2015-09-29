@@ -83,6 +83,7 @@ spl_autoload_register(function ($class) {
 });
 define("AUIEO_FRAMEWORK_PATH", "");
 define("AUIEO_APP_PATH", "");
+//require_once("E:\\auieo\\project\\naanal\\testing.php");
 include_once("lib/ClsNaanalController.php");
 include_once("lib/ClsNaanalApplication.php");
 include_once("lib/ClsLInputValidator.php");
@@ -102,6 +103,7 @@ include_once("lib/ClsAuieoViewerBase.php");
 include_once("lib/PRGManagement.php");
 include_once("lib/PRGGroup.php");
 include_once("mvc/viewers/ClsAuieoView.php");
+//ClsAuieoTestGen::render("http://127.0.0.1/candidats/");
 /* Do we need to run the installer? */
 if (!file_exists('INSTALL_BLOCK') && !isset($_POST['performMaintenence']))
 {
@@ -156,9 +158,9 @@ if (get_magic_quotes_gpc())
 {
     include_once('./lib/ArrayUtility.php');
 
-    $_GET     = array_map('stripslashes', $_GET);
-    $_POST    = array_map('stripslashes', $_POST);
-    $_REQUEST = array_map('stripslashes', $_REQUEST);
+    //$_GET     = array_map('stripslashes', $_GET);
+    //$_POST    = array_map('stripslashes', $_POST);
+    //$_REQUEST = array_map('stripslashes', $_REQUEST);
     $_GET     = ArrayUtility::arrayMapKeys('stripslashes', $_GET);
     $_POST    = ArrayUtility::arrayMapKeys('stripslashes', $_POST);
     $_REQUEST = ArrayUtility::arrayMapKeys('stripslashes', $_REQUEST);
