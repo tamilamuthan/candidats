@@ -66,7 +66,7 @@ class AddressParser
     protected $_phoneNumbers;
     protected $_addressBlock;
     protected $_mode;
-
+    protected $maxAddresLength=50;
 
     /**
      * Attempts to parse the given address block. This should be a string
@@ -193,6 +193,10 @@ class AddressParser
             'phoneNumbers'   => $this->_phoneNumbers
         );
     }
+    public function getZip()
+    {
+        return $this->_zip;
+    }
 
     // FIXME: Document me.
     protected function _initialize($addressBlock, $mode)
@@ -219,7 +223,7 @@ class AddressParser
         $addressBlock = StringUtility::removeEmptyLines($addressBlock);
 
         /* Split address block into an array indexed by line number. */
-        $addressBlockArray = explode("\n", $addressBlock);
+        $addressBlockArray = preg_split("/[\n\t]/", $addressBlock,-1,PREG_SPLIT_NO_EMPTY);
 
         /* Trim whitespace/etc. from each line in the array. */
         $addressBlockArray = array_map(
@@ -242,7 +246,7 @@ class AddressParser
         {
             return false;
         }
-
+        if(strlen($string)>=$this->maxAddresLength) return false;
         /* Array of regular expressions that a "written-out" english number
          * can begin with.
          */

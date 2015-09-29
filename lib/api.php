@@ -29,22 +29,23 @@
 		/*
 		 * Dynmically call the method based on the query string
 		 */
-		public function processApi(){
-                    if($this->get_request_method() != "POST" && $this->get_request_method() != "DELETE")
+                public function processApi()
+                {
+                    if($this->get_request_method() != "POST" && $this->get_request_method() != "DELETE" && $this->get_request_method() != "GET")
                     {
                         $this->response('',406);
                         return false;
                     }
                     $this->input=json_decode(file_get_contents("php://input"),true);
                     return true;
-		}
+                }
                 
                 public function getInput()
                 {
                     return $this->input;
                 }
                 
-                public function &getInstance()
+                public static function &getInstance()
                 {
                     static $api = null;
                     if(is_null($api))

@@ -227,7 +227,7 @@ class Candidates extends Modules
             $this->_db->makeQueryString($firstName),
             $this->_db->makeQueryString($middleName),
             $this->_db->makeQueryString($lastName),
-            $this->_db->makeQueryString($email1),
+            $this->_db->makeQueryStringOrNULL($email1),
             $this->_db->makeQueryString($email2),
             $this->_db->makeQueryString($phoneHome),
             $this->_db->makeQueryString($phoneCell),
@@ -415,11 +415,12 @@ class Candidates extends Modules
                 $objSQL->addValue($key, $var);
             }
         }
-        $objSQL->addValue("date_modified","NOW()");
+        $datetime=  date("Y-m-d h:i:s");
+        $objSQL->addValue("date_modified",$datetime);
         $objSQL->addValue("site_id",$this->_siteID);
         $objSQL->addValue("ownertype", $ownertype);
         $objSQL->addWhere("candidate_id", $candidate_id);
-        $sql=$objSQL->render();
+        $sql=$objSQL->render();//trace($sql);
         $preHistory = $this->get($candidate_id);
         $queryResult = $this->_db->query($sql);
         $postHistory = $this->get($candidate_id);
@@ -1682,7 +1683,7 @@ class CandidatesDataGrid extends DataGrid
                                      'pagerWidth'   => 80,
                                      'filter'         => 'candidate.can_relocate'),
 
-            /*'Owner' =>         array('select'   => 'owner_user.first_name AS ownerFirstName,' .
+            'Owner' =>         array('select'   => 'owner_user.first_name AS ownerFirstName,' .
                                                    'owner_user.last_name AS ownerLastName,' .
                                                    'CONCAT(owner_user.last_name, owner_user.first_name) AS ownerSort',
                                      'join'     => 'LEFT JOIN user AS owner_user ON candidate.owner = owner_user.user_id',
@@ -1691,7 +1692,7 @@ class CandidatesDataGrid extends DataGrid
                                      'sortableColumn'     => 'ownerSort',
                                      'pagerWidth'    => 75,
                                      'alphaNavigation' => true,
-                                     'filter'         => 'CONCAT(owner_user.first_name, owner_user.last_name)'),*/
+                                     'filter'         => 'CONCAT(owner_user.first_name, owner_user.last_name)'),
 
             'Created' =>       array('select'   => 'DATE_FORMAT(candidate.date_created, \'%m-%d-%y\') AS dateCreated',
                                      'pagerRender'      => 'return $rsData[\'dateCreated\'];',
