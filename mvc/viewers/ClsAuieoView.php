@@ -6,8 +6,10 @@ class ClsAuieoView
     private $_siteID=0;
     private $id=0;
     protected $data=array();
-    public function __construct()
+    protected $moduleInfo=array();
+    public function __construct($module)
     {
+        $this->moduleInfo=getModuleInfo("modulename",$module);
         $this->_siteID=$_SESSION["CATS"]->getSiteID();
         $users = new Users($this->_siteID);
         $this->usersRS = $users->getSelectList();

@@ -48,6 +48,9 @@ include_once("./lib/Modules.php");
 include_once('./lib/Session.php'); /* Depends: MRU, Users, DatabaseConnection. */
 include_once('./lib/AJAXInterface.php');
 include_once('./lib/CATSUtility.php');
+include_once('./lib/Users.php');
+include_once("utils.php");
+include_once("lib/PRGUtility.php");
 
 header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');

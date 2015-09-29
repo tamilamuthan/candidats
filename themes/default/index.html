@@ -88,14 +88,16 @@
                 {$AUIEO_RECENT}
             </div>
         <div id='quickSearchBlock'>
-            <form id='quickSearchForm' action='{$indexName}' method='get' onsubmit='return checkQuickSearchForm(document.quickSearchForm);'>
-               
-                    <div style="float:right;">
-                    {$AUIEO_HAS_USER_CATEGORY}
-                    <input name="quickSearchFor" id="quickSearchFor" class="quickSearchBox" value="{$wildCardString}" />&nbsp;
-                    <input type="submit" name="quickSearch" class="button" value="Go" /></div>
-               
-            </form>
+                <div style="float:left;">
+
+                </div>
+                <div style="float:right;">
+                        <form id='quickSearchForm' action='{$indexName}' method='get' onsubmit='return checkQuickSearchForm(document.quickSearchForm);'>        
+                                {$AUIEO_HAS_USER_CATEGORY}
+                                <input name="quickSearchFor" id="quickSearchFor" class="quickSearchBox" value="{$wildCardString}" />&nbsp;
+                                <input type="submit" name="quickSearch" class="button" value="Go" />
+                        </form>
+                </div>
         </div>
         </div>
             <div style="background:#E2E2E2;font-weight: bold;font-size: 1.5em;padding-left: 1em;margin: 0px;"> {$AUIEO_MODULE_ICON} {$AUIEO_MODULE_CAPTION}</div>
