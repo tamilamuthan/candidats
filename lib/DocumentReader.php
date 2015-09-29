@@ -73,18 +73,40 @@ class DocumentReader
             $line = fread($fileHandle, filesize($this->filename));
             $lines = explode(chr(0x0D),$line);
             $outtext = "";
-            foreach($lines as $thisline)
+            $emptyOrSingleLetterLines=0;
+            $linesNew=array();
+            foreach($lines as $ind=>$thisline)
             {
                   $pos = strpos($thisline, chr(0x00));
                   if (($pos !== FALSE)||(strlen($thisline)==0))
                     {
-                    } else {
-                          $outtext .= $thisline."
-    ";
+                      $tmp="";
+                      for($iii=0;$iii<strlen($thisline);$iii++)
+                      {//trace($thisline);
+                          $ord=ord($thisline[$iii]);
+                          if($ord>=1 && $ord<=255) 
+                          {
+                              $tmp.=$thisline[$iii];
+                          }
+                          else
+                          {
+                              $tmp="";
+                          }
+                      }
+                     $thisline=$tmp;
                     }
+                    $linesNew[]=$thisline;
+                    if(strlen($thisline)<=1) $emptyOrSingleLetterLines++;
+                    else $emptyOrSingleLetterLines=0;
+                    if($emptyOrSingleLetterLines>15) break;
+                    $outtext .= $thisline."
+    ";
             }
         }
-        $outtext = preg_replace("/[^a-zA-Z0-9\s\,\.\-\n\r\t@\/\_\(\)]/","",$outtext);
+        $outtext = preg_replace("/[^a-zA-Z0-9\:\"\'\s\,\.\-\n\r\t@\/\_\(\)]/","",$outtext);
+        $outtext = preg_replace("/:[\t ]{1,}/",":",$outtext);
+        $outtext = preg_replace("/[ ]{4,}/","\t",$outtext);
+        $outtext = preg_replace("/[\t]{1,}/","\t",$outtext);
         return $outtext;
     }
     
@@ -126,12 +148,24 @@ class DocumentReader
 
                     zip_entry_close($zip_entry);
             }
-
             zip_close($zip);
-
-            $content = str_replace('</w:r></w:p></w:tc><w:tc>', " ", $content);
-            $content = str_replace('</w:r></w:p>', "\r\n", $content);
-            $striped_content = strip_tags($content);
+           $dom=new DOMDocument();
+            $dom->loadXML($content, LIBXML_NOENT | LIBXML_XINCLUDE | LIBXML_NOERROR | LIBXML_NOWARNING);
+            $arrRow=array();
+            $objLine=$dom->getElementsByTagName("p");
+            for($line=0;$line<$objLine->length;$line++)
+            {
+                for($word=0;$word<$objLine->item($line)->getElementsByTagName("r")->length;$word++)
+                {
+                    $arrRow[$line][$word]=$objLine->item($line)->getElementsByTagName("r")->item($word)->nodeValue;
+                }
+            }
+            $arrContent=array();
+            foreach($arrRow as $row)
+            {
+                $arrContent[]=implode(" ",$row);
+            }
+            $striped_content =implode("\n",$arrContent);
             return $striped_content;
     } 
   

@@ -73,15 +73,19 @@ class ModuleUtility
         $moduleClass = $modules[$moduleName][0];
         if($_SESSION["CATS"]->getSiteID()>0)
         {
-            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if siteid greater than 0 start");
-            $objPRGManagement=PRGManagement::getInstance();
-            $permit=$objPRGManagement->isModuleActionPermitted();
-            if($permit===false)
-            {
-                Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if siteid not permitted");
-                CommonErrors::fatal(COMMONERROR_PERMISSION, $this, 'You have no permission to access this.');
-            }
-            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if siteid greater than 0 end");
+             if(defined("AUIEO_API") && isset($_REQUEST["operation"])){}
+             else
+             {
+                Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if siteid greater than 0 start");
+                $objPRGManagement=PRGManagement::getInstance();
+                $permit=$objPRGManagement->isModuleActionPermitted();
+                if($permit===false)
+                {
+                    Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if siteid not permitted");
+                    CommonErrors::fatal(COMMONERROR_PERMISSION, NULL, 'You have no permission to access this.');
+                }
+                Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if siteid greater than 0 end");
+             }
         }
         include_once(
             'modules/' . $moduleName . '/'
@@ -107,7 +111,12 @@ class ModuleUtility
         }
         else
         {
-            $action="listing";
+            if($moduleName=="login" || isset($_REQUEST["sessionName"]))
+            {
+                $action="attemptLogin";
+            }
+            else
+                $action="listing";
         }
         
         $moduleActionViewClass="Cls".ucfirst($moduleName).ucfirst($action)."View";
@@ -157,7 +166,6 @@ class ModuleUtility
         }
         if(defined("AUIEO_API"))
         {
-            Logger::getLogger("AuieoATS")->info("ModuleUtility:loadModule if request from API start");
             include_once("lib/api.php");
             $api = new API();
             $suceess=$api->processApi();
@@ -528,7 +536,7 @@ class ModuleUtility
 
         if (count($missing) > 0)
         {
-            $error = 'One or more of CATS\' core modules is missing.<br />';
+            $error = 'One or more of CandidATS\' core modules is missing.<br />';
 
             foreach ($missing as $module)
             {

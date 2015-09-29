@@ -69,7 +69,7 @@ class UserInterface extends ClsNaanalController
     {
         $this->_db = DatabaseConnection::getInstance();
         $this->_template = new Template();
-
+        
         if (isset($_SESSION['CATS']) && !empty($_SESSION['CATS']))
         {
             /* Get the current user's user ID. */
@@ -80,10 +80,187 @@ class UserInterface extends ClsNaanalController
 
             /* Get the current user's access level. */
             $this->_accessLevel = $_SESSION['CATS']->getAccessLevel();
-
+            $this->_realAccessLevel = $_SESSION['CATS']->getRealAccessLevel();
             /* All templates have an access level if we have a session. */
             $this->_template->assign('accessLevel', $this->_accessLevel);
         }
+    }
+    
+    public function updateFieldData()
+    {
+        $arrModuleInfo=getModuleInfo("modulename");
+        $moduleInfo=$arrModuleInfo[$_REQUEST["m"]];
+        $sql="update {$moduleInfo["tablename"]} set `{$_REQUEST["field"]}`='{$_REQUEST["newdata"]}' where {$moduleInfo["primarykey"]}='{$_REQUEST[$moduleInfo["primarykey"]]}'";
+        DatabaseConnection::getInstance()->query($sql);
+        exit;
+    }
+    
+    public function deleteTag()
+    {
+        if (!$this->isOptionalIDValid('candidateID', $_REQUEST))
+        {
+            CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this, 'Invalid Candidate ID.');
+        }
+        $candidateID=$_REQUEST["candidateID"];
+        $tagID=$_REQUEST["tagID"];
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $objDB=  DatabaseConnection::getInstance();
+        $sql="select tag_parent_id from tag where tag_id={$tagID}";
+        $rw=$objDB->getAssoc($sql);
+        $tag_parent_id=empty($rw["tag_parent_id"])?0:$rw["tag_parent_id"];
+        $sql="update tag set tag_parent_id={$tag_parent_id} where tag_parent_id ={$tagID}";
+        $objDB->query($sql);
+        $sql="select * from tag_entry where site_id={$_siteID} and tag_id={$tag_parent_id}";
+        $row=$objDB->getAssoc($sql);
+        if(empty($row))
+        {
+            $sql="update tag_entry set tag_id={$tag_parent_id} where site_id={$_siteID} and tag_id={$tagID}";
+            $objDB->query($sql);
+        }
+        else
+        {
+            $sql="delete from tag_entry where site_id={$_siteID} and tag_id={$tagID}";
+            $objDB->query($sql);
+        }
+        $sql="delete from tag where site_id={$_siteID} and tag_id={$tagID}";
+        $objDB->query($sql);
+        header("Location:index.php?m=candidates&a=show&candidateID=".$candidateID);exit;
+    }
+    
+    public function onAddCandidateTags()
+    {
+        $_siteID = $_SESSION['CATS']->getSiteID();
+        $objDB=  DatabaseConnection::getInstance();
+        $date=  date("Y-m-d h:i:s");
+        foreach($_POST["newtag"] as $parent_id=>$tagtitle)
+        {
+            if(empty($tagtitle)) continue;
+            $sql="insert into tag (`tag_parent_id`,`title`,`description`,`site_id`,`date_created`) values({$parent_id},'{$tagtitle}','',{$_siteID},'{$date}')";
+            $objDB->query($sql);
+            $_POST['candidate_tags'][]=$objDB->getLastInsertID();
+        }
+        if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
+        {
+            CommonErrors::fatal(COMMONERROR_PERMISSION, $this, 'Invalid user level for action.');
+        }
+        $arrModuleInfo=getModuleInfo("modulename");
+        $moduleInfo=$arrModuleInfo[$_GET['m']];
+        if($moduleInfo["modulename"]=="joborders")
+        {
+            $class="JobOrders";
+            $fldUrlID="jobOrderID";
+        }
+        else
+        {
+            $class=  ucfirst($moduleInfo["modulename"]);
+            $fldUrlID=$moduleInfo["tablename"]."ID";
+        }
+
+            /* Bail out if we don't have a valid regardingjob order ID. */
+        if (!$this->isOptionalIDValid($fldUrlID, $_POST))
+        {
+            CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this, 'Invalid '.$fldUrlID);
+        }
+
+        /* Bail out if we don't have a valid regardingjob order ID. */
+        if (!isset($_POST['candidate_tags']) || !is_array($_POST['candidate_tags']))
+        {
+            //CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this, 'Invalid Tag ID.');
+        }
+
+        $dataItemID	= $_POST[$fldUrlID];
+
+        header("Location:index.php?m={$moduleInfo["modulename"]}&a=show&{$fldUrlID}=".$dataItemID);exit;
+    }
+    
+   
+        public function addCandidateTags(){
+        /* Bail out if we don't have a valid candidate ID. */
+        /*if (!$this->isRequiredIDValid('candidateID', $_GET))
+        {
+            CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this, 'Invalid candidate ID.');
+        }*/
+
+        $arrModuleInfo=getModuleInfo("modulename");
+        $moduleInfo=$arrModuleInfo[$_GET['m']];
+        if($moduleInfo["modulename"]=="joborders")
+        {
+            $class="JobOrders";
+            $fldUrlID="jobOrderID";
+        }
+        else
+        {
+            $class=  ucfirst($moduleInfo["modulename"]);
+            $fldUrlID=$moduleInfo["tablename"]."ID";
+        }
+        $dataItemID=$_GET[$fldUrlID];
+        $modules = new $class($this->_siteID);
+        $moduleData = $modules->get($dataItemID);
+
+        /* Bail out if we got an empty result set. */
+        if (empty($moduleData))
+        {
+            CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this);
+            return;
+            /*$this->fatalModal(
+                'The specified candidate ID could not be found.'
+            );*/
+        }
+        
+        $this->_template->assign("dataItemType", $moduleInfo["data_item_type_id"]);
+        $this->_template->assign("dataItemTypeID", $dataItemID);
+        $this->_template->assign('assignedTagsID', $tags->getCandidateTagsID($dataItemID,$moduleInfo["data_item_type_id"]));
+        $this->_template->assign('assignedTags', $tags->getCandidateTagsTitle($dataItemID,$moduleInfo["data_item_type_id"]));
+        $this->_template->assign('isFinishedMode', false);
+        /*$this->_template->display(
+            './modules/candidates/AssignCandidateTagModal.php'
+        );*/
+        
+    }
+    
+    public function addTags(){
+        /* Bail out if we don't have a valid candidate ID. */
+        /*if (!$this->isRequiredIDValid('candidateID', $_GET))
+        {
+            CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this, 'Invalid candidate ID.');
+        }*/
+
+        $arrModuleInfo=getModuleInfo("modulename");
+        $moduleInfo=$arrModuleInfo[$_GET['m']];
+        if($moduleInfo["modulename"]=="joborders")
+        {
+            $class="JobOrders";
+            $fldUrlID="jobOrderID";
+        }
+        else
+        {
+            $class=  ucfirst($moduleInfo["modulename"]);
+            $fldUrlID=$moduleInfo["tablename"]."ID";
+        }
+        $dataItemID=$_GET[$fldUrlID];
+        $dataItemTypeID        = $_REQUEST[$fldUrlID];
+        $modules = new $class($this->_siteID);
+        $moduleData = $modules->get($dataItemID);
+
+        /* Bail out if we got an empty result set. */
+        if (empty($moduleData))
+        {
+            CommonErrors::fatalModal(COMMONERROR_BADINDEX, $this);
+            return;
+            /*$this->fatalModal(
+                'The specified candidate ID could not be found.'
+            );*/
+        }
+        
+        $this->_template->assign('dataItemTypeID', $dataItemTypeID);
+        $this->_template->assign('assignedTagsID', $tags->getCandidateTagsID($dataItemID,$moduleInfo["data_item_type_id"]));
+        $this->_template->assign('assignedTags', $tags->getCandidateTagsTitle($dataItemID,$moduleInfo["data_item_type_id"]));
+        $this->_template->assign('isFinishedMode', false);
+
+        /*$this->_template->display(
+            './modules/candidates/AssignCandidateTagModal.php'
+        );*/
+        
     }
     
     public function setView(&$objView)

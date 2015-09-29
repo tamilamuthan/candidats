@@ -105,10 +105,7 @@ class ExportUtility
             . '</form>'
             . '</div>'
             . '<a href="#" id="exportBoxLink" onclick="showBox(\'ExportBox\'); return false;">Export</a> | <a href="#" id="deleteBoxLink" onclick="deleteSelected(); return false;">Delete</a>'.$link;
-        if($_REQUEST["m"]=="candidates")
-        {
-            $menu = $menu . ' | <a href="#" id="addToJoborderBoxLink" onclick="showBox(\'JoborderBox\'); return false;">Add to joborder</a>';
-        }
+
         $menu = $menu . '<br />'
             . '<div class="exportPopup" id="ExportBox" align="left" onmouseover="showBox(\'ExportBox\');" onmouseout="hideBox(\'ExportBox\');">'
             . '<a href="' . $allRecordsURL . '">Export All Records</a><br />'

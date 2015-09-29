@@ -1071,8 +1071,8 @@ class DataGrid
         {
             if (isset($data['data']['join']) && !empty($data['data']['join']) && strpos($data['data']['join'],"extra_field"))
             {
-            	$this->_currentColumns[$index]['data']['select']="`{$data['name']}`";
-            	$this->_currentColumns[$index]['data']['sortableColumn']="`{$data['name']}`";
+            	$this->_currentColumns[$index]['data']['select']="{$data['name']}";
+            	$this->_currentColumns[$index]['data']['sortableColumn']="{$data['name']}";
             	$this->_currentColumns[$index]['data']['pagerRender'] = 'return $rsData["'.$data['name'].'"];';
             	unset($this->_currentColumns[$index]['data']['join']);
             }
@@ -1354,7 +1354,11 @@ class DataGrid
         //$whereSQL="";
         //if($dgModule=="candidates" || $dgModule=="companies" || $dgModule=="contacts" || $dgModule=="joborders")
         //{
-            $whereSQL=getPermittedRecordWhere($dgModule);
+            $permittedWhereSQL=getPermittedRecordWhere($dgModule);
+            foreach($permittedWhereSQL as $pWSQL)
+            {
+                $whereSQL[]=$pWSQL;
+            }
             $arrFilterWhere=getReportFilter();
             if($arrFilterWhere)
             {

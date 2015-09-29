@@ -493,7 +493,7 @@ class ExtraFields
         $rs = $this->_db->query($sql);   
     }
 
-    /**
+   /**
      * Returns all extra fields fields for a company.
      *
      * @param integer candidate ID
@@ -513,12 +513,18 @@ class ExtraFields
             is_extra=1
             AND
                site_id = %s",
-            $this->_db->makeQueryInteger($record_id),
             $this->_siteID
             
         );
-
-        return $this->_db->getAssoc($sql);
+        $arrRow=$this->_db->getAllAssoc($sql);  
+        $arrField=array();        
+        foreach($arrRow as $row)
+        {
+          $arrField[]=$row["fieldname"];
+        }   
+        if(empty($arrField)) return array();    
+        $sql="select `".implode('`,`',$arrField)."` from {$arrTableInfo["table"]} where {$arrTableInfo["primary_key"]}={$record_id}";         
+        return $this->_db->getAssoc($sql);                                                                                           
     }
     /**
      * transfer all the extra field data to another site if the field name matches
@@ -807,9 +813,9 @@ class ExtraFields
             case EXTRA_FIELD_CHECKBOX:
                return array('select'       => '`'.$data['fieldName'].'` AS `'.$data['fieldName'].'`',
                           'join'         => ' ',
-                          'pagerRender'          => 'return ($rsData[\'extra_field_value' . $uniqueIndex . '\'] == \'Yes\' ? \'Yes\' : \'No\');',
-                          'exportRender'          => 'return ($rsData[\'extra_field_value' . $uniqueIndex . '\'] == \'Yes\' ? \'Yes\' : \'No\');',
-                          'sortableColumn'         => '`'.$data['fieldName'].'`',
+                          'pagerRender'          => 'return ($rsData[\''.$data['fieldName'].'\'] == \'Yes\' ? \'Yes\' : \'No\');',
+                          'exportRender'          => 'return ($rsData[\''.$data['fieldName'].'\'] == \'Yes\' ? \'Yes\' : \'No\');',
+                          'sortableColumn'         => $data['fieldName'],
                           'pagerWidth'  => 45,
                           'filter' => 'IF (`'.$data['fieldName'].'`.value = "Yes", "Yes", "No")');
             break;
@@ -819,7 +825,7 @@ class ExtraFields
                           'join'    => '',
                           'pagerRender'     => 'if (isset($_SESSION[\'CATS\']) && $_SESSION[\'CATS\']->isLoggedIn() && $_SESSION[\'CATS\']->isDateDMY())
                                         {
-                                              $dateParts = explode(\'-\',  $rsData[\'extra_field_value' . $uniqueIndex . '\']);
+                                              $dateParts = explode(\'-\',  $rsData[\''.$data['fieldName'].'\']);
                                               if (count($dateParts) > 2)
                                               {
                                                     $t = $dateParts[0];
@@ -831,11 +837,11 @@ class ExtraFields
                                         }
                                         else
                                         {
-                                             return $rsData[\'extra_field_value' . $uniqueIndex . '\'];
+                                             return $rsData[\''.$data['fieldName'].'\'];
                                         }',
                           'exportRender'     => 'if (isset($_SESSION[\'CATS\']) && $_SESSION[\'CATS\']->isLoggedIn() && $_SESSION[\'CATS\']->isDateDMY())
                                         {
-                                              $dateParts = explode(\'-\',  $rsData[\'extra_field_value' . $uniqueIndex . '\']);
+                                              $dateParts = explode(\'-\',  $rsData[\''.$data['fieldName'].'\']);
                                               if (count($dateParts) > 2)
                                               {
                                                     $t = $dateParts[0];
@@ -847,19 +853,19 @@ class ExtraFields
                                         }
                                         else
                                         {
-                                             return $rsData[\'extra_field_value' . $uniqueIndex . '\'];
+                                             return $rsData[\''.$data['fieldName'].'\'];
                                         }',
-                          'sortableColumn'       => '`'.$data['fieldName'].'`',
+                          'sortableColumn'       => $data['fieldName'],
                           'pagerWidth' => 110,
-                          'filter' => '`'.$data['fieldName'].'`');
+                          'filter' => $data['fieldName']);
             
             case EXTRA_FIELD_TEXT:
             default:
                 return array('select'  =>'`'.$data['fieldName'].'` AS `'.$data['fieldName'].'`',
                           'join'    => '',
-                          'sortableColumn'    => '`'.$data['fieldName'].'`',
+                          'sortableColumn'    => $data['fieldName'],
                           'pagerWidth'   => 110,
-                          'filter' => '`'.$data['fieldName'].'`',
+                          'filter' => $data['fieldName'],
                           'filterTypes'   => '===>=<=~');
             break;
         }

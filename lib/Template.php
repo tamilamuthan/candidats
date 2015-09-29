@@ -113,11 +113,11 @@ class Template
         if($__AUIEO__OTHER__VAR!==false)
         {
             extract($__AUIEO__OTHER__VAR);
-        }                                         
+        }
         include $__AUIEO__TEMPLATE__FILE;
-        $arrVar=get_defined_vars();                  
+        $arrVar=get_defined_vars();
         unset($arrVar[$__AUIEO__TEMPLATE__FILE]);
-        $arrVarNew=array();                  
+        $arrVarNew=array();
         foreach($arrVar as $var=>$data)
         {
             $tmpVar = strtoupper($var);
@@ -126,39 +126,32 @@ class Template
             {
                 $arrVarNew[$tmpVar]=$data;
             }
-        }                    
+        }
         return $arrVarNew;
     }
-
     /**
-     * Evaluates a template file. All assignments (see the Template::assign()
-     * and Template::assignByReference() methods) must be made before calling
-     * this method. The template filename is relative to index.php.
-     *
-     * @param string template filename
-     * @return void
+     * 
+     * @param type $template
+     * @param type $var - template variale where the processed content stored
+     * @return type
      */
-    public function display($template,$objView=false)
-    {                           
-        $this->isRendered=true;
-        $arrAuieoTplVar=array();
-        if($objView!==false)
-        {
-            $arrAuieoTplVar=$objView->render();
-        }                                     
+    public function subTemplate($template,$var,$arrAuieoTplVar=array())
+    {
             /* File existence checking. */
+            if(!file_exists($template))
+            {
+                $arrPathInfo=pathinfo($template);
+                if(file_exists("auieo/common/template/{$arrPathInfo["basename"]}"))
+                {
+                    $template="auieo/common/template/{$arrPathInfo["basename"]}";
+                }
+            }
             $file = realpath('./' . $template);
             if (!$file)
             {
                 echo 'Template error: File \'', $template, '\' not found.', "\n\n";
                 return;
             }
-                                      
-            $this->_templateFile = $file;
-
-            /* We don't want any variable name conflicts here. */
-            unset($file, $template);
-
             /**
             * for handing comment in html template. usage is {$_("This is comment")}
             */
@@ -166,15 +159,14 @@ class Template
            {
                return "";
            };
-                                              
+
             /* Include the template, with output buffering on, and echo it. */
-            $arrPathInfo=pathinfo($this->_templateFile);
+            $arrPathInfo=pathinfo($file);
             if($arrPathInfo["extension"]=="php" && (file_exists("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.html") || file_exists("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.htm")))
-            {                             
+            {
                $otherVar = $arrAuieoTplVar;
-               $arrTplVar=$this->loadTemplateVars($this->_templateFile,$otherVar);    
+               $arrTplVar=$this->loadTemplateVars($file,$otherVar);
                extract($arrTplVar);
-                                      
                 if(file_exists("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.html"))
                     $_AUIEO_TEMPLATE_CONTENT=file_get_contents("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.html");
                 else
@@ -188,18 +180,99 @@ class Template
 EOT;
 ');
                     $html = ob_get_clean();
-                }                 
+                }
                 catch(Exception $e)
                 {
                     trace($e);
                 }
             }
             else
-            {                       
+            {
                 ob_start();
                 include($this->_templateFile);
                 $html = ob_get_clean();
-            }                         
+            }
+            $this->assign($var, $html);
+    }
+
+    /**
+     * Evaluates a template file. All assignments (see the Template::assign()
+     * and Template::assignByReference() methods) must be made before calling
+     * this method. The template filename is relative to index.php.
+     *
+     * @param string template filename
+     * @return void
+     */
+    public function display($template,$objView=false,$isTheme=true)
+    {
+        $this->isRendered=true;
+        $arrAuieoTplVar=array();
+        if($objView!==false)
+        {
+            $arrAuieoTplVar=$objView->render();
+        }
+            /* File existence checking. */
+            if(!file_exists($template))
+            {
+                $arrPathInfo=pathinfo($template);
+                if(file_exists("auieo/template/{$arrPathInfo["basename"]}"))
+                {
+                    $template="auieo/template/{$arrPathInfo["basename"]}";
+                }
+            }
+            $file = realpath('./' . $template);
+            if (!$file)
+            {
+                echo 'Template error: File \'', $template, '\' not found.', "\n\n";
+                return;
+            }
+
+            $this->_templateFile = $file;
+
+            /* We don't want any variable name conflicts here. */
+            unset($file, $template);
+
+            /**
+            * for handing comment in html template. usage is {$_("This is comment")}
+            */
+           $_=function($comment)
+           {
+               return "";
+           };
+
+            /* Include the template, with output buffering on, and echo it. */
+            $arrPathInfo=pathinfo($this->_templateFile);
+            if($arrPathInfo["extension"]=="php" && (file_exists("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.html") || file_exists("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.htm")))
+            {
+               $otherVar = $arrAuieoTplVar;
+               $arrTplVar=$this->loadTemplateVars($this->_templateFile,$otherVar);
+               extract($arrTplVar);
+               //trace($arrPathInfo);
+                if(file_exists("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.html"))
+                    $_AUIEO_TEMPLATE_CONTENT=file_get_contents("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.html");
+                else
+                    $_AUIEO_TEMPLATE_CONTENT=file_get_contents("{$arrPathInfo["dirname"]}/{$arrPathInfo["filename"]}.htm");
+                try
+                {
+                    ob_start();
+                    $AUIEO_MODULE_CONTENT="";
+                    eval('echo <<< EOT
+            '.$_AUIEO_TEMPLATE_CONTENT.'
+EOT;
+');
+                    $html = ob_get_clean();
+                }
+                catch(Exception $e)
+                {
+                    trace($e);
+                }
+            }
+            else
+            {
+                ob_start();
+                include($this->_templateFile);
+                $html = ob_get_clean();
+            }
             if (strpos($html, '<!-- NOSPACEFILTER -->') === false && strpos($html, 'textarea') === false)
             {
                 $html = preg_replace('/^\s+/m', '', $html);
@@ -209,7 +282,12 @@ EOT;
             {
                 eval($filter);
             }
-        echo $this->loadTheme(array("out"=>$html,"AUIEO_MODULE_CONTENT"=>"","AUIEO_VIEW_OBJECT"=>$objView));
+            if($isTheme===false)
+            {
+                echo $html;
+            }
+            else
+                echo $this->loadTheme(array("out"=>$html,"AUIEO_MODULE_CONTENT"=>"","AUIEO_VIEW_OBJECT"=>$objView));
     }
     
     private function loadTheme($_AUIEO_ARR_THEME_VAR)
@@ -512,6 +590,7 @@ $MRU = $_SESSION['CATS']->getMRU()->getFormatted();
         }
         $AUIEO_HAS_USER_CATEGORY="";
         //FIXME:  Abstract into a hook.
+        $AUIEO_TAG_SEARCH="";
         if ($_SESSION['CATS']->hasUserCategory('msa'))
         {
             $AUIEO_HAS_USER_CATEGORY = "<input type='hidden' name='m' value='asp' />
@@ -520,6 +599,7 @@ $MRU = $_SESSION['CATS']->getMRU()->getFormatted();
         }
         else
         {
+            $objDB=  DatabaseConnection::getInstance();
             $AUIEO_HAS_USER_CATEGORY = "<input type='hidden' name='m' value='home' />
                 <input type='hidden' name='a' value='quickSearch' />
                 <span class='quickSearchLabel' id='quickSearchLabel'>Quick Search:</span>&nbsp;";

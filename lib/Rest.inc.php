@@ -19,7 +19,8 @@
 		public function response($data,$status){
 			$this->_code = ($status)?$status:200;
 			$this->set_headers();
-			echo $data;
+                        if(is_array($data)) echo json_encode ($data);
+			else echo $data;
 			exit;
 		}
 		// For a list of http codes checkout http://en.wikipedia.org/wiki/List_of_HTTP_status_codes

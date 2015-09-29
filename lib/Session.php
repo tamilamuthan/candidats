@@ -82,6 +82,7 @@ class CATSSession
     //private $_isAgreedToLicense = false;
     private $_isLocalizationConfigured = false;
     private $_loggedInDirectory = '';
+    private $loginType="user";
 
     /**
      * Returns this session's MRU object, and creates one if it doesn't exist.
@@ -207,7 +208,10 @@ class CATSSession
         {
             return false;
         }
-
+        if(defined("AUIEO_API") && isset($_REQUEST["operation"]))
+        {
+                return true;
+        }
         /* Get the current user's session cookie from the database. */
         $users = new Users($this->_siteID);
         $userRS = $users->get($this->_userID);
@@ -625,6 +629,211 @@ class CATSSession
             $this->_userLoginID,
             $this->_siteID
         );
+    }
+    
+      /**
+     * Processes a user login request and sets up the session if successful.
+     * After calling this method, if $this->isLoggedIn() returns false, an
+     * error occurred (which can be retrieved using $this->getLoginError()).
+     *
+     * @param string User's username.
+     * @param string User's password.
+     * @return void
+     */
+    public function processCandidateLogin()
+    {
+        $objCon=DatabaseConnection::getInstance();
+        Logger::getLogger("AuieoATS")->info("Login process start");
+        
+        if(!$objCon->isTableExist("auieo_webservice"))
+        {
+            $objCon->createTable("auieo_webservice");
+        }
+        if(!$objCon->isFieldExist("auieo_webservice", "session"))
+        {
+            $objCon->addField("auieo_webservice", "session", "varchar", 255);
+        }
+        if(!$objCon->isFieldExist("auieo_webservice", "status"))
+        {
+            $objCon->addField("auieo_webservice", "status", "number",0);
+        }
+        if(!$objCon->isFieldExist("auieo_webservice", "email"))
+        {
+            $objCon->addField("auieo_webservice", "email", "varchar",255);
+        }
+        if(!$objCon->isFieldExist("auieo_webservice", "access"))
+        {
+            $objCon->addField("auieo_webservice", "access", "varchar",255);
+        }
+        if(!$objCon->isFieldExist("auieo_webservice", "data"))
+        {
+            $objCon->addField("auieo_webservice", "data", "text");
+        }
+        if(!$objCon->isFieldExist("auieo_webservice", "created"))
+        {
+            $objCon->addField("auieo_webservice", "created", "varchar",255);
+        }
+        if(!$objCon->isFieldExist("auieo_webservice", "modified"))
+        {
+            $objCon->addField("auieo_webservice", "modified", "varchar",255);
+        }
+        $expiryTime =  mktime(date("H"), date("i"), date("s"), date("m"), date("d")-1, date("Y"));
+        $expiryDate = date("Y-m-d h:i:s",$expiryTime);
+        $objCon->query("delete from auieo_webservice where created<'{$expiryDate}'");
+         $api=API::getInstance();
+        $db = DatabaseConnection::getInstance();
+        if(!isset($_REQUEST["sessionName"]))
+        {
+            if(!isset($_REQUEST["operation"])) 
+            {
+                $api->response(array("success"=>0,"result"=>array("err"=>"Unknown request")),406);
+                return;
+            }
+            switch($_REQUEST["operation"])
+            {
+                case "getchallenge":
+                {
+                    if(!isset($_REQUEST["email"]))
+                    {
+                        $api->response(array("success"=>0,"result"=>array("err"=>"email not set")),200);return;
+                    }
+                    if(!isset($_REQUEST["password"]))
+                    {
+                        $api->response(array("success"=>0,"result"=>array("err"=>"password not set")),200);return;
+                    }
+                    $passwordFieldExist=$objCon->isFieldExist("candidate", "password");
+                    if(!$passwordFieldExist)
+                    {
+                        $api->response(array("success"=>0,"result"=>array("err"=>"password field not exist for candidate table")),200);
+                        exit;
+                    }
+                    $email=$_REQUEST["email"];
+                    $password=$_REQUEST["password"];
+                    $arrRecord=$objCon->getAllAssoc("select * from candidate where email1='{$email}' and password='{$password}'");
+                    if(empty($arrRecord))
+                    {
+                        $api->response(array("success"=>0,"result"=>array("err"=>"email or password wrong")),200);exit;
+                    }
+                    $sess=uniqid();
+                    $access=md5($sess.ACCESS_KEY);
+                    $created=date("Y-m-d h:i:s");
+                    $objCon->query("insert into auieo_webservice (status,email,access,created,modified) value(1,'{$email}','{$access}','{$created}','{$created}')");
+                    $api->response(array("success"=>1,"result"=>array("token"=>$sess)),200);
+                    exit;
+                }
+                case "login":
+                {
+                    $access=$_REQUEST["accessKey"];
+                    $arrAssoc=$objCon->getAllAssoc("select * from auieo_webservice where access='{$access}'");
+                    if(empty($arrAssoc))
+                    {
+                        $api->response(array("success"=>0,"result"=>array("err"=>"invalid token or access key")), 406);
+                        exit;
+                    }
+                    $email=$arrAssoc[0]["email"];
+                    $arrAssoc=$objCon->getAllAssoc("select candidate.*,site.name as site_name,site.unix_name,user_licenses from candidate left join site on site.site_id=candidate.site_id where email1='{$email}'");
+                    if(empty($arrAssoc))
+                    {
+                        $api->response(array("success"=>0,"result"=>array("err"=>"invalid email or password")), 406);
+                        return;
+                    }
+                    $rs=$arrAssoc[0];
+                    $sess=session_id();
+                    $sess=$sess.rand(999, 9999);
+
+                    if (isset($_SERVER['REMOTE_ADDR']))
+                    {
+                        $ip = $_SERVER['REMOTE_ADDR'];
+                    }
+                    else
+                    {
+                        $ip = '';
+                    }
+
+                    if (isset($_SERVER['HTTP_USER_AGENT']))
+                    {
+                        $userAgent = $_SERVER['HTTP_USER_AGENT'];
+                    }
+                    else
+                    {
+                        $userAgent = '';
+                    }
+
+                    $this->_username               = $rs['email1'];
+                    $this->_password               = $rs['password'];
+                    $this->_userID                 = $rs['candidate_id'];
+                    $this->_siteID                 = $rs['site_id'];
+                    $this->_firstName              = $rs['first_name'];
+                    $this->_lastName               = $rs['last_name'];
+                    $this->_siteName               = $rs['site_name'];
+                    $this->_unixName               = $rs['unix_name'];
+                    $this->_email                  = $rs['email1'];
+                    $this->_ip                     = $ip;
+                    $this->_userAgent              = $userAgent;
+                    $this->loginType = "candidate";
+
+                        $userLoginID = -1;
+
+                    $this->_userLoginID = $rs['candidate_id'];
+                    $this->_isLoggedIn = true;
+
+                    $data= urlencode(serialize($this));
+                    $modified=date("Y-m-d h:i:s");
+                    $objCon->query("update auieo_webservice set status=10, session='{$sess}', data='{$data}', modified='{$modified}' where access='{$access}'");
+                    $api->response(array("success"=>1,"result"=>array("session"=>$sess,"id"=>$rs['candidate_id'],"site_id"=>$rs['site_id'])),200);
+                    exit;
+                }
+                default:
+                {
+                     $api->response(array("success"=>0,"result"=>array("err"=>"unknown request")),200);
+                     exit;
+                }
+            }
+        }
+        $sess=$_REQUEST["sessionName"];
+        if(empty($sess))
+        {
+            switch($_REQUEST["operation"])
+            {
+                case "function":
+                {
+                    $query =  json_decode($_REQUEST["query"],true);
+                    $function="anonymousws_".$query["name"];
+                    $param=$query["param"];
+                    $ret=call_user_func_array($function, $param);
+                    if(is_array($ret) && isset($ret["completed"]))
+                    {
+                        $arr=array("success"=>$ret["completed"],"message"=>$ret["result"],"result"=>$ret["result"]);
+                        $api->response($arr, 200);
+                    }
+                    else if($ret===false)
+                    {
+                        $arr=array("success"=>0,"result"=>false);
+                        $api->response($arr, 200);
+                    }
+                    else
+                    {
+                        $arr=array("success"=>1,"result"=>$ret);
+                        $api->response($arr, 200);
+                    }
+                    exit;
+                }
+            }
+        }
+        $arrAssoc=$objCon->getAllAssoc("select * from auieo_webservice where status>9 and session='{$sess}'");
+        if(empty($arrAssoc))
+        {
+             $api->response(array("success"=>0,"result"=>array("err"=>"not logged in or login expired")),406);
+             exit;
+        }
+        $_SESSION["CATS"]=unserialize(urldecode($arrAssoc[0]["data"]));
+        Logger::getLogger("AuieoATS")->info("Candidate Login process end");
+        return;
+    }
+
+    public function getLoginType()
+    {
+        return $this->loginType;
     }
 
     /**

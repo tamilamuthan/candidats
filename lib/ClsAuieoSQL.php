@@ -600,6 +600,12 @@ class ClsAuieoSQLFrom
         $this->isJoin=true;
         return true;
     }
+    public function setJoinCustom($join)
+    {
+        $this->arrJoin[]=array("joinCustom"=>true,"join"=>$join);
+        $this->isJoin=true;
+        return true;
+    }
     public function isJoin()
     {
         return $this->isJoin;
@@ -634,6 +640,19 @@ class ClsAuieoSQLFrom
         $strjoin=false;
         foreach($this->arrJoin as $ind=>$join)
         {
+            if(isset($join["joinCustom"]) && $join["joinCustom"]=true)
+            {
+                $boolean=isset($join["boolean"])?$join["boolean"]:"AND";
+                if(empty($strjoin))
+                {
+                    $strjoin=" {$join["join"]}";
+                }
+                else
+                {
+                    $strjoin=" {$strjoin} {$boolean}  {$join["join"]}";
+                }
+                continue;
+            }
             $arrFromJoin=$join["joinFrom"];
             $arrToJoin=$join["joinTo"];
             $fromField=$arrFromJoin["field"];
@@ -1581,7 +1600,6 @@ class ClsAuieoSQL
         {
             $sql=$sql." LIMIT {$this->from},{$this->length}";
         }
-        addLog($sql);
         return $sql;
     }
     function loadSql($sqlFile)

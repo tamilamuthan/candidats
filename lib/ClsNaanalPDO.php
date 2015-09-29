@@ -8,7 +8,7 @@ class ClsNaanalPDO extends PDO
 {
     protected $statement=null; 
     public $error=null;
-    public $arrLastSql=array();
+    //public $arrLastSql=array();
     private $dbname="";
     public $name="";
     public $sql="";
@@ -249,13 +249,13 @@ class ClsNaanalPDO extends PDO
         {
             foreach($sql as $s)
             {
-                $this->arrLastSQL[]=$s;
+                //$this->arrLastSQL[]=$s;
                 $arrSql[]=trim($s);
             }
         }
         else
         {
-            $this->arrLastSQL[]=$sql;
+            //$this->arrLastSQL[]=$sql;
             $arrSql[]=trim($sql);
         }
         $arrSt=array();
@@ -545,7 +545,7 @@ class ClsNaanalPDO extends PDO
             return false;
         }
         $objParam=$arrTmpParam;
-        $this->arrLastSql[]=$sql;
+        //$this->arrLastSql[]=$sql;
         $this->sql=$sql;
         Logger::getLogger("AuieoATS")->info($sql);
         try
@@ -935,10 +935,15 @@ class ClsNaanalPDO extends PDO
                 $size=14;
             }
         }
+        else if($fieldtype=="text")
+        {
+            $fieldtype="TEXT";
+        }
+        $sqlsize=empty($size)?"":"({$size})";
         if($database)
-            $sql="ALTER TABLE `{$database}`.`{$tablename}` ADD `{$fieldname}` {$fieldtype}({$size})";
+            $sql="ALTER TABLE `{$database}`.`{$tablename}` ADD `{$fieldname}` {$fieldtype}{$sqlsize}";
         else
-            $sql="ALTER TABLE `{$tablename}` ADD `{$fieldname}` {$fieldtype}({$size})";
+            $sql="ALTER TABLE `{$tablename}` ADD `{$fieldname}` {$fieldtype}{$sqlsize}";
         if(!is_null($after))
         {
             $sql=$sql." ".$after;

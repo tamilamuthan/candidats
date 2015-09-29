@@ -21,10 +21,10 @@ class Modules
             $this->_siteID=$siteID;
         $this->_db = DatabaseConnection::getInstance();
     }
-    
+
     public function getExtraFieldInfoForLoad()
     {
-        $moduleInfo=getModuleInfo("modulename");
+        $moduleInfo=getModuleInfo("modulename",$this->_siteID);
         $sql="select * from auieo_fields where data_item_type={$moduleInfo[$this->module]["data_item_type_id"]} and is_extra=1 and site_id={$this->_siteID}";
         $arrAssocExtra = $this->_db->getAllAssoc($sql);
         $arrExtraField=array();
@@ -41,7 +41,7 @@ class Modules
         {
             if($extraFieldCount>1)
             {
-                $selectExtraField='`,`'.implode(",",$arrExtraField);
+                $selectExtraField=',`'.implode("`,`",$arrExtraField).'`';
             }
             else
             {

@@ -13,24 +13,33 @@ class ClsNaanalFilter
     
     protected function getNaanalFilter($table,$actionUrl="index.php",$isForm=true)
     {
+        $_siteID = $_SESSION['CATS']->getSiteID();
         $arr=array();
         /**
          * if we don't want any field, we can remove that field name
          */
-        $arr["candidate"]["main"]=array("can_relocate","zip","city","state","source");
-        $arr["candidate"]["extra"]=array("Visa Status","Security Clearance","Availability","Payment Type");
+        //$arr["candidate"]["main"]=array("can_relocate","zip","city","state","source");
+        //ExtraFields::getValuesTypes();
+        //$arr["candidate"]["extra"]=array("Visa_Status","Availability");
         $module=$_REQUEST["m"];
         $action=isset($_REQUEST["a"])?$_REQUEST["a"]:"";
         $objDatabase = DatabaseConnection::getInstance();
-        $sql="SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '".DATABASE_NAME."' AND TABLE_NAME = '$table'";
+        $sql="SELECT fieldname,uitype,is_extra,fieldlabel,defaultvalue,displaytype,primarykey FROM auieo_fields left join  data_item_type on auieo_fields.data_item_type=data_item_type.data_item_type_id and auieo_fields.site_id=data_item_type.site_id  where data_item_type.tablename = '$table' and  auieo_fields.site_id={$_siteID}";
         $arrRow=$objDatabase->getAllAssoc($sql);
+        $arrFieldInfo=array();
+        foreach($arrRow as $row)
+        {
+            ///separate extra field and regular field
+            $arrFieldInfo[$row["is_extra"]][$row["fieldname"]]=$row;
+        }
         $arrUniqueData=array();
         foreach($arrRow as $row)
         {
-            if($row["COLUMN_KEY"]=="PRI" || $row["COLUMN_KEY"]=="MUL") continue;
-            if(!isset($arr[$table])) continue;
-            if(!in_array($row["COLUMN_NAME"],$arr[$table]["main"])) continue;
-            $sql="select distinct `{$row["COLUMN_NAME"]}` from {$table}";
+            if($row["uitype"]!=7 && $row["uitype"]!=11) continue;
+            //if($row["COLUMN_KEY"]=="PRI" || $row["COLUMN_KEY"]=="MUL") continue;
+            //if(!isset($arr[$table])) continue;
+            //if(!in_array($row["fieldname"],$arr[$table]["main"])) continue;
+            $sql="select distinct `{$row["fieldname"]}` from {$table} where site_id={$_siteID}";
             $arrRecord=$objDatabase->getAllRow($sql);
             $arrData=array();
             if($arrRecord)
@@ -38,7 +47,13 @@ class ClsNaanalFilter
             {
                 if(method_exists($this, "on_unique_data_display"))
                 {
-                    $uniqueDataDisplay=$this->on_unique_data_display($row["COLUMN_NAME"],$r[0]);
+                    $uniqueDataDisplay=$this->on_unique_data_display($row["fieldname"],$r[0]);
+                    if(is_null($uniqueDataDisplay)) $arrData[$r[0]]=$r[0];
+                    else $arrData[$r[0]]=$uniqueDataDisplay;
+                }
+                else if(function_exists( "on_unique_data_display"))
+                {
+                    $uniqueDataDisplay=on_unique_data_display($row["fieldname"],$r[0]);
                     if(is_null($uniqueDataDisplay)) $arrData[$r[0]]=$r[0];
                     else $arrData[$r[0]]=$uniqueDataDisplay;
                 }
@@ -53,7 +68,7 @@ class ClsNaanalFilter
             {
                 if(method_exists($this, "on_unique_data_display"))
                 {
-                    $uniqueDataDisplay=$this->on_unique_data_display($row["COLUMN_NAME"],$r[0]);
+                    $uniqueDataDisplay=$this->on_unique_data_display($row["fieldname"],$r[0]);
                     if(is_null($uniqueDataDisplay)) $arrData[$r[0]]=$r[0];
                     else $arrData[$r[0]]=$uniqueDataDisplay;
                 }
@@ -63,15 +78,17 @@ class ClsNaanalFilter
                 }
             }*/
             asort($arrData);
-            $arrUniqueData[$row["COLUMN_NAME"]]=$arrData;
+            $arrUniqueData[$row["fieldname"]]=$arrData;
         }
-        if(isset($arr[$table]["extra"]))
+        //trace($arrUniqueData);
+        /*if(isset($arr[$table]["extra"]))
         foreach($arr[$table]["extra"] as $extField)
         {
-            $sql="select extra_field_settings_id from extra_field_settings where field_name='{$extField}'";
+            //$sql="select extra_field_settings_id from extra_field_settings where field_name='{$extField}'";
+            $sql="select id from auieo_fields where fieldname='{$extField}' and site_id={$_siteID}";
             $records=$objDatabase->getAllRow($sql);
-            $rEField=$records[0];
-            $sql="select distinct `value` from extra_field where field_name='{$extField}'";
+            $rEField=$records[0];                 
+            $sql="select distinct `{$extField}` from {$table} where site_id={$_siteID}";
             $records=$objDatabase->getAllRow($sql);
             $arrData=array();
             if($records)
@@ -88,28 +105,28 @@ class ClsNaanalFilter
                     $arrData[$r[0]]=$r[0];
                 }
             }
-            /*
-            $result=mysql_query($sql);
-            $rEField=mysql_fetch_row($result);
-            $sql="select distinct `value` from extra_field where field_name='{$extField}'";
-            $result=mysql_query($sql);
-            $arrData=array();
-            while($r=  mysql_fetch_row($result))
-            {
-                if(method_exists($this, "on_unique_data_display"))
-                {
-                    $uniqueDataDisplay=$this->on_unique_data_display($extField,$r[0]);
-                    if(is_null($uniqueDataDisplay)) $arrData[$r[0]]=$r[0];
-                    else $arrData[$r[0]]=$uniqueDataDisplay;
-                }
-                else
-                {
-                    $arrData[$r[0]]=$r[0];
-                }
-            }*/
+            
+           // $result=mysql_query($sql);
+            //$rEField=mysql_fetch_row($result);
+            //$sql="select distinct `value` from extra_field where field_name='{$extField}'";
+            //$result=mysql_query($sql);
+            //$arrData=array();
+            //while($r=  mysql_fetch_row($result))
+            //{
+               // if(method_exists($this, "on_unique_data_display"))
+                //{
+                  //  $uniqueDataDisplay=$this->on_unique_data_display($extField,$r[0]);
+                    //if(is_null($uniqueDataDisplay)) $arrData[$r[0]]=$r[0];
+                    //else $arrData[$r[0]]=$uniqueDataDisplay;
+                //}
+                //else
+                //{
+                   // $arrData[$r[0]]=$r[0];
+                //}
+            //}
             asort($arrData);
             $arrUniqueData[$rEField[0]]=$arrData;
-        }
+        }*/
         $arrOption=array();
         $formStart='';
         $formEnd="";
@@ -246,16 +263,16 @@ function onFldfilterChange(obj)
                 $selectedFilter="";
                 foreach($arrRow as $row)
                 {
-                    if($row["COLUMN_KEY"]=="PRI" || $row["COLUMN_KEY"]=="MUL") continue;
+                    //if($row["COLUMN_KEY"]=="PRI" || $row["COLUMN_KEY"]=="MUL") continue;
                     $selected="";
-                    if($filter==$row["COLUMN_NAME"])
+                    if($filter==$row["fieldname"])
                     {
                         $selectedFilter=$filter;
                         $selected=" selected";
                     }
                     if(method_exists($this, "on_column_display"))
                     {
-                        $ret=$this->on_column_display($row["COLUMN_NAME"]);
+                        $ret=$this->on_column_display($row["fieldname"]);
                         if(is_null($ret)) continue;
                         $arrNewOption[]="<option value='{$ret["value"]}'{$selected}>{$ret["display"]}</option>";
                         //$arrDynamicOption[]="<option value='{$ret["value"]}'>{$ret["display"]}</option>";
@@ -263,9 +280,9 @@ function onFldfilterChange(obj)
                     }
                     else
                     {
-                        $arrNewOption[]="<option value='{$row["COLUMN_NAME"]}'{$selected}>{$row["COLUMN_NAME"]}</option>";
-                        //$arrDynamicOption[]="<option value='{$row["COLUMN_NAME"]}'>{$row["COLUMN_NAME"]}</option>";
-                        $arrDynamicOption[$row["COLUMN_NAME"]]=$row["COLUMN_NAME"];
+                        $arrNewOption[]="<option value='{$row["fieldname"]}'{$selected}>{$row["fieldname"]}</option>";
+                        //$arrDynamicOption[]="<option value='{$row["fieldname"]}'>{$row["fieldname"]}</option>";
+                        $arrDynamicOption[$row["fieldname"]]=$row["fieldname"];
                     }
                 }
                 foreach($this->arrExtraField as $ky=>$valu)
@@ -413,10 +430,10 @@ function onFldfilterChange(obj)
             $arrDynamicOption=array();
             foreach($arrRow as $row)
             {
-                if($row["COLUMN_KEY"]=="PRI" || $row["COLUMN_KEY"]=="MUL") continue;
+                //if($row["COLUMN_KEY"]=="PRI" || $row["COLUMN_KEY"]=="MUL") continue;
                 if(method_exists($this, "on_column_display"))
                 {
-                    $ret=$this->on_column_display($row["COLUMN_NAME"]);
+                    $ret=$this->on_column_display($row["fieldname"]);
                     if(is_null($ret)) continue;
                     $arrNewOption[]="<option value='{$ret["value"]}'>{$ret["display"]}</option>";
                     $arrDynamicOption[$ret["value"]]=$ret["display"];
@@ -424,12 +441,12 @@ function onFldfilterChange(obj)
                 }
                 else
                 {
-                    $arrNewOption[]="<option value='{$row["COLUMN_NAME"]}'>{$row["COLUMN_NAME"]}</option>";
-                    $arrDynamicOption[$row["COLUMN_NAME"]]=$row["COLUMN_NAME"];
-                    //$arrDynamicOption[]="<option value='{$row["COLUMN_NAME"]}'>{$row["COLUMN_NAME"]}</option>";
+                    $arrNewOption[]="<option value='{$row["fieldname"]}'>{$row["fieldname"]}</option>";
+                    $arrDynamicOption[$row["fieldname"]]=$row["fieldname"];
+                    //$arrDynamicOption[]="<option value='{$row["fieldname"]}'>{$row["fieldname"]}</option>";
                 }
             }
-            foreach($this->arrExtraField as $ky=>$valu)
+            /*foreach($this->arrExtraField as $ky=>$valu)
             {
                 if(method_exists($this, "on_extra_column_display"))
                 {
@@ -447,7 +464,7 @@ function onFldfilterChange(obj)
                 $arrNewOption[]="<option value='{$ky}'{$selected}>{$valu}</option>";
                 //$arrDynamicOption[]="<option value='{$ky}'>{$valu}</option>";
                 $arrDynamicOption[$ky]=$valu;
-            }
+            }*/
             $newOption=implode("", $arrNewOption);
             $filterUI=$filterUI.'
             <tr>

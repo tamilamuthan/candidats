@@ -1456,6 +1456,94 @@ class ContactsSearch extends SearchBase
     }
 }
 
+class TagSearch
+{
+    private $_db;
+    private $_siteID;
+    protected $_userID = -1;
+
+
+    public function __construct($siteID)
+    {
+        $this->_siteID = $siteID;
+        $this->_db = DatabaseConnection::getInstance();
+        //FIXME: Library code Session dependencies suck.
+        $this->_userID = $_SESSION['CATS']->getUserID();
+    }
+    
+    /**
+     * Support function for Tag Search code. Searches all relevant fields for
+     * $tag.
+     *
+     * @param string tag
+     * @param int data_item_type
+     * @param array array of fields to display
+     * @return array candidates data
+     */
+    public function searchModule($tag,$data_item_type,$arrField)
+    {
+        $objSQL=new ClsAuieoSQL();
+        
+        $arrModuleInfo=getModuleInfo("data_item_type");
+        $moduleInfo=$arrModuleInfo[$data_item_type];
+        
+        array_unshift($arrField, $moduleInfo["primarykey"]);
+
+        $objFromModule=$objSQL->addFrom($moduleInfo["tablename"]);
+        $joinCandidateOwner=$objFromModule->addJoinField("owner");
+        $joinModuleCompanyID=$objFromModule->addJoinField("company_id");
+        $joinModuleModuleID=$objFromModule->addJoinField($moduleInfo["primarykey"]);
+        
+        $objFromOwnerUser=$objSQL->addFrom("user","owner_user");
+        $joinOwnerUserUserID=$objFromOwnerUser->addJoinField("user_id");
+        
+        if($data_item_type==400)
+        {
+            $objFromRecruiterUser=$objSQL->addFrom("user","recruiter_user");
+            $joinRecruiterUserUserID=$objFromRecruiterUser->addJoinField("user_id");
+            $objFromRecruiterUser->setJoinWith($objFromModule, $joinCandidateOwner, $joinRecruiterUserUserID);
+            $objSQL->addSelect($objFromRecruiterUser,"first_name","recruiter_first_name");
+            $objSQL->addSelect($objFromRecruiterUser,"last_name","recruiter_last_name");
+        }
+        
+        if($data_item_type==300 || $data_item_type==400)
+        {
+            $objFromCompany=$objSQL->addFrom("company");
+            $joinCompanyCompanyID=$objFromCompany->addJoinField("company_id");
+            $objFromCompany->setJoinWith($objFromModule, $joinModuleCompanyID, $joinCompanyCompanyID);
+            $objSQL->addSelect($objFromCompany,"name","company_name");
+        }
+        
+         $objFromTagEntry=$objSQL->addFrom("tag_entry");
+        $joinTagEntryDataItemTypeID=$objFromTagEntry->addJoinField("data_item_type_id");
+        $joinTagEntryTagID=$objFromTagEntry->addJoinField("tag_id");
+        
+        $objFromTag=$objSQL->addFrom("tag");
+        $joinTagTagID=$objFromTag->addJoinField("tag_id");
+        
+        $objFromOwnerUser->setJoinWith($objFromModule, $joinCandidateOwner, $joinOwnerUserUserID);
+        
+        $objFromTagEntry->setJoinWith($objFromModule, $joinModuleModuleID, $joinTagEntryDataItemTypeID);
+        $objFromTagEntry->setJoinCustom("data_item_type={$data_item_type}");
+        
+        $objFromTag->setJoinWith($objFromTagEntry,$joinTagEntryTagID,$joinTagTagID);
+        
+        $objSQL->addWhere($objFromTag, "tag_id", $tag);
+        $objSQL->addWhere($objFromModule, "site_id", $this->_siteID);
+ 
+        foreach($arrField as $field)
+        {
+            $objSQL->addSelect($objFromModule,$field);
+        }
+        
+        $objSQL->addSelect($objFromOwnerUser,"first_name","owner_first_name");
+        $objSQL->addSelect($objFromOwnerUser,"last_name","owner_last_name");
+        $objSQL->addSelect($objFromTag,"title","tag_title");
+        
+        $sql = $objSQL->render();
+        return $this->_db->getAllAssoc($sql);
+    }
+}
 
 /**
  *	Quick Search Library
@@ -1477,6 +1565,50 @@ class QuickSearch
         $this->_userID = $_SESSION['CATS']->getUserID();
     }
     
+    public function searchModule($wildCardString,$data_item_type,$arrField)
+    {
+        $objSQL=new ClsAuieoSQL();
+        
+        $arrModuleInfo=getModuleInfo("data_item_type");
+        $moduleInfo=$arrModuleInfo[$data_item_type];
+        
+        array_unshift($arrField, $moduleInfo["primarykey"]);
+
+        $objFromModule=$objSQL->addFrom($moduleInfo["tablename"]);
+        $joinCandidateOwner=$objFromModule->addJoinField("owner");
+        $joinModuleModuleID=$objFromModule->addJoinField($moduleInfo["primarykey"]);
+        
+        $objFromOwnerUser=$objSQL->addFrom("user","owner_user");
+        $joinOwnerUserUserID=$objFromOwnerUser->addJoinField("user_id");
+        
+         $objFromTagEntry=$objSQL->addFrom("tag_entry");
+        $joinTagEntryDataItemTypeID=$objFromTagEntry->addJoinField("data_item_type_id");
+        $joinTagEntryTagID=$objFromTagEntry->addJoinField("tag_id");
+        
+        $objFromTag=$objSQL->addFrom("tag");
+        $joinTagTagID=$objFromTag->addJoinField("tag_id");
+        
+        $objFromOwnerUser->setJoinWith($objFromModule, $joinCandidateOwner, $joinOwnerUserUserID);
+        
+        $objFromTagEntry->setJoinWith($objFromModule, $joinModuleModuleID, $joinTagEntryDataItemTypeID);
+        $objFromTagEntry->setJoinCustom("data_item_type={$data_item_type}");
+        
+        $objFromTag->setJoinWith($objFromTagEntry,$joinTagEntryTagID,$joinTagTagID);
+        
+        $objSQL->addWhere($objFromTag, "tag_id", $tag);
+        $objSQL->addWhere($objFromModule, "site_id", $this->_siteID);
+ 
+        foreach($arrField as $field)
+        {
+            $objSQL->addSelect($objFromModule,$field);
+        }
+        $objSQL->addSelect($objFromOwnerUser,"first_name","owner_first_name");
+        $objSQL->addSelect($objFromOwnerUser,"last_name","owner_last_name");
+        $objSQL->addSelect($objFromTag,"title");
+        
+        $sql = $objSQL->render();
+        return $this->_db->getAllAssoc($sql);
+    }
     
     /**
      * Support function for Quick Search code. Searches all relevant fields for
@@ -2190,6 +2322,8 @@ class SearchByResumePager extends Pager
         }
         else
         {
+            $tmpwhere="";
+            if(!empty($this->_WHERE)) $tmpwhere="AND ".$this->_WHERE;
              $sql = sprintf(
                 "SELECT
                 count(*) AS count
@@ -2203,8 +2337,7 @@ class SearchByResumePager extends Pager
                 %s
             WHERE
                 resume = 1
-            AND
-                %s
+           %s
             AND
                 (attachment.data_item_type = %s)
             AND
@@ -2216,7 +2349,7 @@ class SearchByResumePager extends Pager
                 %s
 ",
                 $join,
-            $this->_WHERE,
+            $tmpwhere,
             DATA_ITEM_CANDIDATE,
             $this->_siteID,
                     $filter
@@ -2300,6 +2433,8 @@ class SearchByResumePager extends Pager
         }
         else
         {
+            $tmpwhere="";
+            if(!empty($this->_WHERE)) $tmpwhere="AND ".$this->_WHERE;
             $sql = sprintf(
             "SELECT
                 attachment.attachment_id AS attachmentID,
@@ -2332,7 +2467,6 @@ class SearchByResumePager extends Pager
                 %s
             WHERE
                 resume = 1
-            AND
                 %s
             AND
                 (attachment.data_item_type = %s)
@@ -2348,7 +2482,7 @@ class SearchByResumePager extends Pager
             LIMIT %s, %s",
             empty($column)?"":",{$column}",
             $join,
-            $this->_WHERE,
+            $tmpwhere,
             DATA_ITEM_CANDIDATE,
             $this->_siteID,
                     $filter,

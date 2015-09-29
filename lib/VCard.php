@@ -375,6 +375,7 @@ class VCard
         header('Content-Type: text/x-vCard; name=' . $this->_filename);
 
         echo $output;
+        exit;
     }
 
 
