@@ -564,7 +564,7 @@ class JobOrdersUI extends UserInterface
                 <img src='images/consider.gif' width='16' height='16' class='absmiddle' alt='add candidate' border='0' />&nbsp;Add Candidate to This Job Order Pipeline
             </a>";
         }
-        
+
         $this->_template->assign('active', $this);
         $this->_template->assign('public', $public);
         $this->_template->assign('ACCESS_LEVEL_EDIT_BUTTON', $ACCESS_LEVEL_EDIT_BUTTON);
@@ -755,7 +755,7 @@ class JobOrdersUI extends UserInterface
             $this->_template->display('./modules/joborders/Add.php');
         }
     }
-
+    
     /*
      * Called by render() to process saving / submitting the add page.
      */

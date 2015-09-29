@@ -39,7 +39,7 @@
 
     <div style="font-size: 14px;">
         <?php if (LicenseUtility::isParsingEnabled()): ?>
-            CATS has attempted to extract relevant information like contact data, education and skill sets automatically.
+            CandidATS has attempted to extract relevant information like contact data, education and skill sets automatically.
             This process is <b>not</b> an exact science and can sometimes guess incorrectly (or not at all). Click on a
             row above to find out more information.
             <br />
@@ -66,8 +66,8 @@
             <i><?php echo strlimit($doc['realName'], 25); ?></i> <font style="font-size: 11px;">(<?php echo number_format(@filesize($doc['name'])/1024); ?> KB)</font>
             </a>
         </span>
-        <span id="data_<?php echo $i; ?>_column_1" class="hiddenDataColumn"><?php echo isset($doc['firstName']) ? strlimit($doc['firstName'], 10) : ''; ?> <?php echo isset($doc['lastName']) ? strlimit($doc['lastName'], 10) : '&nbsp;'; ?>&nbsp;</span>
-        <span id="data_<?php echo $i; ?>_column_2" class="hiddenDataColumn"><?php echo isset($doc['city']) ? strlimit($doc['city'], 10) : ''; ?><?php echo (isset($doc['state']) && strlen($doc['state']) > 0) ? ', ' . strlimit($doc['state'], 5) : ''; ?><?php echo isset($doc['zipCode']) ? '  ' . strlimit($doc['zipCode'], 5) : '&nbsp;'; ?>&nbsp;</span>
+        <span id="data_<?php echo $i; ?>_column_1" class="hiddenDataColumn"><?php echo isset($doc['first_name']) ? strlimit($doc['first_name'], 10) : ''; ?> <?php echo isset($doc['last_name']) ? strlimit($doc['last_name'], 10) : '&nbsp;'; ?>&nbsp;</span>
+        <span id="data_<?php echo $i; ?>_column_2" class="hiddenDataColumn"><?php echo isset($doc['city']) ? strlimit($doc['city'], 10) : ''; ?><?php echo (isset($doc['state']) && strlen($doc['state']) > 0) ? ', ' . strlimit($doc['state'], 5) : ''; ?><?php echo isset($doc['zip_code']) ? '  ' . strlimit($doc['zip_code'], 5) : '&nbsp;'; ?>&nbsp;</span>
         <span id="data_<?php echo $i; ?>_column_3" class="hiddenDataColumn"><?php echo isset($doc['email']) ? strlimit($doc['email'], 20) : '&nbsp;'; ?></span>
         <?php
     }

@@ -12,7 +12,7 @@ ob_start();
                 </tr>
             </table>
 
-            <?php if (isset($this->errorMessage)): ?>
+            <?php if (isset($this->errorMessage)){ ?>
 
                 <p class="warning" id="importHide0">Error!</p>
 
@@ -26,7 +26,7 @@ ob_start();
 
                 <br />
 
-            <?php elseif (isset($this->successMessage)): ?>
+            <?php }elseif (isset($this->successMessage)){ ?>
 
                 <p class="note" id="importHide0">Success</p>
 
@@ -40,7 +40,7 @@ ob_start();
 
                 <br />
 
-            <?php elseif (isset($this->pendingCommits)): ?>
+            <?php }else if (isset($this->pendingCommits)){ ?>
 
                 <p class="warning" id="importHide0">Notice</p>
 
@@ -56,12 +56,12 @@ ob_start();
                 <br />
 
 
-            <?php else: ?>
+            <?php }else{ ?>
                 <p class="note" id="importHide0">Warning!</p>
 
                 <table class="searchTable" id="importTable1" width="100%">
                     <tr>
-                        <td>CATS may discard or fail to read some of the submitted data which it does not
+                        <td>CandidATS may discard or fail to read some of the submitted data which it does not
                         understand how to use. Do not discard the original data!
                         </td>
                     </tr>
@@ -69,7 +69,9 @@ ob_start();
                 </table>
 
                 <br />
-            <?php endif; ?>
+<?php 
+}
+?>
 
             <p class="warning" id="importShow0" style="display:none;">PLEASE WAIT!</p>
 
@@ -113,13 +115,24 @@ ob_start();
                             <label id="importIntoLabel" for="importIntoDisabled">Import Into:</label>
                         </td>
                         <td class="tdData">
-                            <?php if ($this->importInto == 'Candidates'): ?>
-                                <img src="images/candidate_inline.gif">&nbsp;Candidates
-                            <?php elseif ($this->importInto == 'Companies'): ?>
-                                <img src="images/mru/company.gif">&nbsp;Companies
-                            <?php elseif ($this->importInto == 'Contacts'): ?>
-                                <img src="images/mru/contact.gif">&nbsp;Contacts
-                            <?php endif; ?>
+ <?php 
+ if ($this->importInto == 'Candidates')
+{
+     echo "<img src='images/candidate_inline.gif'>&nbsp;Candidates";
+ }
+ else if ($this->importInto == 'Companies')
+{
+     echo "<img src='images/mru/company.gif'>&nbsp;Companies";
+}
+else if ($this->importInto == 'Contacts')
+{
+    echo "<img src='images/mru/contact.gif'>&nbsp;Contacts";
+}
+else if ($this->importInto == 'Joborders')
+{
+    echo "<img src='images/mru/joborders.gif'>&nbsp;Job&nbsp;Orders";
+}
+?>
                         </td>
                     </tr>
                 </table>
@@ -132,26 +145,28 @@ ob_start();
 
             <p class="note" id="importHide5"><a name="step2">Map Data</a></p>
 
-            <?php if (isset($this->contactsUploadNotice) && $this->contactsUploadNotice): ?>
-
+ <?php 
+ if (isset($this->contactsUploadNotice) && $this->contactsUploadNotice)
+{
+?>
             <table class="searchTable" id="importHide6">
                 <tr>
                     <td>
                         You are importing data into Contacts. Each contact is required to have an associated
                         Company.<br /><br />
 
-                        If you wish, CATS can create the companies for each company who is not in the database. The
+                        If you wish, CandidATS can create the companies for each company who is not in the database. The
                         company's contact information will be identical to the first contacts contact information.
                         <br /><br />
 
                         For example, if adding John Smith listed as being associated to Fun Industries, and John
-                        Smith is listed as having work address '1234 Fun St.', then CATS can create the company Fun
+                        Smith is listed as having work address '1234 Fun St.', then CandidATS can create the company Fun
                         Industries with address '1234 Fun St.'.<br /><br />
 
                         If you choose not to generate company data, then contacts with unknown companies will not be
                         imported.<br /><br />
 
-                        <span class="bold">Should CATS generate the company data automatically?</span><br />
+                        <span class="bold">Should CandidATS generate the company data automatically?</span><br />
                         <select id="generateCompanies" name="generateCompanies" class ="inputBox" style="width: 260px;" onchange="evaluateUnnamedContacts();">
                             <option value="yes" selected="selected">Yes, generate assocated company data.</option>
                             <option value="no">No, just import the contacts.</option>
@@ -159,7 +174,7 @@ ob_start();
                         <br />
                         <span id='unnamedContactsSpan'>
                         <br />
-                        <span class="bold">If there is no name for the companies contact, should CATS name the contact 'nobody' and add it to the company?</span><br />
+                        <span class="bold">If there is no name for the companies contact, should CandidATS name the contact 'nobody' and add it to the company?</span><br />
                         <select id="unnamedContacts" name="unnamedContacts" class ="inputBox" style="width: 260px;">
                             <option value="yes" selected="selected">Yes, add a name as necessary.</option>
                             <option value="no">No, throw out these records.</option>
@@ -169,8 +184,48 @@ ob_start();
                 </tr>
             </table>
             <br />
+<?php 
+}
+else if (isset($this->jobordersUploadNotice) && $this->jobordersUploadNotice)
+{
+?>
+            <table class="searchTable" id="importHide6">
+                <tr>
+                    <td>
+                        You are importing data into Joborders. Each joborder is required to have an associated
+                        Company.<br /><br />
 
-            <?php endif; ?>
+                        If you wish, CandidATS can create the companies for each company who is not in the database. The
+                        company's joborder information will be identical to the first joborders joborder information.
+                        <br /><br />
+
+                        For example, if adding Java Position listed as being associated to TATA, and Kalamazoo
+                        is listed as having work address '1234 Fun St.', then CandidATS can create the company TATA with address '1234 Fun St.'.<br /><br />
+
+                        If you choose not to generate company data, then joborders with unknown companies will not be
+                        imported.<br /><br />
+
+                        <span class="bold">Should CandidATS generate the company data automatically?</span><br />
+                        <select id="generateCompanies" name="generateCompanies" class ="inputBox" style="width: 260px;" onchange="evaluateUnnamedContacts();">
+                            <option value="yes" selected="selected">Yes, generate assocated company data.</option>
+                            <option value="no">No, just import the joborders.</option>
+                        </select>
+                        <br />
+                        <span id='unnamedContactsSpan'>
+                        <br />
+                        <span class="bold">If there is no name for the companies contact, should CandidATS name the contact 'nobody' and add it to the company?</span><br />
+                        <select id="unnamedContacts" name="unnamedContacts" class ="inputBox" style="width: 260px;">
+                            <option value="yes" selected="selected">Yes, add a name as necessary.</option>
+                            <option value="no">No, throw out these records.</option>
+                        </select>
+                        </span>
+                    </td>
+                </tr>
+            </table>
+            <br />
+<?php 
+}
+?>
 
             <table class="searchTable" id="importHide9">
                 <tr>

@@ -84,6 +84,69 @@ class HomeUI extends UserInterface
         }
     }
 
+    public function create()
+    {
+        switch($_REQUEST["operation"])
+            {
+                case "query":
+                {
+                    $fromCandidate=new ClsAuieoSQLFrom();
+                    $fromJoborder=new ClsAuieoSQLFrom();
+                    $fromJoborderCandidate= new ClsAuieoSQLFrom();
+                    
+                    $sess=$_REQUEST["session"];
+                    $arrAssoc=$objCon->getAllAssoc("select * from auieo_webservice where status>9 and session='{$sess}'");
+                    if(empty($arrAssoc))
+                    {
+                        $api->response("Authentication failed", 406);
+                    }
+                    $site_id=$_SESSION["CATS"]->getSiteID();
+                    $query=$_REQUEST["queryobject"];
+                    $arrQuery=json_decode($query, true);
+                    $module=$arrQuery["module"];
+                    $arrSelect=isset($arrQuery["select"])?$arrQuery["select"]:array();
+                    $arrModuleInfo=getModuleInfo("modulename");
+                    $moduleInfo=$arrModuleInfo[$module];
+                    $user_id=$_SESSION["CATS"]->getUserID();
+                    $objSQL=new ClsAuieoSQL();
+                    if($module=="candidates")
+                    {
+                        $fromCandidate=$objSQL->addFrom("candidate");
+                        if($arrSelect)
+                        foreach($arrSelect as $select)
+                        {
+                            $objSQL->addSelect($fromCandidate, $select);
+                        }
+                    }
+                    else if($module=="joborders")
+                    {
+                        $fromJoborderCandidate=$objSQL->addFrom("candidate_joborder");
+                        $joinJoborderCandidateJoborderID=$fromJoborderCandidate->addJoinField("joborder_id");
+                        $joinJoborderCandidateCandidateID=$fromJoborderCandidate->addJoinField("candidate_id");
+                        
+                        $fromCandidate=$objSQL->addFrom("candidate");
+                        $joinCandidteID=$fromCandidate->addJoinField("candidate_id");
+                        
+                        $fromJoborder=$objSQL->addFrom("joborder");
+                        $joinJoborderID=$fromJoborder->addJoinField("joborder_id");
+                        
+                       $fromCandidate->setJoinWith($fromJoborderCandidate, $joinJoborderCandidateCandidateID, $joinCandidteID);
+                        $fromJoborder->setJoinWith($fromJoborderCandidate, $joinJoborderCandidateJoborderID, $joinJoborderID);
+                        
+                        if($arrSelect)
+                        foreach($arrSelect as $select)
+                        {
+                            $objSQL->addSelect($from, $select);
+                        }
+                    }
+                    $objSQL->addWhere($fromCandidate,"site_id",$site_id);
+                    $objSQL->addWhere($fromCandidate,"candidate_id",$user_id);
+                    //$arrAssoc=$objCon->getAllAssoc($objSQL->render());
+                     $api->response($objSQL->render(), 200);
+                    exit;
+                }
+            }
+    }
 
     public function home()
     {        

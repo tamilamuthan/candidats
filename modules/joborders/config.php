@@ -11,6 +11,7 @@ $action=array
     (
         "theme"=>"notemplate"
     ),
+    "addCandidateModal"=>array("theme"=>"notemplate"),
     "considerCandidateSearch"=>array
     (
         "theme"=>"notemplate"

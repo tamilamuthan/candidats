@@ -221,6 +221,7 @@ class ImportUI extends UserInterface
     */
     public function setImportTypes()
     {
+        Logger::getLogger("AuieoATS")->info("setImportTypes:start");
         $this->candidatesTypes = array(
             'Full Name',        'name',
             'First Name',       'first_name',
@@ -270,9 +271,18 @@ class ImportUI extends UserInterface
             'Notes',            'notes',
             'Fax Number',       'fax_number'
         );
+        $arrrField=getModuleFields(400);
         $this->jobordersTypes = array(
-            'Name',             'name'
+            'Company',      'company_id',
         );
+        foreach($arrrField as $field)
+        {
+            if($field["fieldname"]=='company_id') continue;
+            if($field["fieldname"]=='owner') continue;
+            if($field["fieldname"]=='recruiter') continue;
+            $this->jobordersTypes[]=$field["fieldlabel"];
+            $this->jobordersTypes[]=$field["fieldname"];
+        }
 
         if (!eval(Hooks::get('IMPORT_TYPES_2'))) return;
 
@@ -307,6 +317,7 @@ class ImportUI extends UserInterface
             $this->contactsTypes[] = $data['fieldName'];
             $this->contactsTypes[] = '#' . $data['fieldName'];
         }
+        Logger::getLogger("AuieoATS")->info("setImportTypes:end");
     }
 
    /*
@@ -314,6 +325,7 @@ class ImportUI extends UserInterface
     */
     public function import()
     {
+        Logger::getLogger("AuieoATS")->info("import:start");
         $import = new Import($this->_siteID);
         $data = $import->getAll();
 
@@ -330,6 +342,7 @@ class ImportUI extends UserInterface
         $this->_template->assign('active', $this);
         $this->_template->assign('bulk', $bulk);
         $this->_template->display('./modules/import/Import1.php');
+        Logger::getLogger("AuieoATS")->info("import:end");
     }
 
    /*
@@ -382,13 +395,15 @@ class ImportUI extends UserInterface
     * 3rd page for CSV data (After uploading a file).  Sets environment to behave like old style import.
     */
    public function importUploadFile()
-   {trace($_POST);
+   {
+       Logger::getLogger("AuieoATS")->info("importUploadFile:start");
        /* Change passed in settings to settings the old importer knows how to handle. */
        $_POST['dataType'] = 'Text File';
        $_POST['importInto'] = $this->getTrimmedInput('typeOfImport', $_POST);
        $_POST['delimitedType'] = $this->getTrimmedInput('typeOfFile', $_POST);
 
        $this->onImport();
+       Logger::getLogger("AuieoATS")->info("importUploadFile:end");
    }
 
    /*
@@ -407,6 +422,7 @@ class ImportUI extends UserInterface
     */
     public function onImport()
     {
+        Logger::getLogger("AuieoATS")->info("onImport:start");
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
             CommonErrors::fatal(COMMONERROR_PERMISSION, $this, 'Invalid user level for action.');
@@ -436,6 +452,7 @@ class ImportUI extends UserInterface
         /* If a file was submitted, then the user sent what colums he wanted to use already. */
         if (isset($_POST['fileName']))
         {
+            Logger::getLogger("AuieoATS")->info("import process file:start");
             if ($_SESSION['CATS']->isDemo())
             {
                 CommonErrors::fatal(COMMONERROR_PERMISSION, $this, 'Demo user can not import data.');
@@ -457,6 +474,7 @@ class ImportUI extends UserInterface
                     $this->import();
                     return;
             }
+             Logger::getLogger("AuieoATS")->info("import process file:end");
         }
 
         /* Otherwise, parse the file... */
@@ -546,7 +564,7 @@ class ImportUI extends UserInterface
             $this->importSelectType();
             return;
         }
-
+        Logger::getLogger("AuieoATS")->info("import:file copied");
         /* Try to remove the temp file; if it fails it doesn't matter. */
         @unlink($tempFilename);
 
@@ -570,6 +588,7 @@ class ImportUI extends UserInterface
                 $this->importSelectType();
                 break;
         }
+        Logger::getLogger("AuieoATS")->info("onImport:end");
     }
 
     /*
@@ -578,6 +597,7 @@ class ImportUI extends UserInterface
      */
     public function onImportDelimited($fileID)
     {
+        Logger::getLogger("AuieoATS")->info("onImportDelimited:start");
         $filePath = CATS_TEMP_DIR . '/'. $fileID;
 
         $dataContaining = $this->getTrimmedInput('delimitedType', $_POST);
@@ -599,7 +619,7 @@ class ImportUI extends UserInterface
             $this->import();
             return;
         }
-
+        Logger::getLogger("AuieoATS")->info("onImportDelimited:file opened");
         if (!eval(Hooks::get('IMPORT_ON_IMPORT_DELIMITED_1'))) return;
 
         switch ($dataContaining)
@@ -619,7 +639,7 @@ class ImportUI extends UserInterface
                 $this->import();
                 return;
         }
-
+        Logger::getLogger("AuieoATS")->info("onImportDelimited:heading extracted");
         if (!eval(Hooks::get('IMPORT_ON_IMPORT_DELIMITED_2'))) return;
 
         switch ($importInto)
@@ -639,6 +659,7 @@ class ImportUI extends UserInterface
             
             case 'Joborders':
                 $types = $this->jobordersTypes;
+                 $this->_template->assign('jobordersUploadNotice', true);
                 break;
 
             default:
@@ -650,7 +671,7 @@ class ImportUI extends UserInterface
         }
 
         /* Figure out what fields match already */
-
+        Logger::getLogger("AuieoATS")->info("onImportDelimited header matching:started");
         $matchingFields = array();
 
         foreach ($theFields AS $theField)
@@ -669,7 +690,7 @@ class ImportUI extends UserInterface
                 }
             }
         }
-
+        Logger::getLogger("AuieoATS")->info("onImportDelimited header matching:end");
         /* Get some sample data */
         $ArrayOfData = array();
         for ($i = 0; $i < 20; $i++)
@@ -698,7 +719,7 @@ class ImportUI extends UserInterface
             }
             $ArrayOfData[] = $someData;
         }
-
+        Logger::getLogger("AuieoATS")->info("onImportDelimited:data extracted");
         $highlightModule = strtolower($importInto);
 
         $isSA = ($this->_accessLevel >= ACCESS_LEVEL_SA);
@@ -719,6 +740,7 @@ class ImportUI extends UserInterface
         $this->_template->assign('importTypes', $types);
         $this->_template->assign('active', $this);
         $this->_template->display('./modules/import/importfile.php');
+        Logger::getLogger("AuieoATS")->info("onImportDelimited:end");
     }
 
     /*
@@ -727,6 +749,7 @@ class ImportUI extends UserInterface
      */
     public function onImportFieldsDelimited()
     {
+        Logger::getLogger("AuieoATS")->info("onImportFieldsDelimited:start");
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
         {
             CommonErrors::fatal(COMMONERROR_PERMISSION, $this, 'Invalid user level for action.');
@@ -759,7 +782,7 @@ class ImportUI extends UserInterface
             $this->import();
             return;
         }
-
+        Logger::getLogger("AuieoATS")->info("onImportFieldsDelimited:file opened");
         if (!eval(Hooks::get('IMPORT_ON_IMPORT_DELIMITED_5'))) return;
 
         switch ($dataContaining)
@@ -779,7 +802,7 @@ class ImportUI extends UserInterface
         }
 
         if (!eval(Hooks::get('IMPORT_ON_IMPORT_DELIMITED_6'))) return;
-
+        Logger::getLogger("AuieoATS")->info("onImportFieldsDelimited:headings extracted");
         /* Set up a new import record, and set table types. */
         $import = new Import($this->_siteID);
         switch ($importInto)
@@ -800,7 +823,7 @@ class ImportUI extends UserInterface
                 break;
             
             case 'Joborders':
-                $types = $this->jobodersTypes;
+                $types = $this->jobordersTypes;
                 $importID = $import->add('joborder');
                 break;
 
@@ -841,7 +864,7 @@ class ImportUI extends UserInterface
                     $this->import();
                     return;
             }
-
+            
             $catsEntriesRows = array();
             $catsEntriesValuesNamed = array();
             $foreignEntries = array();
@@ -891,6 +914,10 @@ class ImportUI extends UserInterface
                                     $import->addForeignSettingUnique(DATA_ITEM_COMPANY, $theFields[$fieldID], $importID);
                                     break;
 
+                                case 'Joborders':
+                                    $import->addForeignSettingUnique(DATA_ITEM_COMPANY, $theFields[$fieldID], $importID);
+                                    break;
+                                
                                 default:
                                     $this->_template->assign('errorMessage', 'Cannot handle that destination for new foreign entry setting.');
                                     $this->import();
@@ -905,7 +932,7 @@ class ImportUI extends UserInterface
                     }
                 }
             }
-
+            
             $result = '';
 
             if (!eval(Hooks::get('IMPORT_ON_IMPORT_DELIMITED_9'))) return;
@@ -923,6 +950,10 @@ class ImportUI extends UserInterface
 
                 case 'Companies':
                     $result = $this->addToCompanies($catsEntriesRows, $catsEntriesValuesNamed, $foreignEntries, $importID);
+                    break;
+                
+                case 'Joborders':
+                    $result = $this->addToJoborders($catsEntriesRows, $catsEntriesValuesNamed, $foreignEntries, $importID);
                     break;
 
                 default:
@@ -957,7 +988,7 @@ class ImportUI extends UserInterface
                 $errorHtml .= '</span>';
             }
         }
-
+        Logger::getLogger("AuieoATS")->info("onImportFieldsDelimited:data imported");
         /* Put a header on the error output, then update the import record with our errors. */
         if ($totalRows - $totalImported <= self::MAX_ERRORS)
         {
@@ -1000,6 +1031,7 @@ class ImportUI extends UserInterface
         /* Send off to the import template. */
         $this->_template->assign('successMessage', $message);
         $this->import(strtolower($importInto));
+        Logger::getLogger("AuieoATS")->info("onImportFieldsDelimited:end");
     }
 
    /*
@@ -1018,6 +1050,7 @@ class ImportUI extends UserInterface
     */
     public function addToCandidates($dataFields, $dataNamed, $dataForeign, $importID)
     {
+        Logger::getLogger("AuieoATS")->info("addToCandidates:start");
         $dateAvailable = '01/01/0001';
 
         /* Bail out if any of the required fields are empty. */
@@ -1050,7 +1083,7 @@ class ImportUI extends UserInterface
         $this->addForeign(DATA_ITEM_CANDIDATE, $dataForeign, $candidateID, $importID);
 
         if (!eval(Hooks::get('IMPORT_ADD_CANDIDATE_POST'))) return;
-
+        Logger::getLogger("AuieoATS")->info("addToCandidates:end");
         return '';
     }
 
@@ -1059,6 +1092,7 @@ class ImportUI extends UserInterface
     */
     public function addToCompanies($dataFields, $dataNamed, $dataForeign, $importID)
     {
+        Logger::getLogger("AuieoATS")->info("addToCompanies:start");
         $companiesImport = new CompaniesImport($this->_siteID);
 
         /* Bail out if any of the required fields are empty. */
@@ -1088,15 +1122,17 @@ class ImportUI extends UserInterface
         $this->addForeign(DATA_ITEM_COMPANY, $dataForeign, $companyID, $importID);
 
         if (!eval(Hooks::get('IMPORT_ADD_CLIENT_POST'))) return;
-
+        Logger::getLogger("AuieoATS")->info("addToCompanies:end");
         return '';
     }
-
+    
+    
    /*
     * Inserts a record into Contacts.
     */
     public function addToContacts($dataFields, $dataNamed, $dataForeign, $importID)
     {
+        Logger::getLogger("AuieoATS")->info("addToContacts:start");
         $contactImport = new ContactImport($this->_siteID);
 
         /* Try to find the company. */
@@ -1191,7 +1227,98 @@ class ImportUI extends UserInterface
         $this->addForeign(DATA_ITEM_CONTACT, $dataForeign, $contactID, $importID);
 
         if (!eval(Hooks::get('IMPORT_ADD_CONTACT_POST'))) return;
+        Logger::getLogger("AuieoATS")->info("addToContacts:end");
+        if ($genCompany)
+        {
+            return 'newCompany';
+        }
 
+        return '';
+    }
+
+   /*
+    * Inserts a record into Contacts.
+    */
+    public function addToJoborders($dataFields, $dataNamed, $dataForeign, $importID)
+    {
+        Logger::getLogger("AuieoATS")->info("addToJoborders:start");
+        $contactImport = new JoborderImport($this->_siteID);
+
+        /* Try to find the company. */
+        if (!isset($dataNamed['company_id']))
+        {
+            return 'Unable to add company - no company name.';
+        }
+
+        $companyID = $contactImport->companyByName($dataNamed['company_id']);
+
+        $genCompany = false;
+
+        /* The company does not exist. What do we do? */
+        if ($companyID == -1)
+        {
+            if ($_POST['generateCompanies'] == 'yes')
+            {
+                /* Build data for the new company. */
+                $dataCompany = array();
+                $dataCompany['name'] = $dataNamed['company_id'];
+
+                if (isset($dataNamed['phone_work']))
+                {
+                    $dataCompany['phone1'] = $dataNamed['phone_work'];
+                }
+
+                foreach (array('address', 'city', 'state', 'zip') as $field)
+                {
+                    if (isset($dataNamed[$field]))
+                    {
+                        $dataCompany[$field] = $dataNamed[$field];
+                    }
+                }
+
+                if (!eval(Hooks::get('IMPORT_ADD_JOBORDER_CLIENT'))) return;
+
+                $companyID = $contactImport->addCompany($dataCompany, $this->_userID, $importID);
+                if ($companyID == -1)
+                {
+                    return 'Unable to add company.';
+                }
+                $genCompany = true;
+
+                if (!eval(Hooks::get('IMPORT_ADD_CONTACT_CLIENT_POST'))) return;
+            }
+            else
+            {
+                /* Bail out of add - no company. */
+                return 'Invalid company name.';
+            }
+        }
+
+        $dataNamed['company_id'] = $companyID;
+
+        /* Bail out if any of the required fields are empty. */
+
+        if (!empty($dataNamed['name']))
+        {
+            $nameArray = explode(' ', $dataNamed['name']);
+            $dataNamed['first_name'] = $nameArray[0];
+            $dataNamed['last_name'] = $nameArray[count($nameArray)-1];
+            unset($dataNamed['name']);
+        }
+
+        if (!eval(Hooks::get('IMPORT_ADD_JOBORDER'))) return;
+
+        $contactID = $contactImport->add($dataNamed, $this->_userID, $importID);
+
+        if ($contactID <= 0)
+        {
+            return 'Failed to add JOBORDER.';
+        }
+
+        $this->addForeign(DATA_ITEM_JOBORDER, $dataForeign, $contactID, $importID);
+
+        if (!eval(Hooks::get('IMPORT_ADD_CONTACT_POST'))) return;
+Logger::getLogger("AuieoATS")->info("addToJoborders:end");
         if ($genCompany)
         {
             return 'newCompany';
@@ -1383,24 +1510,24 @@ class ImportUI extends UserInterface
             // User is saving changes
             if (!isset($_SESSION['CATS_PARSE_TEMP'][$documentID]['parse']))
                 $_SESSION['CATS_PARSE_TEMP'][$documentID]['parse'] = array(
-                    'firstName' => '', 'lastName' => '', 'address' => '', 'city' => '', 'state' => '',
-                    'zipCode' => '', 'email' => '', 'phone' => '', 'skills' => '', 'education' => '',
+                    'first_name' => '', 'last_name' => '', 'address' => '', 'city' => '', 'state' => '',
+                    'zip_code' => '', 'email' => '', 'phone' => '', 'skills' => '', 'education' => '',
                     'experience' => ''
             );
-            if (isset($_POST['firstName']))
-                $_SESSION['CATS_PARSE_TEMP'][$documentID]['parse']['first_name'] = $_POST['firstName'];
-            if (isset($_POST['lastName']))
-                $_SESSION['CATS_PARSE_TEMP'][$documentID]['parse']['last_name'] = $_POST['lastName'];
+            if (isset($_POST['firstName']) || isset($_POST['first_name']))
+                $_SESSION['CATS_PARSE_TEMP'][$documentID]['parse']['first_name'] = isset($_POST['first_name'])?$_POST['first_name']:$_POST['firstName'];
+            if (isset($_POST['lastName']) || isset($_POST['last_name']))
+                $_SESSION['CATS_PARSE_TEMP'][$documentID]['parse']['last_name'] = isset($_POST['last_name'])?$_POST['last_name']:$_POST['lastName'];
             if (isset($_POST['address']))
                 $_SESSION['CATS_PARSE_TEMP'][$documentID]['parse']['us_address'] = $_POST['address'];
             if (isset($_POST['city']))
                 $_SESSION['CATS_PARSE_TEMP'][$documentID]['parse']['city'] = $_POST['city'];
             if (isset($_POST['state']))
                 $_SESSION['CATS_PARSE_TEMP'][$documentID]['parse']['state'] = $_POST['state'];
-            if (isset($_POST['zipCode']))
-                $_SESSION['CATS_PARSE_TEMP'][$documentID]['parse']['zip_code'] = $_POST['zipCode'];
-            if (isset($_POST['homePhone']))
-                $_SESSION['CATS_PARSE_TEMP'][$documentID]['parse']['phone_number'] = $_POST['homePhone'];
+            if (isset($_POST['zipCode']) || isset($_POST['zip_code']))
+                $_SESSION['CATS_PARSE_TEMP'][$documentID]['parse']['zip_code'] = isset($_POST['zip_code'])?$_POST['zip_code']:$_POST['zipCode'];
+            if (isset($_POST['homePhone']) || isset($_POST['home_phone']))
+                $_SESSION['CATS_PARSE_TEMP'][$documentID]['parse']['phone_number'] = isset($_POST['home_phone'])?$_POST['home_phone']:$_POST['homePhone'];
             if (isset($_POST['email']))
                 $_SESSION['CATS_PARSE_TEMP'][$documentID]['parse']['email_address'] = $_POST['email'];
             if (isset($_POST['skills']))
@@ -1427,11 +1554,12 @@ class ImportUI extends UserInterface
         $this->_template->assign('active', $this);
         $this->_template->assign('document', $document);
         $this->_template->assign('documentID', $documentID);
-        $this->_template->display('./modules/import/MassImportEdit.tpl');
+        $this->_template->display('./modules/import/MassImportEdit.php');
     }
 
     public function massImport($step = 1)
     {
+        Logger::getLogger("AuieoATS")->info("massImport:start");
         if (isset($_SESSION['CATS']) && !empty($_SESSION['CATS']))
         {
             $siteID = $_SESSION['CATS']->getSiteID();
@@ -1543,6 +1671,7 @@ class ImportUI extends UserInterface
         }
         else if ($step == 4)
         {
+            Logger::getLogger("AuieoATS")->info("massImport:start step 4: start");
             // Final step, import all applicable candidates
             list($importedCandidates, $importedDocuments, $importedFailed, $importedDuplicates) =
                 $this->getMassImportCandidates();
@@ -1558,6 +1687,7 @@ class ImportUI extends UserInterface
                     . 'mass resume import, <a style="font-size: 16px;" href="' . CATSUtility::getIndexName() . '?m=import&a=massImport&'
                     . 'step=1">click here</a>.'
                 );
+                Logger::getLogger("AuieoATS")->info("massImport:start step 4: end");
             }
 
             //if (!eval(Hooks::get('IMPORT_NOTIFY_DEV'))) return;
@@ -1591,17 +1721,19 @@ class ImportUI extends UserInterface
 
         // Build the sub-template to pass to the container
         ob_start();
-        $this->_template->display(sprintf('./modules/import/MassImportStep%d.tpl', $step));
+        $this->_template->display(sprintf('./modules/import/MassImportStep%d.tpl', $step),false,false);
         $subTemplateContents = ob_get_contents();
         ob_end_clean();
 
         // Show the main template (the container with the large status sections)
         $this->_template->assign('subTemplateContents', $subTemplateContents);
         $this->_template->display('./modules/import/MassImport.php');
+        Logger::getLogger("AuieoATS")->info("massImport:end");
     }
 
     public function getMassImportCandidates()
     {
+        Logger::getLogger("AuieoATS")->info("getMassImportCandidates:start");
         $db = DatabaseConnection::getInstance();
 
         // Find the files the user has uploaded and put them in an array
@@ -1643,7 +1775,7 @@ class ImportUI extends UserInterface
             {
                 $candidateAdded = false;
 
-                if (isset($doc['lastName']) && $doc['lastName'] != '' && isset($doc['firstName']) && $doc['firstName'] != '')
+                if (isset($doc['last_name']) && $doc['last_name'] != '')
                 {
                     $isCandidateUnique = true;
 
@@ -1669,7 +1801,7 @@ class ImportUI extends UserInterface
                         }
                     }
 
-                    if (strlen($doc['lastName']) > 3 && isset($doc['phone']) && strlen($doc['phone']) >= 10)
+                    if (strlen($doc['last_name']) > 3 && isset($doc['phone']) && strlen($doc['phone']) >= 10)
                     {
                         $sql = sprintf('SELECT count(*) '
                             . 'FROM candidate '
@@ -1678,7 +1810,7 @@ class ImportUI extends UserInterface
                             . 'OR candidate.phone_work = "%s '
                             . 'OR candidate.phone_cell = "%s) '
                             . 'AND candidate.site_id = %d',
-                            $db->makeQueryString($doc['lastName']),
+                            $db->makeQueryString($doc['last_name']),
                             $db->makeQueryString($doc['phone']),
                             $db->makeQueryString($doc['phone']),
                             $db->makeQueryString($doc['phone']),
@@ -1690,15 +1822,15 @@ class ImportUI extends UserInterface
                         }
                     }
 
-                    if (strlen($doc['lastName']) > 3 && isset($doc['zip']) && strlen($doc['zip']) >= 5)
+                    if (strlen($doc['last_name']) > 3 && isset($doc['zip']) && strlen($doc['zip']) >= 5)
                     {
                         $sql = sprintf('SELECT count(*) '
                             . 'FROM candidate '
                             . 'WHERE candidate.last_name = %s '
                             . 'AND candidate.zip = %s '
                             . 'AND candidate.site_id = %d',
-                            $db->makeQueryString($doc['lastName']),
-                            $db->makeQueryString($doc['zipCode']),
+                            $db->makeQueryString($doc['last_name']),
+                            $db->makeQueryString($doc['zip_code']),
                             $this->_siteID
                         );
                         if ($db->getColumn($sql, 0, 0) > 0)
@@ -1713,9 +1845,9 @@ class ImportUI extends UserInterface
                         $candidates = new Candidates($siteID);
 
                         $candidateID = $candidates->add(
-                            $doc['firstName'],
+                            $doc['first_name'],
                             '',
-                            $doc['lastName'],
+                            $doc['last_name'],
                             $doc['email'],
                             '',
                             $doc['phone'],
@@ -1724,7 +1856,7 @@ class ImportUI extends UserInterface
                             $doc['address'],
                             $doc['city'],
                             $doc['state'],
-                            $doc['zipCode'],
+                            $doc['zip_code'],
                             '',
                             $doc['skills'],
                             NULL,
@@ -1763,21 +1895,21 @@ class ImportUI extends UserInterface
                             }
 
                             $importedCandidates[] = array(
-                                'name' => trim($doc['firstName'] . ' ' . $doc['lastName']),
+                                'name' => trim($doc['first_name'] . ' ' . $doc['last_name']),
                                 'resume' => $doc['realName'],
                                 'url' => sprintf(
                                     '%s?m=candidates&a=show&candidateID=%d',
                                     CATSUtility::getIndexName(),
                                     $candidateID
                                 ),
-                                'location' => trim($doc['city'] . ' ' . $doc['state'] . ' ' . $doc['zipCode'])
+                                'location' => trim($doc['city'] . ' ' . $doc['state'] . ' ' . $doc['zip_code'])
                             );
                         }
                     }
                     else
                     {
                         $importedDuplicates[] = array(
-                            'name' => trim($doc['firstName'] . ' ' . $doc['lastName']),
+                            'name' => trim($doc['first_name'] . ' ' . $doc['last_name']),
                             'resume' => $doc['realName']
                         );
                         @unlink($doc['name']);
@@ -1899,12 +2031,13 @@ class ImportUI extends UserInterface
                 }
             }
         }
-
+        Logger::getLogger("AuieoATS")->info("getMassImportCandidates:end");
         return array($importedCandidates, $importedDocuments, $importedFailed, $importedDuplicates);
     }
 
     public function getMassImportDocuments()
     {
+        Logger::getLogger("AuieoATS")->info("getMassImportDocuments:start");
         if (!isset($_SESSION['CATS_PARSE_TEMP']) || empty($_SESSION['CATS_PARSE_TEMP']) ||
             !is_array($_SESSION['CATS_PARSE_TEMP']))
         {
@@ -1925,9 +2058,9 @@ class ImportUI extends UserInterface
                 if (isset($doc['parse']) && is_array($doc['parse']))
                 {
                     if (isset($doc['parse'][$id = 'first_name']))
-                        $doc['firstName'] = $doc['parse'][$id]; else $doc['firstName'] = '';
+                        $doc['first_name'] = $doc['parse'][$id]; else $doc['first_name'] = '';
                     if (isset($doc['parse'][$id = 'last_name']))
-                        $doc['lastName'] = $doc['parse'][$id]; else $doc['lastName'] = '';
+                        $doc['last_name'] = $doc['parse'][$id]; else $doc['last_name'] = '';
                     if (isset($doc['parse'][$id = 'us_address']))
                         $doc['address'] = $doc['parse'][$id]; else $doc['address'] = '';
                     if (isset($doc['parse'][$id = 'city']))
@@ -1935,7 +2068,7 @@ class ImportUI extends UserInterface
                     if (isset($doc['parse'][$id = 'state']))
                         $doc['state'] = $doc['parse'][$id]; else $doc['state'] = '';
                     if (isset($doc['parse'][$id = 'zip_code']))
-                        $doc['zipCode'] = $doc['parse'][$id]; else $doc['zipCode'] = '';
+                        $doc['zip_code'] = $doc['parse'][$id]; else $doc['zip_code'] = '';
                     if (isset($doc['parse'][$id = 'email_address']))
                         $doc['email'] = $doc['parse'][$id]; else $doc['email'] = '';
                     if (isset($doc['parse'][$id = 'phone_number']))
@@ -1962,6 +2095,7 @@ class ImportUI extends UserInterface
                 $failed++;
             }
         }
+        Logger::getLogger("AuieoATS")->info("getMassImportDocuments:end");
         return array($documents, $success, $failed);
     }
 

@@ -3,18 +3,90 @@ pageHeaderInclude('js/sorttable.js');
 pageHeaderInclude('js/match.js');
 pageHeaderInclude('js/pipeline.js');
 pageHeaderInclude('js/attachment.js');
+pageHeaderInclude('js/xeditable/js/xeditable.js');
+$arrModuleInfo=getModuleInfo("modulename");
+$moduleInfo=$arrModuleInfo[$_REQUEST["m"]];
 pageTitle('Job Order');
 ob_start();
- ?>
-
-            <p class="note">Job Order Details</p>
-
-            <?php /*if ($this->data['is_admin_hidden'] == 1): ?>
+ /*if ($this->data['is_admin_hidden'] == 1): ?>
                 <p class="warning">This Job Order is hidden.  Only CATS Administrators can view it or search for it.  To make it visible by the site users, click <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=joborders&a=administrativeHideShow&jobOrderID=<?php echo($this->jobOrderID); ?>&state=0" style="font-weight:bold;">Here.</a></p>
-            <?php endif;*/ ?>
-
-            <?php
+            <?php endif;*/ 
             echo $this->adminHidden;echo $this->frozen;
+            $AUIEO_PREVIEW_FIELD=array();
+            $singleActionMenu="";
+            ob_start();
+            TemplateUtility::printSingleQuickActionMenu(DATA_ITEM_JOBORDER, $this->data['joborder_id']);
+            $other=ob_get_clean();
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Ttitle","class"=>$this->data['titleClass'],"data"=>$this->data['title'],"public"=>$this->data['public'],"other"=>$other);
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Duration","class"=>"previewtitle","data"=>$this->data['duration'],"public"=>false,"other"=>false);
+            
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Company Name","class"=>"previewtitle","data"=>"<a href='index.php?m=companies&a=show&companyID={$this->data['company_id']}'>{$this->data['companyName']}</a>","public"=>false,"other"=>false);
+            $openingAvailable="";
+            if (isset($this->data['openings_available'] ) && $this->data['openings_available'] != $this->data['openings']) $openingAvailable=" ({$this->data['openings_available']} Available)";
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Openings","class"=>"previewtitle","data"=>$this->data['openings'].$openingAvailable,"public"=>false,"other"=>false,'key'=>'openings','sql'=>"index.php?m={$moduleInfo["modulename"]}&a=updateFieldData&field=openings&{$moduleInfo["primarykey"]}={$this->data[$moduleInfo["primarykey"]]}&data={$this->data['openings']}");
+            
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Department","class"=>"previewtitle","data"=>$this->data['department'],"public"=>false,"other"=>false);
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Type","class"=>"previewtitle","data"=>$this->data['typeDescription'],"public"=>false,"other"=>false);
+            
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"CATS Job ID","class"=>"previewtitle","data"=>$this->data['joborder_id'],"public"=>false,"other"=>false);
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Status","class"=>"previewtitle","data"=>$this->data['status'],"public"=>false,"other"=>false);
+            
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Company Job ID","class"=>"previewtitle","data"=>$this->data['client_job_id'],"public"=>false,"other"=>false);
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Pipeline","class"=>"previewtitle","data"=>$this->data['pipeline'],"public"=>false,"other"=>false);
+            
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Contact Name","class"=>"previewtitle","data"=>"<a href='index.php?m=contacts&a=show&contactID={$this->data['contact_id']}'>{$this->data['contactFullName']}</a>","public"=>false,"other"=>false);
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Submitted","class"=>"previewtitle","data"=>$this->data['submitted'],"public"=>false,"other"=>false);
+            
+            if($this->data['contact_id']>0)
+            {
+                $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Contact Phone","class"=>"previewtitle","data"=>$this->data['contactWorkPhone'],"public"=>false,"other"=>false,'key'=>'contactWorkPhone','sql'=>"index.php?m=contacts&a=updateFieldData&field=phone_work&contact_id={$this->data['contact_id']}&data={$this->data['contactWorkPhone']}");
+            }
+            else
+            {
+                $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Contact Phone","class"=>"previewtitle","data"=>$this->data['contactWorkPhone'],"public"=>false,"other"=>false);
+            }
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Days Old","class"=>"previewtitle","data"=>$this->data['daysOld'],"public"=>false,"other"=>false);
+            
+            if($this->data['contact_id']>0)
+            {
+                $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Contact Email","class"=>"previewtitle","data"=>"<a href='mailto:{$this->data['contactEmail']}'>{$this->data['contactEmail']}</a>","public"=>false,"other"=>false,'key'=>'contactEmail','sql'=>"index.php?m=contacts&a=updateFieldData&field=email1&contact_id={$this->data['contact_id']}&data={$this->data['contactEmail']}");
+            }
+            else
+            {
+                $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Contact Email","class"=>"previewtitle","data"=>"<a href='mailto:{$this->data['contactEmail']}'>{$this->data['contactEmail']}</a>","public"=>false,"other"=>false);
+            }
+            $dateCreated="{$this->data['dateCreated']} ({$this->data['enteredByFullName']})";
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Created","class"=>"previewtitle","data"=>$dateCreated,"public"=>false,"other"=>false);
+            
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Location","class"=>"previewtitle","data"=>$this->data['cityAndState'],"public"=>false,"other"=>false);
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Recruiter","class"=>"previewtitle","data"=>$this->data['recruiterFullName'],"public"=>false,"other"=>false);
+            
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Max Rate","class"=>"previewtitle","data"=>$this->data['rate_max'],"public"=>false,"other"=>false,'key'=>'rate_max','sql'=>"index.php?m=joborders&a=updateFieldData&field=rate_max&joborder_id={$this->data["joborder_id"]}&data={$this->data['salary']}");
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Owner","class"=>"previewtitle","data"=>$this->data['ownerFullName'],"public"=>false,"other"=>false);
+            
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Salary","class"=>"previewtitle","data"=>$this->data['salary'],"public"=>false,"other"=>false,'key'=>'salary','sql'=>"index.php?m=joborders&a=updateFieldData&field=salary&joborder_id={$this->data["joborder_id"]}&data={$this->data['salary']}");
+            $AUIEO_PREVIEW_FIELD[]=array("caption"=>"Start Date","class"=>"previewtitle","data"=>$this->data['start_date'],"public"=>false,"other"=>false);
+            //$AUIEO_PREVIEW_FIELD[]=array("caption"=>"Start Date","class"=>"previewtitle","data"=>$this->data['start_date'],"public"=>false,"other"=>false,'editable'=>'editable-bsdate','key'=>'start_date','sql'=>"index.php?m=joborders&a=updateFieldData&field=start_date&joborder_id={$this->data["joborder_id"]}&data={$this->data['start_date']}");
+            
+           $jsonRender=array();
+            foreach($this->data as $k=>$v)
+            {
+                $jsonRender[$k]=$v;
+            }
+            
+            $extraFieldData=array();
+            for ($i = 0; $i < count($this->extraFieldRS); $i++)
+            {
+                $jsonRender["extra".$this->extraFieldRS[$i]["extraFieldSettingsID"]]=$this->extraFieldRS[$i]['display'];
+                //$sql="select * from auieo_fields where id={$this->extraFieldRS["extraFieldSettingsID"]}";
+                //$arrField=DatabaseConnection::getInstance()->getAssoc($sql);
+                if($this->extraFieldRS[$i]["extraFieldType"]==8 || $this->extraFieldRS[$i]["extraFieldType"]<=4)
+                    $AUIEO_PREVIEW_FIELD[]=array("caption"=>$this->extraFieldRS[$i]['fieldName'],"class"=>"previewtitle","data"=>$this->extraFieldRS[$i]['display'],"public"=>false,"other"=>false,'key'=>"extra".$this->extraFieldRS[$i]["extraFieldSettingsID"],'sql'=>"index.php?m=joborders&a=updateFieldData&field={$this->extraFieldRS[$i]['fieldName']}&joborder_id={$this->data["joborder_id"]}&data={$this->extraFieldRS[$i]['display']}");
+                else
+                    $AUIEO_PREVIEW_FIELD[]=array("caption"=>$this->extraFieldRS[$i]['fieldName'],"class"=>"previewtitle","data"=>$this->extraFieldRS[$i]['display'],"public"=>false,"other"=>false);
+            }
+            
+            $AUIEO_JSON=  json_encode($jsonRender);
             /*if (isset($this->frozen)){ ?>
                 <table style="font-weight:bold; border: 1px solid #000; background-color: #ffed1a; padding:5px; margin-bottom:7px;" width="<?php  if(false): ?>100%<?php else: ?>100%<?php endif; ?>" id="candidateAlreadyInSystemTable">
                     <tr>
@@ -33,163 +105,18 @@ ob_start();
 
             <table class="detailsOutside" width="100%" height="<?php echo((count($this->extraFieldRS)/2 + 12) * 22); ?>">
                 <tr style="vertical-align:top;">
-                    <td width="50%" height="100%">
+                    <td width="100%" height="100%">
                         <table class="detailsInside" height="100%">
-                            <tr>
-                                <td class="vertical">Title:</td>
-                                <td class="data" width="300">
-                                    <span class="<?php echo($this->data['titleClass']); ?>"><?php $this->_($this->data['title']); ?></span>
-                                    <?php echo($this->data['public']) ?>
-                                    <?php TemplateUtility::printSingleQuickActionMenu(DATA_ITEM_JOBORDER, $this->data['joborder_id']); ?>
-                                </td>
-                            </tr>
+                        <?php
+ displayMultiColumnTable($AUIEO_PREVIEW_FIELD, 2);
+                        
+                  ?>
 
-                            <tr>
-                                <td class="vertical">Company Name:</td>
-                                <td class="data">
-                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=companies&a=show&companyID=<?php echo($this->data['company_id']); ?>">
-                                        <?php echo($this->data['companyName']); ?>
-                                    </a>
-                                </td>
-                            </tr>
 
-                            <tr>
-                                <td class="vertical">Department:</td>
-                                <td class="data">
-                                    <?php echo($this->data['department']); ?>
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">CATS Job ID:</td>
-                                <td class="data" width="300"><?php $this->_($this->data['joborder_id']); ?></td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Company Job ID:</td>
-                                <td class="data"><?php echo($this->data['client_job_id']); ?></td>
-                            </tr>
-
-                            <!-- CONTACT INFO -->
-                            <tr>
-                                <td class="vertical">Contact Name:</td>
-                                <td class="data">
-                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=contacts&a=show&contactID=<?php echo($this->data['contact_id']); ?>">
-                                        <?php echo($this->data['contactFullName']); ?>
-                                    </a>
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Contact Phone:</td>
-                                <td class="data"><?php echo($this->data['contactWorkPhone']); ?></td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Contact Email:</td>
-                                <td class="data">
-                                    <a href="mailto:<?php $this->_($this->data['contactEmail']); ?>"><?php $this->_($this->data['contactEmail']); ?></a>
-                                </td>
-                            </tr>
-                            <!-- /CONTACT INFO -->
-
-                            <tr>
-                                <td class="vertical">Location:</td>
-                                <td class="data"><?php $this->_($this->data['cityAndState']); ?></td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Max Rate:</td>
-                                <td class="data"><?php $this->_($this->data['rate_max']); ?></td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Salary:</td>
-                                <td class="data"><?php $this->_($this->data['salary']); ?></td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Start Date:</td>
-                                <td class="data"><?php $this->_($this->data['startDate']); ?></td>
-                            </tr>
-
-                            <?php for ($i = 0; $i < intval(count($this->extraFieldRS)/2); $i++): ?>
-                               <tr>
-                                    <td class="vertical"><?php $this->_($this->extraFieldRS[$i]['fieldName']); ?>:</td>
-                                    <td class="data"><?php echo($this->extraFieldRS[$i]['display']); ?></td>
-                              </tr>
-                            <?php endfor; ?>
-
-                            <?php eval(Hooks::get('JO_TEMPLATE_SHOW_BOTTOM_OF_LEFT')); ?>
-
-                        </table>
-                    </td>
-
-                    <td width="50%" height="100%" style="vertical-align:top;" >
-                        <table class="detailsInside" height="100%">
-                            <tr>
-                                <td class="vertical">Duration:</td>
-                                <td class="data"><?php $this->_($this->data['duration']); ?></td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Openings:</td>
-                                <td class="data"><?php $this->_($this->data['openings']); if ($this->data['openings_available'] != $this->data['openings']): ?> (<?php $this->_($this->data['openingsAvailable']); ?> Available)<?php endif; ?></td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Type:</td>
-                                <td class="data"><?php $this->_($this->data['typeDescription']); ?></td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Status:</td>
-                                <td class="data"><?php $this->_($this->data['status']); ?></td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Pipeline:</td>
-                                <td class="data"><?php $this->_($this->data['pipeline']) ?></td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Submitted:</td>
-                                <td class="data"><?php $this->_($this->data['submitted']) ?></td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Days Old:</td>
-                                <td class="data"><?php $this->_($this->data['daysOld']); ?></td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Created:</td>
-                                <td class="data"><?php $this->_($this->data['dateCreated']); ?> (<?php $this->_($this->data['enteredByFullName']); ?>)</td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Recruiter:</td>
-                                <td class="data"><?php $this->_($this->data['recruiterFullName']); ?></td>
-                            </tr>
-
-                            <tr>
-                                <td class="vertical">Owner:</td>
-                                <td class="data"><?php $this->_($this->data['ownerFullName']); ?></td>
-                            </tr>
-
-                            <?php for ($i = (intval(count($this->extraFieldRS))/2); $i < (count($this->extraFieldRS)); $i++): ?>
-                                <tr>
-                                    <td class="vertical"><?php $this->_($this->extraFieldRS[$i]['fieldName']); ?>:</td>
-                                    <td class="data"><?php echo($this->extraFieldRS[$i]['display']); ?></td>
-                                </tr>
-                            <?php endfor; ?>
-
-                            <?php eval(Hooks::get('JO_TEMPLATE_SHOW_BOTTOM_OF_RIGHT')); ?>
                         </table>
                     </td>
                 </tr>
             </table>
-
             <?php if ($this->public): ?>
             <div style="background-color: #E6EEFE; padding: 10px; margin: 5px 0 12px 0; border: 1px solid #728CC8;">
                 <b>This job order is public<?php if ($this->careerPortalURL === false): ?>.</b><?php else: ?>
@@ -212,12 +139,16 @@ ob_start();
                     <?php endif; ?>
                 <?php endif; ?>
             </div>
-            <?php endif; ?>
+            <?php endif; 
+            $this->subTemplate(dirname(__FILE__)."/AssignTagModal.php","AUIEO_TAG_UL");
+            //include();
+            ?>
 
             <table class="detailsOutside" width="100%">
                 <tr>
                     <td>
                         <table class="detailsInside">
+                            
                             <tr>
                                 <td valign="top" class="vertical">Attachments:</td>
                                 <td valign="top" class="data">
@@ -375,5 +306,6 @@ if (!isset($this->isPopup)): ?>
             <?php endif; ?>
 
 <?php endif; ?>
-    
-<?php $AUIEO_CONTENT=ob_get_clean(); ?>
+   
+<?php 
+$AUIEO_CONTENT=ob_get_clean(); ?>

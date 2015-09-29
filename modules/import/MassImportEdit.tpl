@@ -45,7 +45,7 @@
                                                 <table cellpadding="0" cellspacing="0" border="0">
                                                     <tr>
                                                         <td valign="middle" align="left" style="padding-right: 5px;">
-                                                            <input type="text" class="inputField firstName" id="firstName" name="firstName" value="<?php echo isset($this->document['firstName']) ? $this->document['firstName'] : ''; ?>" maxlength="30" onchange="validation();" />
+                                                            <input type="text" class="inputField firstName" id="firstName" name="firstName" value="<?php echo isset($this->document['first_name']) ? $this->document['first_name'] : ''; ?>" maxlength="30" onchange="validation();" />
                                                         </td>
                                                         <td id="firstNameCopy" valign="middle" align="left">
                                                             <div id="firstNameCopyBlock" onclick="fieldCopy('firstName');">
@@ -62,7 +62,7 @@
                                                 <table cellpadding="0" cellspacing="0" border="0">
                                                     <tr>
                                                         <td valign="middle" align="left" style="padding-right: 5px;">
-                                                            <input type="text" class="inputField lastName" id="lastName" name="lastName" value="<?php echo isset($this->document['lastName']) ? $this->document['lastName'] : ''; ?>" maxlength="30" onchange="validation();" />
+                                                            <input type="text" class="inputField lastName" id="lastName" name="lastName" value="<?php echo isset($this->document['last_name']) ? $this->document['last_name'] : ''; ?>" maxlength="30" onchange="validation();" />
                                                         </td>
                                                         <td id="lastNameCopy" valign="middle" align="left">
                                                             <div id="lastNameCopyBlock" onclick="fieldCopy('lastName');">
@@ -130,7 +130,7 @@
                                                 <table cellpadding="0" cellspacing="0" border="0">
                                                     <tr>
                                                         <td valign="middle" align="left" style="padding-right: 5px;">
-                                                            <input type="text" class="inputField zipCode" id="zipCode" name="zipCode" value="<?php echo isset($this->document['zipCode']) ? $this->document['zipCode'] : ''; ?>" maxlength="30" onchange="validation();" />
+                                                            <input type="text" class="inputField zipCode" id="zipCode" name="zipCode" value="<?php echo isset($this->document['zip_code']) ? $this->document['zip_code'] : ''; ?>" maxlength="30" onchange="validation();" />
                                                         </td>
                                                         <td id="zipCodeCopy" valign="middle" align="left">
                                                             <div id="zipCodeCopyBlock" onclick="fieldCopy('zipCode');">
