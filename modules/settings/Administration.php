@@ -133,17 +133,6 @@ ob_start();
                         Manage Sites
                     </td>
                 </tr>
-               <tr>
-                    <td>
-                        <img src="images/bullet_black.gif" alt="" />
-                        <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=settings&amp;a=fields">
-                            Manage Fields
-                        </a>
-                    </td>
-                    <td>
-                        Manage Fields
-                    </td>
-                </tr>
                 <tr>
                     <td>
                         <img src="images/bullet_black.gif" alt="" />

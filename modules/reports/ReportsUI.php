@@ -93,12 +93,7 @@ class ReportsUI extends UserInterface
                 break;
         }
     }
-    
-    public function builder()
-    {
-        
-    }
-    
+
     public function reportFields()
     {
         $objRequest=ClsNaanalRequest::getInstance();
