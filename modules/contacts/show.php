@@ -2,287 +2,85 @@
 $objRole=Users::getInstance()->getRole();
 $allowDelete=$objRole->getModulePermission(300, Contacts::actionMapping("delete"));
 $allowEdit=$objRole->getModulePermission(300, Contacts::actionMapping("edit"));
+pageHeaderInclude('js/activity.js');
+pageHeaderInclude('js/sorttable.js');
+pageHeaderInclude('js/match.js');
+pageHeaderInclude('js/lib.js');
+pageHeaderInclude('js/pipeline.js');
+pageHeaderInclude('js/attachment.js');
+pageHeaderInclude('js/xeditable/js/xeditable.js');
+pageTitle('Contact - '.$this->data['first_name'].' '.$this->data['last_name']);
+$arrModuleInfo=getModuleInfo("modulename");
+$moduleInfo=$arrModuleInfo[$_REQUEST["m"]];
 ob_start();
+TemplateUtility::printSingleQuickActionMenu(DATA_ITEM_COMPANY, $this->contactID);
+$other=ob_get_clean();
 
-TemplateUtility::printHeader('Contact - '.$this->data['first_name'].' '.$this->data['last_name'], array( 'js/activity.js', 'js/sorttable.js', 'js/match.js', 'js/lib.js', 'js/pipeline.js', 'js/attachment.js'));
+$other2="&nbsp;
+                                        <a id='vCard' href='index.php?m=contacts&amp;a=downloadVCard&contactID={$this->contactID}'>
+                                            <img src='images/vcard.gif' class='absmiddle' alt='vCard' border='0' />
+                                        </a>";
 
-$AUIEO_HEADER=  ob_get_clean();
+$AUIEO_PREVIEW_FIELD[]=array("caption"=>"Name","class"=>$this->data['titleClassContact'],"data"=>$this->data['first_name']." ".$this->data['last_name'],"public"=>false,"other"=>$other.$other2);
+$data="";
+if($this->data['reports_to'] == -1 || $this->data['reports_to'] == 0 || $this->data['reportsToTitle'] == '')
+{ 
+    $data = "(None)";
+}
+else
+{
+       $data = "<a href='index.php?m=contacts&a=show&contactID={$this->data["reportsTo"]}'>
+            <img src='images/contact_small.gif' border='0' />&nbsp;
+       {$this->data['reportsToFirstName']}&nbsp;{$this->data['reportsToLastName']}
+        </a>
+        &nbsp;({$this->data['reportsToTitle']})";
+}
+$AUIEO_PREVIEW_FIELD[]=array("caption"=>"Reports To","class"=>"previewtitle","data"=>$data,"public"=>false,"other"=>false);
 
+$other="";
+if ($this->data['left_company'])
+{ 
+    $other="&nbsp;(no longer associated with company)";
+}
+$AUIEO_PREVIEW_FIELD[]=array("caption"=>"Company","class"=>"previewtitle","data"=>"<a href='index.php?m=companies&a=show&companyID={$this->data['company_id']}'>{$this->data['companyName']}</a>","public"=>false,"other"=>$other);
+$AUIEO_PREVIEW_FIELD[]=array("caption"=>"E-Mail","class"=>"previewtitle","data"=>$this->data['email1'],"public"=>false,"other"=>false);
+
+$AUIEO_PREVIEW_FIELD[]=array("caption"=>"Title","class"=>"previewtitle","data"=>$this->data['title'],"public"=>false,"other"=>false,'key'=>'title','sql'=>"index.php?m={$moduleInfo["modulename"]}&a=updateFieldData&field=title&{$moduleInfo["primarykey"]}={$this->data[$moduleInfo["primarykey"]]}&data={$this->data['title']}");
+$AUIEO_PREVIEW_FIELD[]=array("caption"=>"2nd E-Mail","class"=>"previewtitle","data"=>$this->data['email2'],"public"=>false,"other"=>false,'key'=>'email2','sql'=>"index.php?m={$moduleInfo["modulename"]}&a=updateFieldData&field=email2&{$moduleInfo["primarykey"]}={$this->data[$moduleInfo["primarykey"]]}&data={$this->data['email2']}");
+
+$AUIEO_PREVIEW_FIELD[]=array("caption"=>"Department","class"=>"previewtitle","data"=>$this->data['department'],"public"=>false,"other"=>false);
+$AUIEO_PREVIEW_FIELD[]=array("caption"=>"Address","class"=>"previewtitle","data"=>nl2br(htmlspecialchars($this->data['address']))."
+    <br />{$this->data['cityAndState']} {$this->data['zip']}","public"=>false,"other"=>false);
+    
+$AUIEO_PREVIEW_FIELD[]=array("caption"=>"Work Phone","class"=>"previewtitle","data"=>$this->data['phone_work'],"public"=>false,"other"=>false,'key'=>'phone_work','sql'=>"index.php?m={$moduleInfo["modulename"]}&a=updateFieldData&field=phone_work&{$moduleInfo["primarykey"]}={$this->data[$moduleInfo["primarykey"]]}&data={$this->data['phone_work']}");
+$AUIEO_PREVIEW_FIELD[]=array("caption"=>"Created","class"=>"previewtitle","data"=>$this->data['dateCreated']."({$this->data['enteredByFullName']})","public"=>false,"other"=>false);
+
+$AUIEO_PREVIEW_FIELD[]=array("caption"=>"Cell Phone","class"=>"previewtitle","data"=>$this->data['phone_cell'],"public"=>false,"other"=>false,'key'=>'phone_cell','sql'=>"index.php?m={$moduleInfo["modulename"]}&a=updateFieldData&field=phone_cell&{$moduleInfo["primarykey"]}={$this->data[$moduleInfo["primarykey"]]}&data={$this->data['phone_cell']}");
+$AUIEO_PREVIEW_FIELD[]=array("caption"=>"Other Phone","class"=>"previewtitle","data"=>$this->data['phone_other'],"public"=>false,"other"=>false,'key'=>'phone_other','sql'=>"index.php?m={$moduleInfo["modulename"]}&a=updateFieldData&field=phone_other&{$moduleInfo["primarykey"]}={$this->data[$moduleInfo["primarykey"]]}&data={$this->data['phone_other']}");
+
+$AUIEO_PREVIEW_FIELD[]=array("caption"=>"Owner","class"=>"previewtitle","data"=>$this->data['dateCreated']."({$this->data['ownerFullName']})","public"=>false,"other"=>false);
+$jsonRender=array();
+foreach($this->data as $k=>$v)
+{
+    $jsonRender[$k]=$v;
+}
+$extraFieldData=array();
+for ($i = 0; $i < count($this->extraFieldRS); $i++)
+{
+    $jsonRender["extra".$this->extraFieldRS[$i]["extraFieldSettingsID"]]=$this->extraFieldRS[$i]['display'];
+    if($this->extraFieldRS[$i]["extraFieldType"]==8 || $this->extraFieldRS[$i]["extraFieldType"]<=4)
+        $AUIEO_PREVIEW_FIELD[]=array("caption"=>$this->extraFieldRS[$i]['fieldName'],"class"=>"previewtitle","data"=>$this->extraFieldRS[$i]['display'],"public"=>false,"other"=>false,'key'=>"extra".$this->extraFieldRS[$i]["extraFieldSettingsID"],'sql'=>"index.php?m={$moduleInfo["modulename"]}&a=updateFieldData&field={$this->extraFieldRS[$i]['fieldName']}&{$moduleInfo["primarykey"]}={$this->data[$moduleInfo["primarykey"]]}&data={$this->extraFieldRS[$i]['display']}");
+    else
+        $AUIEO_PREVIEW_FIELD[]=array("caption"=>$this->extraFieldRS[$i]['fieldName'],"class"=>"previewtitle","data"=>$this->extraFieldRS[$i]['display'],"public"=>false,"other"=>false);
+}
+$AUIEO_JSON=  json_encode($jsonRender);
 ob_start();
-
+echo "<table class='detailsOutside' width='100%'>
+                    <tr>
+                        <td><table class='detailsInside'>";
+            displayMultiColumnTable($AUIEO_PREVIEW_FIELD);
+            echo "</table></td></tr></table>";
 ?>
-
-
-
-
-
-            <table class="detailsOutside" width="100%">
-
-                <tr style="vertical-align:top;">
-
-                    <td width="50%" height="100%">
-
-                        <table class="detailsInside" height="100%">
-
-                            <tr>
-
-                                <td class="vertical">Name:</td>
-
-                                <td class="data">
-
-                                    <span class="bold">
-
-                                        <span class="<?php echo($this->data['titleClassContact']);?>">
-
-                                            <?php $this->_($this->data['first_name']); ?>
-
-                                            <?php $this->_($this->data['last_name']); ?>
-
-                                            <?php TemplateUtility::printSingleQuickActionMenu(DATA_ITEM_CONTACT, $this->contactID); ?>
-
-                                        </span>
-
-                                        &nbsp;
-
-                                        <a id="vCard" href="<?php echo(CATSUtility::getIndexName()); ?>?m=contacts&amp;a=downloadVCard&amp;contactID=<?php echo($this->contactID); ?>">
-
-                                            <img src="images/vcard.gif" class="absmiddle" alt="vCard" border="0" />
-
-                                        </a>
-
-                                    </span>
-
-                                </td>
-
-                            </tr>
-
-
-
-                            <tr>
-
-                                <td class="vertical">Company:</td>
-
-                                <td class="data">
-
-                                    <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=companies&amp;a=show&amp;companyID=<?php echo($this->data['company_id']); ?>">
-
-                                        <span class="<?php echo($this->data['titleClassCompany']);?>">
-
-                                            <?php echo($this->data['companyName']); ?>
-
-                                        </span>
-
-                                    </a>
-
-                                    <?php if ($this->data['left_company']): ?>
-
-                                        &nbsp;(no longer associated with company)
-
-                                    <?php endif; ?>
-
-                                </td>
-
-                            </tr>
-
-
-
-                            <tr>
-
-                                <td class="vertical">Title:</td>
-
-                                <td class="data"><?php $this->_($this->data['title']); ?></td>
-
-                            </tr>
-
-
-
-                            <tr>
-
-                                <td class="vertical">Department:</td>
-
-                                <td class="data"><?php $this->_($this->data['department']); ?></td>
-
-                            </tr>
-
-
-
-                            <tr>
-
-                                <td class="vertical">Work Phone:</td>
-
-                                <td class="data"><?php $this->_($this->data['phone_work']); ?></td>
-
-                            </tr>
-
-
-
-                            <tr>
-
-                                <td class="vertical">Cell Phone:</td>
-
-                                <td class="data"><?php $this->_($this->data['phone_cell']); ?></td>
-
-                            </tr>
-
-
-
-                            <tr>
-
-                                <td class="vertical">Other Phone:</td>
-
-                                <td class="data"><?php $this->_($this->data['phone_other']); ?></td>
-
-                            </tr>
-
-
-
-                            <?php for ($i = 0; $i < intval(count($this->extraFieldRS)/2); $i++): ?>
-
-                               <tr>
-
-                                    <td class="vertical"><?php $this->_($this->extraFieldRS[$i]['fieldName']); ?>:</td>
-
-                                    <td class="data"><?php echo($this->extraFieldRS[$i]['display']); ?></td>
-
-                              </tr>
-
-                            <?php endfor; ?>
-
-                        </table>
-
-                    </td>
-
-
-
-                    <td width="50%" height="100%">
-
-                        <table class="detailsInside" height="100%">
-
-                            <tr>
-
-                                <td class="vertical">Reports To:</td>
-
-                                <td class="data">
-
-                                    <?php if($this->data['reports_to'] == -1 || $this->data['reports_to'] == 0 || $this->data['reportsToTitle'] == ''): ?>
-
-                                        (None)
-
-                                    <?php else: ?>
-
-                                        <a href="<?php echo(CATSUtility::getIndexName()); ?>?m=contacts&amp;a=show&amp;contactID=<?php echo($this->data['reportsTo']); ?>">
-
-                                            <img src="images/contact_small.gif" border="0" />&nbsp;
-
-                                            <?php $this->_($this->data['reportsToFirstName']); ?>&nbsp;<?php $this->_($this->data['reportsToLastName']); ?>
-
-                                        </a>
-
-                                        &nbsp;(<?php $this->_($this->data['reportsToTitle']); ?>)
-
-                                    <?php endif; ?>
-
-                                </td>
-
-                            </tr>
-
-
-
-                            <tr>
-
-                                <td class="vertical">E-Mail:</td>
-
-                                <td class="data">
-
-                                    <a href="mailto:<?php $this->_($this->data['email1']); ?>"><?php $this->_($this->data['email1']); ?></a>
-
-                                </td>
-
-                            </tr>
-
-
-
-                            <tr>
-
-                                <td class="vertical">2nd E-Mail:</td>
-
-                                <td class="data">
-
-                                    <a href="mailto:<?php $this->_($this->data['email2']); ?>"><?php $this->_($this->data['email2']); ?></a>
-
-                                </td>
-
-                            </tr>
-
-
-
-                            <tr>
-
-                                <td class="vertical">Address:</td>
-
-                                <td class="data"><?php echo(nl2br(htmlspecialchars($this->data['address']))); ?></td>
-
-                            </tr>
-
-
-
-                            <tr>
-
-                                <td class="vertical">&nbsp;</td>
-
-                                <td class="data">
-
-                                    <?php $this->_($this->data['cityAndState']); ?>
-
-                                    <?php $this->_($this->data['zip']); ?>
-
-                                </td>
-
-                            </tr>
-
-
-
-                            <tr>
-
-                                <td class="vertical">Created:</td>
-
-                                <td class="data"><?php $this->_($this->data['dateCreated']); ?> (<?php $this->_($this->data['enteredByFullName']); ?>)</td>
-
-                            </tr>
-
-
-
-                            <tr>
-
-                                <td class="vertical">Owner:</td>
-
-                                <td class="data"><?php $this->_($this->data['ownerFullName']); ?></td>
-
-                            </tr>
-
-
-
-                            <?php for ($i = (intval(count($this->extraFieldRS))/2); $i < (count($this->extraFieldRS)); $i++): ?>
-
-                                <tr>
-
-                                    <td class="vertical"><?php $this->_($this->extraFieldRS[$i]['fieldName']); ?>:</td>
-
-                                    <td class="data"><?php echo($this->extraFieldRS[$i]['display']); ?></td>
-
-                                </tr>
-
-                            <?php endfor; ?>
-
-                        </table>
-
-                    </td>
-
-                </tr>
-
-            </table>
-
-
 
             <table class="detailsOutside" width="100%">
 
@@ -325,6 +123,8 @@ ob_start();
                                 <?php endif; ?>
 
                             </tr>
+                            
+                            
 
                             <tr>
 
@@ -697,7 +497,7 @@ ob_start();
             </div>
 
 <?php
-
+$this->subTemplate(dirname(__FILE__)."/AssignTagModal.php","AUIEO_TAG_UL");
 $AUIEO_CONTENT=  ob_get_clean();
 
 ?>

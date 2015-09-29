@@ -5,10 +5,24 @@ pageHeaderInclude('js/sweetTitles.js');
 pageHeaderInclude('js/searchAdvanced.js');
 pageHeaderInclude('js/highlightrows.js');
 pageHeaderInclude('js/export.js');
-pageTitle('Contacts');      
-include_once("modules/contacts/ClsContactsFilter.php");         
+pageTitle('Contacts');
+include_once("modules/contacts/ClsContactsFilter.php");
 ob_start();
  ?>
+
+
+
+
+
+        <div id="contents">
+            <table>
+                <tr>
+                    <td width="3%">
+                        <img src="images/contact.gif" width="24" height="24" border="0" alt="Contacts" style="margin-top: 3px;" />&nbsp;
+                    </td>
+                    <td><h2>Contacts: Search Contacts</h2></td>
+                </tr>
+            </table>
 
             <p class="note">Search Contacts</p>
 
@@ -106,4 +120,5 @@ echo ClsContactsFilter::getInstance()->getFilter();
                     <p>No matching entries found.</p>
                 <?php endif; ?>
             <?php endif; ?>
+        </div>
     <?php $AUIEO_CONTENT=ob_get_clean(); ?>

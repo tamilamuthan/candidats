@@ -1,1 +1,80 @@
-{$_("* CandidATS* Sites Management** Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.* * This Source Code Form is subject to the terms of the Mozilla Public* License, v. 2.0. If a copy of the MPL was not distributed with this* file, You can obtain one at http://mozilla.org/MPL/2.0/.")}            <p class="note">Candidate Details</p>{$AUIEO_CONTENT}
+{$_(
+"
+* CandidATS
+* Sites Management
+*
+* Copyright (C) 2014 - 2015 Auieo Software Private Limited, Parent Company of Unicomtech.
+* 
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/.
+")}
+<link rel="stylesheet" href="js/anuglar-ui-dialog/css/ngDialog.min.css" />
+<link rel="stylesheet" href="js/anuglar-ui-dialog/css/ngDialog.css">
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="js/anuglar-ui-dialog/css/ngDialog-theme-default.css">
+<script src="js/angular/angular-touch.js"></script>
+<script src="js/angular/angular-animate.js"></script>
+<script type="text/javascript" src="js/anuglar-ui-dialog/js/ngDialog.js"></script>
+<script type="text/javascript" src="js/ui-bootstrap/ui-bootstrap-tpls-0.13.4.js"></script>
+<script type="text/javascript" src="js/ui-bootstrap/ui.bootstrap.datepicker.js"></script>
+<style>
+        .ngdialog-content{
+                width: 200px;
+        }
+</style>
+<script type='text/javascript'>
+var app = angular.module('app', [ 'ngDialog','xeditable','ui.bootstrap']);
+app.controller('MainCtrl', function (\$scope, \$filter,  ngDialog,\$http) {
+        
+         \$scope.data = {$AUIEO_JSON};  
+        // Example of how to set default values for all dialogs
+        app.config(['ngDialogProvider', function (ngDialogProvider) {
+            ngDialogProvider.setDefaults({
+                className: 'ngdialog-theme-default',
+                plain: false,
+                showClose: true,
+                closeByDocument: true,
+                closeByEscape: true,
+                appendTo: false,
+                preCloseCallback: function () {
+                    console.log('default pre-close callback');
+                }
+            });
+        }]);
+        \$scope.openDefault = function (obj) {
+                ngDialog.open({
+                    template: 'dialogId',
+                    controller: 'MainCtrl',
+                    className: 'ngdialog-theme-default'
+                });
+            };
+            \$scope.dialogModel = {
+                message : '<b>message</b> from passed scope'
+            };
+              \$scope.updateData = function (\$data,sql)
+            {
+                    \$http.get(sql+"&newdata="+\$data);
+            };
+            /*\$scope.openSecond = function () {
+                ngDialog.open({
+                    template: '<h3><a href="" ng-click="closeSecond()">Close all by click here!</a></h3>',
+                    plain: true,
+                    closeByEscape: false
+                });
+            };*/
+        });
+</script>
+
+            <p class="note">Candidate Details</p>
+<div ng-app="app">                
+<div ng-controller="MainCtrl">
+{$AUIEO_CONTENT}
+    <script type="text/ng-template" id="dialogId">
+        <div class="ngdialog-message">
+        {$this->AUIEO_TAG_UL}
+        </div>
+    </script>
+    
+</div>
+</div>

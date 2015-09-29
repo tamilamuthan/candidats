@@ -24,14 +24,14 @@ jQuery(document).ready(function ()
 {
     ckedit=CKEDITOR.replace( 'emailBody' );
 });
-$(document).ready(function() 
+jQuery(document).ready(function() 
 {
     jQuery('#emailTo').bind('copy paste cut',function(e) {
     e.preventDefault(); //disable cut,copy,paste
     alert('cut,copy & paste options are disabled !!');
     });
 
-    $('#emailTo').bind('contextmenu', function (e) {
+    jQuery('#emailTo').bind('contextmenu', function (e) {
         e.preventDefault();
         alert('Right Click is not allowed');
     }); 

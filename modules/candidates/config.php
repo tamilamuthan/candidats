@@ -22,6 +22,22 @@ $action=array
     "addActivityChangeStatus"=>array
     (
         "theme"=>"notemplate"
+    ),
+    "createAttachment"=>array
+    (
+         "theme"=>"notemplate"
+    ),
+    "addCandidateTags"=>array
+    (
+         "theme"=>"notemplate"
+    ),
+    "deleteTag"=>array
+    (
+         "theme"=>"notemplate"
+    ),
+    "addEditImage"=>array
+    (
+         "theme"=>"notemplate"
     )
 );
 ?>

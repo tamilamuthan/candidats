@@ -408,7 +408,6 @@ class ContactsUI extends UserInterface
         $arrTpl["email_list"]=$emailList;
 
         if (!eval(Hooks::get('CONTACTS_SHOW'))) return;
-
         $this->_template->display('./modules/contacts/show.php');
     }
 

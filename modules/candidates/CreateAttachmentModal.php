@@ -7,7 +7,15 @@ ob_start();
         <form name="createAttachmentForm" id="createAttachmentForm" action="<?php echo(CATSUtility::getIndexName()); ?>?m=candidates&amp;a=createAttachment" enctype="multipart/form-data" method="post" onsubmit="return checkCreateAttachmentForm(document.createAttachmentForm);">
             <input type="hidden" name="postback" id="postback" value="postback" />
             <input type="hidden" id="candidateID" name="candidateID" value="<?php echo($this->candidateID); ?>" />
-
+<?php if(isset($this->attachmentsRS)) foreach ($this->attachmentsRS as $rowNumber => $attachmentsData): ?>
+                 <?php if ($attachmentsData['isProfileImage'] == '1'): ?>
+                    <div style="text-align:center;">
+                        <a href="attachments/<?php $this->_($attachmentsData['attachmentID']) ?>/<?php $this->_($attachmentsData['storedFilename']) ?>">
+                            <img src="attachments/<?php $this->_($attachmentsData['attachmentID']) ?>/<?php $this->_($attachmentsData['storedFilename']) ?>" border="0" width="165">
+                        </a>
+                    </div>
+                 <?php endif; ?>
+            <?php endforeach; ?>
             <table class="editTable">
                 <tr>
                     <td class="tdVertical">Attachment:</td>

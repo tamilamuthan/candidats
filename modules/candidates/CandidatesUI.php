@@ -2192,7 +2192,7 @@ class CandidatesUI extends UserInterface
             './modules/candidates/AddActivityChangeStatusModal.php'
         );
     }
-
+    
     public function onAddActivityChangeStatus()
     {
         if ($this->_accessLevel < ACCESS_LEVEL_EDIT)
@@ -2432,7 +2432,7 @@ class CandidatesUI extends UserInterface
                 $baseURL = 'm=candidates&amp;a=search&amp;getback=getback&amp;mode=searchByResume&amp;wildCardString='
                     . urlencode($query)
                     . '&amp;searchByResume=Search';
-                if(isset($_REQUEST["fldfilter"]))
+                if(isset($_REQUEST["fldfilter"]) && !empty($_REQUEST["fldfilter"]))
                 foreach($_REQUEST["fldfilter"] as $ind=>$filter)
                 {
                     $condition=$_REQUEST["condition"][$ind];
@@ -2630,7 +2630,7 @@ class CandidatesUI extends UserInterface
         $this->_template->assign('candidateID', $candidateID);
         $this->_template->assign('attachmentsRS', $attachmentsRS);
         $this->_template->display(
-            './modules/candidates/CreateImageAttachmentModal.tpl'
+            './modules/candidates/CreateImageAttachmentModal.php'
         );
     }
 

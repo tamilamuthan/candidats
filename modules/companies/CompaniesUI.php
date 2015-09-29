@@ -443,7 +443,6 @@ class CompaniesUI extends UserInterface
         $this->_template->assign('companyID', $companyID);
 
         if (!eval(Hooks::get('CLIENTS_SHOW'))) return;
-
         $this->_template->display('./modules/companies/show.php');
     }
 
@@ -549,7 +548,7 @@ class CompaniesUI extends UserInterface
 
         /* Departments list editor. */
         $departmentsCSV = $this->getTrimmedInput('departmentsCSV', $_POST);
-
+        $departmentsCSV=  stripslashes($departmentsCSV);
         /* Bail out if any of the required fields are empty. */
         if (empty($name))
         {
@@ -824,7 +823,7 @@ class CompaniesUI extends UserInterface
 
         /* Departments list editor. */
         $departmentsCSV = $this->getTrimmedInput('departmentsCSV', $_POST);
-
+        $departmentsCSV=  stripslashes($departmentsCSV);
         /* Bail out if any of the required fields are empty. */
         if (empty($name))
         {

@@ -890,7 +890,7 @@ class CareersUI extends UserInterface
             $jobOrderData = $jobOrders->get($jobID);
             $questionnaireLib = new Questionnaire($siteID);
 
-            $questionnaireID = $jobOrderData['questionnaireID'];
+            $questionnaireID = $jobOrderData['questionnaire_id'];
             if ($questionnaireID)
             {
                 $questionnaire = $questionnaireLib->get($questionnaireID);
@@ -986,7 +986,7 @@ class CareersUI extends UserInterface
             $template['Content'] = str_replace('<contactPhone>', $jobOrderData['contactWorkPhone'], $template['Content']);
             $template['Content'] = str_replace('<contactEmail>', $jobOrderData['contactEmail'], $template['Content']);
             $template['Content'] = str_replace('<description>',  $jobOrderData['description'], $template['Content']);
-            $template['Content'] = str_replace('<rate>',         nl2br($jobOrderData['maxRate']), $template['Content']);
+            $template['Content'] = str_replace('<rate>',         nl2br($jobOrderData['rate_max']), $template['Content']);
             $template['Content'] = str_replace('<salary>',       nl2br($jobOrderData['salary']), $template['Content']);
             $template['Content'] = str_replace('<daysOld>',      nl2br($jobOrderData['daysOld']), $template['Content']);
 
